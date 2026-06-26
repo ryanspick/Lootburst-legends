@@ -1,5 +1,5 @@
 import { createPC, tmpl, r, p, o, glow, toDataURL, darken, lighten, hexAlpha } from './pixelCanvas'
-import { makeSpritePalette, makeGearPalette, makeBossPalette, seededRng } from './pixelPalettes'
+import { makeSpritePalette, makeGearPalette, makeBossPalette, makeEnemyPalette, seededRng } from './pixelPalettes'
 import { HERO_TEMPLATES, roleToTemplate } from './heroTemplates'
 import { ENEMY_TEMPLATES, tagsToEnemyTemplate } from './enemyTemplates'
 import { GEAR_TEMPLATES, slotToGearTemplate } from './gearTemplates'
@@ -112,8 +112,8 @@ export function generateHeroSprite(hero: HeroInput): string {
 
 export function generateEnemySprite(enemy: EnemyInput): string {
   const { canvas, pc } = createPC(12, 12)
-  const rarity: Rarity = enemy.tier === 'elite' ? 'rare' : 'common'
-  const pal = makeSpritePalette(enemy.element, rarity)
+  const isElite = enemy.tier === 'elite'
+  const pal     = makeEnemyPalette(enemy.element)
   const tmplKey = tagsToEnemyTemplate(enemy.tags ?? [])
   const template = ENEMY_TEMPLATES[tmplKey]
 
@@ -123,28 +123,91 @@ export function generateEnemySprite(enemy: EnemyInput): string {
     G: pal.G, S: pal.S,
   }
 
-  if (enemy.tier === 'elite') {
-    glow(pc, 1, 1, 10, 10, RARITY_COLOURS.rare.glow, 8)
+  // Aura glow behind sprite
+  if (isElite) {
+    glow(pc, 1, 1, 10, 10, RARITY_COLOURS.epic.glow, 14)
+    glow(pc, 2, 2, 8, 8, pal.B, 7)
+  } else {
+    glow(pc, 2, 2, 8, 8, pal.B, 3)
   }
 
   tmpl(pc, template, palMap)
 
-  // Shine highlight on enemy head area
-  p(pc, 3, 2, '#ffffff', 0.55)
-  p(pc, 4, 1, '#ffffff', 0.30)
+  // Eye enhancement: scan template for X pixels, add glow + white highlight
+  for (let row = 0; row < template.length; row++) {
+    const rowStr = template[row] ?? ''
+    for (let col = 0; col < rowStr.length; col++) {
+      if (rowStr[col] === 'X') {
+        p(pc, col, row,     '#ffffff', 0.55)  // bright center
+        p(pc, col, row - 1, pal.X,    0.40)  // glow above
+        p(pc, col - 1, row, pal.X,    0.22)  // glow left
+        p(pc, col + 1, row, pal.X,    0.22)  // glow right
+      }
+    }
+  }
 
-  // Elite corner markers + body dither
-  if (enemy.tier === 'elite') {
-    const rc = RARITY_COLOURS.rare.primary
+  // Specular highlight (upper-left body)
+  p(pc, 3, 2, '#ffffff', 0.42)
+  p(pc, 4, 1, '#ffffff', 0.20)
+  p(pc, 2, 3, '#ffffff', 0.14)
+
+  // Per-element accent pixels (element flavor)
+  switch (enemy.element) {
+    case 'fire':
+      p(pc, 1, 1, '#ff8800', 0.70); p(pc, 10, 1, '#ff8800', 0.70)
+      p(pc, 0, 2, '#ff4400', 0.45); p(pc, 11, 2, '#ff4400', 0.45)
+      break
+    case 'ice':
+      p(pc, 0, 3, '#aaffff', 0.55); p(pc, 11, 3, '#aaffff', 0.55)
+      p(pc, 0, 7, '#aaffff', 0.38); p(pc, 11, 7, '#aaffff', 0.38)
+      p(pc, 5, 0, '#ffffff', 0.50); p(pc, 6, 0, '#ffffff', 0.50)
+      break
+    case 'poison':
+      p(pc, 1, 9,  '#44ff88', 0.60); p(pc, 10, 9,  '#44ff88', 0.60)
+      p(pc, 0, 10, '#44ff44', 0.40); p(pc, 11, 10, '#44ff44', 0.40)
+      break
+    case 'shadow':
+      p(pc, 0, 2, '#cc44ff', 0.45); p(pc, 11, 2, '#cc44ff', 0.45)
+      p(pc, 0, 8, '#cc44ff', 0.30); p(pc, 11, 8, '#cc44ff', 0.30)
+      break
+    case 'machine':
+      p(pc, 0, 4, '#00ffcc', 0.50); p(pc, 11, 4, '#00ffcc', 0.50)
+      p(pc, 0, 7, '#00ffcc', 0.35); p(pc, 11, 7, '#00ffcc', 0.35)
+      break
+    case 'nature':
+      p(pc, 1, 10, '#44ff22', 0.55); p(pc, 10, 10, '#44ff22', 0.55)
+      p(pc, 0, 11, '#22cc00', 0.35); p(pc, 11, 11, '#22cc00', 0.35)
+      break
+    case 'gold':
+      p(pc, 1,  0, '#ffd700', 0.65); p(pc, 10,  0, '#ffd700', 0.65)
+      p(pc, 0,  1, '#ffaa00', 0.45); p(pc, 11,  1, '#ffaa00', 0.45)
+      p(pc, 1, 11, '#ffd700', 0.50); p(pc, 10, 11, '#ffd700', 0.50)
+      break
+    case 'storm':
+      p(pc, 0, 1, '#ffee00', 0.55); p(pc, 11, 1, '#ffee00', 0.55)
+      p(pc, 1, 0, '#ffffff', 0.45); p(pc, 10, 0, '#ffffff', 0.45)
+      break
+  }
+
+  // Elite post-processing
+  if (isElite) {
+    const rc = RARITY_COLOURS.epic.primary
+    // Corner rarity markers
     p(pc, 0, 0, rc); p(pc, 11, 0, rc)
     p(pc, 0, 11, rc); p(pc, 11, 11, rc)
-    p(pc, 0, 5, rc, 0.5); p(pc, 11, 5, rc, 0.5)
-    // Elite body dither
-    for (let dy = 6; dy <= 9; dy++) {
+    // Side accent bars
+    p(pc, 0, 5, rc, 0.65); p(pc, 11, 5, rc, 0.65)
+    p(pc, 0, 6, rc, 0.65); p(pc, 11, 6, rc, 0.65)
+    // Mini crown (3 gold pixels at top)
+    p(pc, 4, 0, '#ffd700', 0.90)
+    p(pc, 6, 0, '#ffd700')
+    p(pc, 8, 0, '#ffd700', 0.90)
+    // Body shimmer dither
+    for (let dy = 2; dy <= 10; dy++) {
       const rowStr = template[dy] ?? ''
-      for (let dx = 2; dx <= 9; dx++) {
+      for (let dx = 1; dx <= 10; dx++) {
         if (rowStr[dx] === 'B' && (dx + dy) % 2 === 0) {
-          p(pc, dx, dy, pal.A, 0.25)
+          p(pc, dx, dy, pal.A, 0.30)
         }
       }
     }

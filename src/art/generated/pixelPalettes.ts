@@ -101,6 +101,37 @@ export function makeBossPalette(element: string): SpritePalette {
   }
 }
 
+const ENEMY_EYE_GLOW: Record<string, string> = {
+  fire:    '#ff7700',
+  ice:     '#00eeff',
+  poison:  '#44ff88',
+  shadow:  '#cc44ff',
+  storm:   '#ffee00',
+  machine: '#00ffcc',
+  nature:  '#88ff22',
+  gold:    '#ffd700',
+  void:    '#ff00cc',
+}
+
+export function makeEnemyPalette(element: string): SpritePalette {
+  const bodyBase = ELEMENT_COLOURS[element] ?? '#8888cc'
+  const eyeGlow  = ENEMY_EYE_GLOW[element] ?? '#ff4444'
+  return {
+    K: '#090912',
+    H: lighten(bodyBase, 100),
+    B: bodyBase,
+    A: lighten(bodyBase, 85),
+    D: darken(bodyBase, 55),
+    L: darken(bodyBase, 40),
+    F: darken(bodyBase, 70),
+    P: lighten(bodyBase, 35),
+    X: eyeGlow,
+    E: '#ffffff',
+    G: lighten(bodyBase, 50),
+    S: ['#000000', 0.3],
+  }
+}
+
 // Seeded deterministic RNG
 export function seededRng(id: string) {
   let seed = 0
