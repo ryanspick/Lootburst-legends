@@ -46,6 +46,7 @@ export const BOTTOM_NAV_TABS = [
   { id: 'run',      label: 'Run',      icon: '⚔️' },
   { id: 'squad',    label: 'Squad',    icon: '👥' },
   { id: 'capsule',  label: 'Capsule',  icon: '🔮' },
+  { id: 'shop',     label: 'Shop',     icon: '💎' },
   { id: 'gear',     label: 'Gear',     icon: '🛡️' },
   { id: 'progress', label: 'Progress', icon: '📦' },
 ] as const

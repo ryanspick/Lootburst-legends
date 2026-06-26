@@ -59,23 +59,49 @@ export function generateHeroSprite(hero: HeroInput): string {
 
   // Draw glow for legendary/mythic
   if (hero.rarity === 'legendary' || hero.rarity === 'mythic') {
-    glow(pc, 3, 1, 10, 14, RARITY_COLOURS[hero.rarity].glow, 8)
+    glow(pc, 3, 1, 10, 14, RARITY_COLOURS[hero.rarity].glow, 10)
+  } else if (hero.rarity === 'epic') {
+    glow(pc, 4, 2, 8, 12, RARITY_COLOURS.epic.glow, 5)
   }
 
   tmpl(pc, template, palMap)
+
+  // Post-process: pixel art shine highlights (upper-left specular)
+  p(pc, 5, 4, '#ffffff', 0.72)
+  p(pc, 6, 3, '#ffffff', 0.42)
+  p(pc, 4, 5, '#ffffff', 0.28)
+
+  // Body pixel dither texture for non-common heroes
+  if (hero.rarity !== 'common') {
+    for (let dy = 7; dy <= 12; dy++) {
+      const rowStr = template[dy] ?? ''
+      for (let dx = 3; dx <= 12; dx++) {
+        if (rowStr[dx] === 'B' && (dx + dy) % 3 === 0) {
+          p(pc, dx, dy, pal.A, 0.22)
+        }
+      }
+    }
+  }
+
+  // Eye highlight dot (small shine inside eye)
+  p(pc, 5, 5, pal.E, 0.8)
 
   // Rarity border dots (corners)
   if (hero.rarity !== 'common') {
     const rc = RARITY_COLOURS[hero.rarity].primary
     p(pc, 0, 0, rc); p(pc, 15, 0, rc)
     p(pc, 0, 15, rc); p(pc, 15, 15, rc)
+    // Side accent bars
+    p(pc, 0, 7, rc, 0.5); p(pc, 0, 8, rc, 0.5)
+    p(pc, 15, 7, rc, 0.5); p(pc, 15, 8, rc, 0.5)
   }
 
   // Mythic: rainbow accent row
   if (hero.rarity === 'mythic') {
     const cols = ['#ff0000','#ff8800','#ffff00','#00ff00','#00ffff','#ff00ff','#ffffff','#ff00ff','#00ffff','#00ff00','#ffff00','#ff8800','#ff0000','#ff00ff','#ffffff','#00ffff']
     for (let i = 0; i < 16; i++) {
-      p(pc, i, 15, cols[i], 0.6)
+      p(pc, i, 15, cols[i], 0.7)
+      p(pc, i, 0, cols[(i + 8) % 16], 0.4)
     }
   }
 
@@ -98,15 +124,30 @@ export function generateEnemySprite(enemy: EnemyInput): string {
   }
 
   if (enemy.tier === 'elite') {
-    glow(pc, 1, 1, 10, 10, RARITY_COLOURS.rare.glow, 6)
+    glow(pc, 1, 1, 10, 10, RARITY_COLOURS.rare.glow, 8)
   }
 
   tmpl(pc, template, palMap)
 
+  // Shine highlight on enemy head area
+  p(pc, 3, 2, '#ffffff', 0.55)
+  p(pc, 4, 1, '#ffffff', 0.30)
+
+  // Elite corner markers + body dither
   if (enemy.tier === 'elite') {
     const rc = RARITY_COLOURS.rare.primary
     p(pc, 0, 0, rc); p(pc, 11, 0, rc)
     p(pc, 0, 11, rc); p(pc, 11, 11, rc)
+    p(pc, 0, 5, rc, 0.5); p(pc, 11, 5, rc, 0.5)
+    // Elite body dither
+    for (let dy = 6; dy <= 9; dy++) {
+      const rowStr = template[dy] ?? ''
+      for (let dx = 2; dx <= 9; dx++) {
+        if (rowStr[dx] === 'B' && (dx + dy) % 2 === 0) {
+          p(pc, dx, dy, pal.A, 0.25)
+        }
+      }
+    }
   }
 
   return toDataURL(canvas)
@@ -436,22 +477,32 @@ export function generateGearIcon(gear: GearInput): string {
   }
 
   if (gear.rarity === 'legendary' || gear.rarity === 'mythic') {
-    glow(pc, 1, 1, 10, 10, RARITY_COLOURS[gear.rarity].glow, 6)
+    glow(pc, 1, 1, 10, 10, RARITY_COLOURS[gear.rarity].glow, 8)
+  } else if (gear.rarity === 'epic') {
+    glow(pc, 1, 1, 10, 10, RARITY_COLOURS.epic.glow, 4)
   }
 
   tmpl(pc, template, palMap)
+
+  // Specular shine dot on gear icon
+  p(pc, 2, 2, '#ffffff', 0.65)
+  p(pc, 3, 1, '#ffffff', 0.38)
 
   // Rarity corner dots
   if (gear.rarity !== 'common') {
     const rc = RARITY_COLOURS[gear.rarity].primary
     p(pc, 0, 0, rc); p(pc, 11, 0, rc)
     p(pc, 0, 11, rc); p(pc, 11, 11, rc)
+    p(pc, 1, 0, rc, 0.5); p(pc, 0, 1, rc, 0.5)
   }
 
-  // Mythic glint
+  // Mythic glint + rainbow row
   if (gear.rarity === 'mythic') {
     const cols = ['#ff0000','#ffff00','#00ffff','#ff00ff']
-    for (let i = 0; i < 4; i++) p(pc, 1 + i * 3, 11, cols[i], 0.7)
+    for (let i = 0; i < 4; i++) {
+      p(pc, 1 + i * 3, 11, cols[i], 0.75)
+      p(pc, 1 + i * 3, 0, cols[(i + 2) % 4], 0.5)
+    }
   }
 
   return toDataURL(canvas)

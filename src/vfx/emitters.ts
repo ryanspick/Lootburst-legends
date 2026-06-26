@@ -271,3 +271,71 @@ export function emitUpgradeCardSparkle(cardRect: { x: number; y: number; w: numb
     })
   }
 }
+
+export function emitEnemyDeath(pos: Pos, element: string, isBoss = false) {
+  const color = ELEMENT_COLOURS[element] ?? '#ff8844'
+  const count = isBoss ? 35 : 12
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2 + randPM(0.5)
+    const speed = rand(50, isBoss ? 220 : 150)
+    spawnParticle({
+      x: pos.x, y: pos.y,
+      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - rand(10, 40),
+      gravity: 220,
+      lifetimeMs: rand(250, isBoss ? 800 : 500),
+      startScale: isBoss ? 2.5 : 1.5, endScale: 0,
+      color: i % 4 === 0 ? '#ffffff' : color,
+      shape: i % 3 === 0 ? 'square' : 'pixel',
+      zIndex: 40, blendMode: 'add',
+    })
+  }
+  spawnParticle({
+    x: pos.x, y: pos.y, vx: 0, vy: 0,
+    lifetimeMs: isBoss ? 200 : 100,
+    startScale: isBoss ? 5 : 2.5, endScale: 0,
+    color: '#ffffff', shape: 'circle',
+    zIndex: 41, blendMode: 'add',
+  })
+}
+
+export function emitGearDropGlow(pos: Pos, rarity: Rarity) {
+  const color = RARITY_COLOURS[rarity].primary
+  const glowC = RARITY_COLOURS[rarity].glow
+  const count = rarity === 'legendary' || rarity === 'mythic' ? 28 : rarity === 'epic' ? 18 : 10
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2
+    spawnParticle({
+      x: pos.x + Math.cos(angle) * 12, y: pos.y + Math.sin(angle) * 12,
+      vx: Math.cos(angle) * rand(25, 80), vy: Math.sin(angle) * rand(25, 80) - 40,
+      gravity: 150,
+      lifetimeMs: rand(500, 1100),
+      startScale: 1.5, endScale: 0,
+      color: i % 3 === 0 ? glowC : color,
+      shape: 'star', zIndex: 55, blendMode: 'add',
+    })
+  }
+  for (let i = 0; i < 6; i++) {
+    spawnParticle({
+      x: pos.x + randPM(4), y: pos.y,
+      vx: randPM(12), vy: rand(-100, -50),
+      lifetimeMs: rand(350, 700),
+      startScale: 1, endScale: 0,
+      color, shape: 'square', zIndex: 55, blendMode: 'add',
+    })
+  }
+}
+
+export function emitComboText(pos: Pos, combo: number) {
+  const colors = ['#ffdd00', '#ff8800', '#ff4400', '#ff00ff', '#ffffff']
+  const color = colors[Math.min(combo - 2, colors.length - 1)]
+  for (let i = 0; i < combo * 2; i++) {
+    spawnParticle({
+      x: pos.x + randPM(30), y: pos.y + randPM(20),
+      vx: randPM(60), vy: rand(-100, -40),
+      lifetimeMs: rand(300, 600),
+      startScale: 1, endScale: 0,
+      color, shape: i % 2 === 0 ? 'star' : 'diamond',
+      zIndex: 52, blendMode: 'add',
+    })
+  }
+}

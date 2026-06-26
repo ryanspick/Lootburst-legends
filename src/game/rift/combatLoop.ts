@@ -4,6 +4,17 @@ import { ZONES } from './zoneBackgrounds'
 import { getReducedMotion } from '@/hooks/reducedMotion'
 import { getProjectileSprite } from '@/art/generated/projectileSprites'
 import { CENTER_X, CENTER_Y, ENEMY_SPAWN_RADIUS_X, ENEMY_SPAWN_RADIUS_Y } from './arenaConstants'
+import { emitEnemyDeath, emitGearDropGlow } from '@/vfx/emitters'
+import type { Rarity } from '@/constants/palette'
+
+// Track which entities/loot items have already triggered particle emission
+const _deadEmitted = new Set<string>()
+const _lootEmitted = new Set<number>()
+
+export function clearCombatEmitCache() {
+  _deadEmitted.clear()
+  _lootEmitted.clear()
+}
 
 const HERO_SPRITE_W = 24
 const HERO_SPRITE_H = 24
@@ -43,6 +54,74 @@ function getImg(url: string): HTMLImageElement | null {
   return img
 }
 
+// ─── Arena floor rune circle ─────────────────────────────────────────────────
+
+function drawArenaFloor(ctx: CanvasRenderingContext2D, w: number, h: number, timeMs: number) {
+  const rm = getReducedMotion()
+
+  // Subtle pixel checkerboard floor in the battle zone
+  ctx.save()
+  ctx.globalAlpha = 0.045
+  const gridSz = 18
+  const floorTop = CENTER_Y - 110
+  const floorBot = CENTER_Y + 150
+  ctx.fillStyle = '#7766cc'
+  for (let gy = floorTop; gy < floorBot; gy += gridSz) {
+    for (let gx = 0; gx < w; gx += gridSz) {
+      if (((Math.floor(gx / gridSz) + Math.floor(gy / gridSz)) & 1) === 0) {
+        ctx.fillRect(gx, gy, gridSz, gridSz)
+      }
+    }
+  }
+  ctx.restore()
+
+  // Glowing arena disc
+  if (!rm) {
+    const pulse = 0.11 + Math.abs(Math.sin(timeMs / 2400)) * 0.055
+    ctx.save()
+    ctx.globalAlpha = pulse
+    const disc = ctx.createRadialGradient(CENTER_X, CENTER_Y, 8, CENTER_X, CENTER_Y, 100)
+    disc.addColorStop(0, '#8877ff')
+    disc.addColorStop(0.55, '#5544cc55')
+    disc.addColorStop(1, '#5544cc00')
+    ctx.fillStyle = disc
+    ctx.beginPath()
+    ctx.ellipse(CENTER_X, CENTER_Y, 100, 78, 0, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+
+  // Inner rune ring (static)
+  ctx.save()
+  ctx.globalAlpha = rm ? 0.14 : 0.18 + Math.sin(timeMs / 3200) * 0.04
+  ctx.strokeStyle = '#8877ee'
+  ctx.lineWidth = 1
+  ctx.beginPath(); ctx.arc(CENTER_X, CENTER_Y, 38, 0, Math.PI * 2); ctx.stroke()
+  ctx.globalAlpha = rm ? 0.08 : 0.10 + Math.sin(timeMs / 2800) * 0.03
+  ctx.lineWidth = 0.5
+  ctx.beginPath(); ctx.arc(CENTER_X, CENTER_Y, 68, 0, Math.PI * 2); ctx.stroke()
+  ctx.restore()
+
+  // Rotating tick marks on inner ring
+  if (!rm) {
+    const rot = (timeMs / 9000) % (Math.PI * 2)
+    ctx.save()
+    ctx.globalAlpha = 0.22
+    ctx.strokeStyle = '#bbaaff'
+    ctx.lineWidth = 1.5
+    ctx.translate(CENTER_X, CENTER_Y)
+    ctx.rotate(rot)
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2
+      ctx.beginPath()
+      ctx.moveTo(Math.cos(a) * 33, Math.sin(a) * 33)
+      ctx.lineTo(Math.cos(a) * 43, Math.sin(a) * 43)
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+}
+
 // ─── HP bar ───────────────────────────────────────────────────────────────────
 
 function drawHpBar(
@@ -54,11 +133,17 @@ function drawHpBar(
   h: number,
 ) {
   const pct = Math.max(0, entity.hp / entity.maxHp)
-  ctx.fillStyle = '#1a1a2e'
+  ctx.fillStyle = '#111122'
   ctx.fillRect(x, y, w, h)
   const col = pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#f59e0b' : '#ef4444'
   ctx.fillStyle = col
-  ctx.fillRect(x, y, Math.round(w * pct), h)
+  const fillW = Math.round(w * pct)
+  ctx.fillRect(x, y, fillW, h)
+  // Pixel shine stripe
+  if (fillW > 2) {
+    ctx.fillStyle = '#ffffff44'
+    ctx.fillRect(x, y, fillW, 1)
+  }
   ctx.strokeStyle = '#000000'
   ctx.lineWidth = 1
   ctx.strokeRect(x, y, w, h)
@@ -90,6 +175,11 @@ function drawEntity(
 
   if (!entity.alive) {
     if (entity.deathAnimMs > 0) {
+      // Emit death burst on first frame of death
+      if (!_deadEmitted.has(entity.id)) {
+        _deadEmitted.add(entity.id)
+        emitEnemyDeath({ x: cx, y: cy }, entity.element, entity.role === 'boss')
+      }
       const maxAnim = entity.role === 'boss' ? 900 : 450
       const t = 1 - entity.deathAnimMs / maxAnim
       ctx.save()
@@ -117,10 +207,16 @@ function drawEntity(
     ctx.scale(pumpScale, pumpScale)
 
     if (entity.flashMs > 0) {
-      ctx.filter = 'brightness(3) saturate(0)'
+      ctx.filter = 'brightness(4) saturate(0)'
     }
 
-    if (entity.rarity !== 'common') {
+    // Low-HP danger glow for heroes
+    const hpPct = entity.hp / entity.maxHp
+    if (entity.role === 'hero' && hpPct < 0.35 && !getReducedMotion()) {
+      const danger = 0.4 + Math.abs(Math.sin(timeMs / 350)) * 0.6
+      ctx.shadowColor = '#ff2244'
+      ctx.shadowBlur = 14 * danger
+    } else if (entity.rarity !== 'common') {
       const rc = RARITY_COLOURS[entity.rarity]
       ctx.shadowColor = rc.glow
       ctx.shadowBlur = entity.rarity === 'mythic' ? 24
@@ -393,37 +489,83 @@ function drawBackground(ctx: CanvasRenderingContext2D, w: number, h: number, tim
 
 // ─── Loot drops ───────────────────────────────────────────────────────────────
 
-function drawLootDrops(ctx: CanvasRenderingContext2D, state: RiftRunState) {
+function drawLootDrops(ctx: CanvasRenderingContext2D, state: RiftRunState, timeMs: number) {
   for (const loot of state.lootDrops) {
     if (loot.collected) continue
-    const fadeAlpha = Math.min(1, loot.lifeMs / 500)
+
+    // Emit particles on first appearance
+    if (!_lootEmitted.has(loot.id)) {
+      _lootEmitted.add(loot.id)
+      if (loot.type === 'item') {
+        emitGearDropGlow({ x: loot.x, y: loot.y }, loot.rarity as Rarity)
+      }
+    }
+
+    const fadeAlpha = Math.min(1, loot.lifeMs / 400)
+    const bobY = Math.sin(timeMs / 480 + loot.x * 0.08) * 3.5
+    const spin = (timeMs / 650) % (Math.PI * 2)
+
     ctx.save()
     ctx.globalAlpha = fadeAlpha
-    ctx.shadowBlur = 6
+    ctx.translate(loot.x, loot.y + bobY)
 
     if (loot.type === 'gem') {
+      // Outer glow ring
+      ctx.save()
+      ctx.globalAlpha = fadeAlpha * 0.35
+      ctx.strokeStyle = '#cc44ff'
+      ctx.lineWidth = 1.5
+      ctx.shadowColor = '#cc44ff'
+      ctx.shadowBlur = 10
+      ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI * 2); ctx.stroke()
+      ctx.shadowBlur = 0
+      ctx.restore()
+      // Spinning gem body
+      ctx.rotate(spin)
       ctx.fillStyle = '#aa44ff'
-      ctx.shadowColor = '#ff88ff'
+      ctx.shadowColor = '#cc44ff'
+      ctx.shadowBlur = 7
       ctx.beginPath()
-      ctx.moveTo(loot.x, loot.y - 7)
-      ctx.lineTo(loot.x + 5, loot.y)
-      ctx.lineTo(loot.x, loot.y + 7)
-      ctx.lineTo(loot.x - 5, loot.y)
-      ctx.closePath()
-      ctx.fill()
-      ctx.strokeStyle = '#ff88ff'
-      ctx.lineWidth = 1
-      ctx.stroke()
+      ctx.moveTo(0, -8); ctx.lineTo(6, 0); ctx.lineTo(0, 8); ctx.lineTo(-6, 0)
+      ctx.closePath(); ctx.fill()
+      ctx.shadowBlur = 0
+      ctx.strokeStyle = '#ff88ff'; ctx.lineWidth = 1; ctx.stroke()
+      // Shine facet
+      ctx.globalAlpha = fadeAlpha * 0.7
+      ctx.fillStyle = '#ffffff99'
+      ctx.beginPath()
+      ctx.moveTo(-1, -6); ctx.lineTo(2, -2); ctx.lineTo(-2, -1)
+      ctx.closePath(); ctx.fill()
+    } else if (loot.type === 'item') {
+      // Gear drop — star shape with rarity glow
+      const rc = RARITY_COLOURS[loot.rarity as Rarity]
+      ctx.shadowColor = rc.glow; ctx.shadowBlur = 12
+      ctx.fillStyle = rc.primary
+      ctx.rotate(spin * 0.3)
+      const sr = 8, ir = 4, pts = 4
+      ctx.beginPath()
+      for (let i = 0; i < pts * 2; i++) {
+        const a = (i * Math.PI) / pts - Math.PI / 2
+        const ra = i % 2 === 0 ? sr : ir
+        i === 0 ? ctx.moveTo(Math.cos(a) * ra, Math.sin(a) * ra)
+                : ctx.lineTo(Math.cos(a) * ra, Math.sin(a) * ra)
+      }
+      ctx.closePath(); ctx.fill()
+      ctx.shadowBlur = 0
+      ctx.strokeStyle = rc.glow; ctx.lineWidth = 1; ctx.stroke()
     } else {
-      ctx.fillStyle = '#ffd700'
-      ctx.shadowColor = '#ffaa00'
-      ctx.beginPath()
-      ctx.arc(loot.x, loot.y, 5, 0, Math.PI * 2)
-      ctx.fill()
-      ctx.strokeStyle = '#ffaa00'
-      ctx.lineWidth = 1
-      ctx.stroke()
+      // Gold coin with detail
+      ctx.fillStyle = '#ffd700'; ctx.shadowColor = '#ffaa00'; ctx.shadowBlur = 9
+      ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill()
+      ctx.shadowBlur = 0
+      ctx.strokeStyle = '#aa7700'; ctx.lineWidth = 1; ctx.stroke()
+      ctx.strokeStyle = '#cc990088'; ctx.lineWidth = 0.5
+      ctx.beginPath(); ctx.arc(0, 0, 3.5, 0, Math.PI * 2); ctx.stroke()
+      ctx.globalAlpha = fadeAlpha * 0.5
+      ctx.fillStyle = '#ffffffaa'
+      ctx.beginPath(); ctx.arc(-1.5, -2, 2, 0, Math.PI * 2); ctx.fill()
     }
+
     ctx.restore()
     ctx.shadowBlur = 0
   }
@@ -433,15 +575,37 @@ function drawLootDrops(ctx: CanvasRenderingContext2D, state: RiftRunState) {
 
 function drawProgressBar(ctx: CanvasRenderingContext2D, elapsedMs: number, totalMs: number, w: number) {
   const pct = Math.min(1, elapsedMs / totalMs)
-  const barH = 4
-  ctx.fillStyle = '#1a1a2e'
+  const barH = 5
+  // Track background
+  ctx.fillStyle = '#0d0d1e'
   ctx.fillRect(0, 0, w, barH)
-  const barGrad = ctx.createLinearGradient(0, 0, w, 0)
-  barGrad.addColorStop(0, '#4444ff')
-  barGrad.addColorStop(0.5, '#ff44ff')
-  barGrad.addColorStop(1, '#ffaa00')
-  ctx.fillStyle = barGrad
-  ctx.fillRect(0, 0, Math.round(w * pct), barH)
+  // Pixel segment markers (every 10%)
+  ctx.fillStyle = '#1a1a3a'
+  for (let i = 1; i < 10; i++) {
+    ctx.fillRect(Math.round(w * i / 10) - 1, 0, 2, barH)
+  }
+  // Fill gradient
+  const fillW = Math.round(w * pct)
+  if (fillW > 0) {
+    const barGrad = ctx.createLinearGradient(0, 0, w, 0)
+    barGrad.addColorStop(0, '#4455ff')
+    barGrad.addColorStop(0.4, '#cc44ff')
+    barGrad.addColorStop(0.7, '#ff44aa')
+    barGrad.addColorStop(1, '#ffaa00')
+    ctx.fillStyle = barGrad
+    ctx.fillRect(0, 0, fillW, barH)
+    // Shine stripe
+    ctx.fillStyle = '#ffffff33'
+    ctx.fillRect(0, 0, fillW, 2)
+    // Leading edge glow
+    ctx.save()
+    ctx.shadowColor = '#ff44ff'
+    ctx.shadowBlur = 8
+    ctx.fillStyle = '#ffffff'
+    ctx.fillRect(fillW - 2, 0, 2, barH)
+    ctx.restore()
+    ctx.shadowBlur = 0
+  }
 }
 
 // ─── Main render ──────────────────────────────────────────────────────────────
@@ -457,10 +621,11 @@ export function renderRiftFrame(
   _activeZoneIdx = zoneIdx
   ctx.clearRect(0, 0, canvasW, canvasH)
   drawBackground(ctx, canvasW, canvasH, timeMs)
+  drawArenaFloor(ctx, canvasW, canvasH, timeMs)
 
   // Screen flash from skill/ultimate impact
   if (state.impactFlashMs > 0) {
-    const flashAlpha = (state.impactFlashMs / 130) * 0.28
+    const flashAlpha = (state.impactFlashMs / 130) * 0.30
     ctx.fillStyle = state.impactFlashColor
     ctx.globalAlpha = flashAlpha
     ctx.fillRect(0, 0, canvasW, canvasH)
@@ -495,7 +660,7 @@ export function renderRiftFrame(
   }
 
   // Loot
-  drawLootDrops(ctx, state)
+  drawLootDrops(ctx, state, timeMs)
 
   // Ability announce text (above projectiles)
   for (const ann of state.abilityAnnounces) {

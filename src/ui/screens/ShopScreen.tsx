@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import styles from './ShopScreen.module.css'
 
-interface ShopProps { onClose: () => void }
+interface ShopProps { onClose?: () => void }
 
 const GEM_PACKS: { id: string; gems: number; price: string; label: string; tag: string; bonus?: string }[] = [
   { id: 'gems_80',   gems: 80,   price: '$0.99',  label: '80 Gems',    tag: '' },
@@ -109,7 +109,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
       <div className={styles.header}>
         <span className={styles.headerTitle}>💎 GEM SHOP</span>
         <div className={styles.headerGems}>💎 {gems.toLocaleString()}</div>
-        <button className={styles.closeBtn} onClick={onClose}>✕</button>
+        {onClose && <button className={styles.closeBtn} onClick={onClose}>✕</button>}
       </div>
 
       <div className={styles.scroll}>

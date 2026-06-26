@@ -11,7 +11,7 @@ import {
   reviveHeroes,
   type SpawnPattern,
 } from '@/game/rift/riftRunState'
-import { renderRiftFrame } from '@/game/rift/combatLoop'
+import { renderRiftFrame, clearCombatEmitCache } from '@/game/rift/combatLoop'
 import { RIFT_DURATION_MS } from '@/game/rift/waveDirector'
 import { getRiftTier } from '@/game/rift/riftTiers'
 import { computeHeroGearBonuses, computeRunGearBonuses } from '@/game/gear/gearStats'
@@ -116,6 +116,7 @@ export default function RiftRunScreen({ onExit }: Props) {
     })
     stateRef.current = state
     timelineRef.current = timeline
+    clearCombatEmitCache()
 
     // Countdown 3→2→1→GO
     let count = 3

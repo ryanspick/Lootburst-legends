@@ -16,16 +16,15 @@ export default function App() {
   const [tab, setTab] = useState<TabId>('run')
   const [showGallery, setShowGallery] = useState(false)
   const [inRift, setInRift] = useState(false)
-  const [inShop, setInShop] = useState(false)
 
   function renderMain() {
     if (showGallery) return <VisualGallery onClose={() => setShowGallery(false)} />
     if (inRift) return <RiftRunScreen onExit={() => setInRift(false)} />
-    if (inShop) return <ShopScreen onClose={() => setInShop(false)} />
     switch (tab) {
-      case 'run':      return <HubScreen onEnterRift={() => setInRift(true)} onOpenShop={() => setInShop(true)} />
+      case 'run':      return <HubScreen onEnterRift={() => setInRift(true)} onOpenShop={() => setTab('shop')} />
       case 'squad':    return <SquadScreen />
       case 'capsule':  return <CapsuleScreen />
+      case 'shop':     return <ShopScreen onClose={() => setTab('run')} />
       case 'gear':     return <GearScreen />
       case 'progress': return <ProgressScreen />
     }
@@ -35,7 +34,7 @@ export default function App() {
     <AppShell>
       <ParticleCanvas />
       {renderMain()}
-      {!inRift && !inShop && !showGallery && (
+      {!inRift && !showGallery && (
         <BottomNav active={tab} onChange={setTab} onGallery={() => setShowGallery(v => !v)} />
       )}
     </AppShell>
