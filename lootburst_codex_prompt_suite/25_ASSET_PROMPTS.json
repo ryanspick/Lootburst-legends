@@ -1,0 +1,55 @@
+{
+  "universalNegativePrompt": "no text, no logo, no watermark, no copyrighted character, no modern UI, no realistic rendering, no blurry anti-aliased painting, no messy background, no extra limbs, no inconsistent frame sizes, no unreadable tiny details",
+  "heroes": [
+    {
+      "id": "hero_copper_knight",
+      "rarity": "common",
+      "prompt": "64x64 transparent chibi pixel sprite sheet, copper tank knight, round shield, tiny sword, thick outline, copper sparks, 4-frame idle bob."
+    },
+    {
+      "id": "hero_mushroom_medic",
+      "rarity": "common",
+      "prompt": "64x64 transparent chibi pixel sprite sheet, mushroom healer, spore pouch, green healing particles, cap bob, friendly face."
+    },
+    {
+      "id": "hero_neon_blade_dancer",
+      "rarity": "epic",
+      "prompt": "64x64 transparent chibi pixel sprite sheet, neon assassin, purple pink twin blades, dash afterimages, 6-frame slash."
+    },
+    {
+      "id": "hero_prismatic_reaper_cat",
+      "rarity": "mythic",
+      "prompt": "80x80 transparent pixel sprite sheet, black cat with rainbow scythe, cosmic particles, mythic aura, 6-frame ultimate pose."
+    }
+  ],
+  "bosses": [
+    {
+      "id": "boss_king_slime_pop",
+      "prompt": "128x128 transparent pixel boss, huge green cyan slime monarch, gold crown, jelly bounce, glowing core."
+    },
+    {
+      "id": "boss_void_arcade_dragon",
+      "prompt": "192x192 transparent pixel boss, dark arcade dragon, cyan magenta CRT glow, glitch wings, bullet pattern silhouette."
+    }
+  ],
+  "gear": [
+    {
+      "id": "gear_squeaky_doom_hammer",
+      "prompt": "48x48 transparent icon, rare toy hammer, red rubber head, skull mark, gold sparkle, thick outline."
+    },
+    {
+      "id": "gear_cursed_party_hat",
+      "prompt": "48x48 transparent icon, epic party hat, purple shadow aura, cute but cursed, confetti, thick outline."
+    }
+  ],
+  "vfx": [
+    {
+      "id": "vfx_legendary_gold_beam",
+      "prompt": "transparent 8-frame pixel VFX, vertical gold reward beam, coin rain, white gold core, orange sparks."
+    },
+    {
+      "id": "vfx_mythic_rainbow_burst",
+      "prompt": "transparent 12-frame pixel VFX, rainbow beam, white flash core, pixel fireworks, constellation specks, no strobe."
+    }
+  ]
+}

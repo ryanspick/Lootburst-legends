@@ -1,0 +1,15 @@
+.panel {
+  background: var(--panel-bg);
+  border: 2px solid var(--panel-border);
+  border-radius: 4px;
+  padding: var(--panel-pad);
+  position: relative;
+  overflow: hidden;
+}
+
+.glow {
+  border-color: var(--rarity-color, var(--panel-border));
+  box-shadow: 0 0 8px 1px var(--rarity-color, transparent),
+              inset 0 0 12px rgba(0,0,0,0.4);
+  animation: rarity-glow-pulse 2s ease-in-out infinite;
+}

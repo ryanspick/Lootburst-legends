@@ -1,0 +1,152 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.panel {
+  background: linear-gradient(160deg, #0a0d1a 0%, #111430 100%);
+  border: 2px solid #334;
+  border-radius: 12px;
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  animation: panelIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes panelIn {
+  from { transform: scale(0.85) translateY(20px); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.moonIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.1em;
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--text-muted, #7a8);
+  margin-top: 2px;
+}
+
+.chestWrap {
+  margin: 12px auto;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chestImg {
+  width: 64px;
+  height: 64px;
+  image-rendering: pixelated;
+}
+
+.chestEmoji {
+  font-size: 48px;
+}
+
+.rewards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.rewardRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+  padding: 8px 12px;
+}
+
+.rewardIcon { font-size: 18px; }
+.rewardLabel { flex: 1; text-align: left; font-size: 13px; color: var(--text-muted, #889); }
+.rewardValue { font-size: 15px; font-weight: 700; }
+
+.lootSection {
+  border-top: 1px solid #334;
+  padding-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lootTitle {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted, #889);
+  margin-bottom: 4px;
+}
+
+.lootItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 5px;
+  border: 1px solid #334;
+  background: rgba(255,255,255,0.03);
+}
+
+.lootRarity {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  min-width: 60px;
+}
+
+.lootName {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.claimBtn {
+  margin-top: 8px;
+  width: 100%;
+}
+
+.loadingDots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 16px 0;
+  font-size: 24px;
+  color: #ffd700;
+  animation: blink 1.2s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 0.3; }
+  50%       { opacity: 1; }
+}

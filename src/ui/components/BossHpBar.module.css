@@ -1,0 +1,127 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(5, 7, 20, 0.85);
+  border: 1px solid #331144;
+  border-radius: 6px;
+  padding: 6px 8px;
+  width: 100%;
+  animation: slam-in 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.portrait {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.name {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.element {
+  font-size: 8px;
+  font-weight: bold;
+  border: 1px solid;
+  border-radius: 3px;
+  padding: 1px 4px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
+.phases {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.phaseDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-border);
+  background: transparent;
+}
+
+.phaseDone {
+  background: #ef4444;
+  border-color: #ef4444;
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  background: #1a0011;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #440033;
+}
+
+.fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 5px 0 0 5px;
+  transition: width 0.15s ease;
+}
+
+.critical {
+  animation: pulse-scale 0.3s ease-in-out infinite;
+}
+
+.segment {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 2;
+}
+
+/* Crack marks */
+.crack {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.4);
+  transform: skewX(-15deg);
+  z-index: 3;
+}
+
+.crack1 { left: 30%; }
+.crack2 { left: 55%; }
+.crack3 { left: 75%; }
+
+.hpNumbers {
+  display: flex;
+  gap: 3px;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}

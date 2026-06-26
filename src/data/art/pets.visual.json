@@ -1,0 +1,12 @@
+{
+  "pets": [
+    { "id": "pet_coin_bat", "displayName": "Coin Bat", "rarity": "common", "animationProfile": "bat_pet", "combatEffect": "coin_divebomb", "menuEffect": "fly_circle" },
+    { "id": "pet_bubble_frog", "displayName": "Bubble Frog", "rarity": "uncommon", "animationProfile": "frog_pet", "combatEffect": "shield_bubble", "menuEffect": "hop" },
+    { "id": "pet_loot_ferret", "displayName": "Loot Ferret", "rarity": "uncommon", "animationProfile": "ferret_pet", "combatEffect": "loot_magnet", "menuEffect": "scurry" },
+    { "id": "pet_bomb_chick", "displayName": "Bomb Chick", "rarity": "rare", "animationProfile": "chick_pet", "combatEffect": "egg_bomb", "menuEffect": "peck" },
+    { "id": "pet_tiny_wyvern", "displayName": "Tiny Wyvern", "rarity": "epic", "animationProfile": "wyvern_pet", "combatEffect": "fire_breath", "menuEffect": "fly_swoop" },
+    { "id": "pet_ghost_cat", "displayName": "Ghost Cat", "rarity": "epic", "animationProfile": "ghost_pet", "combatEffect": "phase_strike", "menuEffect": "float_phase" },
+    { "id": "pet_solar_bee", "displayName": "Solar Bee", "rarity": "legendary", "animationProfile": "bee_pet", "combatEffect": "golden_sting", "menuEffect": "orbit_hero" },
+    { "id": "pet_mimic_puppy", "displayName": "Mimic Puppy", "rarity": "legendary", "animationProfile": "mimic_dog_pet", "combatEffect": "copy_attack", "menuEffect": "chest_open_bark" }
+  ]
+}

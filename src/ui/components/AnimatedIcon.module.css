@@ -1,0 +1,19 @@
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.emoji {
+  line-height: 1;
+  display: block;
+  user-select: none;
+}

@@ -1,0 +1,161 @@
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 20, 0.92);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 85;
+  padding: 16px;
+  gap: 16px;
+}
+
+/* Chest */
+.chest {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chestImg {
+  width: 96px;
+  height: 96px;
+  image-rendering: pixelated;
+}
+
+.chestLand {
+  animation: chest-land 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.chestShake {
+  animation: chest-shake 0.08s ease-in-out 6 both;
+  filter: drop-shadow(0 0 12px var(--chest-glow)) drop-shadow(0 0 24px var(--chest-glow));
+}
+
+.chestBurst {
+  animation: chest-burst 0.5s ease-out both;
+}
+
+.beamLeaks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.beamLeak {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 3px;
+  height: 40px;
+  transform-origin: 0 0;
+  opacity: 0.7;
+  border-radius: 2px;
+  animation: beam-leak 0.6s ease-in-out infinite alternate;
+}
+
+/* Items */
+.itemsWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.itemsTitle {
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.itemGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  max-width: 320px;
+}
+
+.itemCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: var(--panel-bg);
+  border: 1px solid;
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-width: 64px;
+  animation: bounce-in 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+.itemEmoji { font-size: 20px; }
+.itemName { font-size: 9px; color: var(--text-primary); text-align: center; line-height: 1.2; }
+.itemRarity { font-size: 8px; font-weight: bold; letter-spacing: 0.5px; }
+
+/* Currency */
+.currencyRow {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+}
+
+.currencyItem {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.currencyIcon { font-size: 18px; }
+.currencyVal { font-size: 16px; font-weight: bold; }
+
+/* Claim */
+.claimBtn {
+  margin-top: 4px;
+  padding: 12px 32px;
+  background: linear-gradient(135deg, #1a4dff, #7722ff);
+  border: 2px solid;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  font-family: inherit;
+  letter-spacing: 1px;
+  cursor: pointer;
+  animation: pulse-scale 1.2s ease-in-out infinite;
+}
+
+.claimBtn:active { transform: scale(0.96); animation: none; }
+
+/* Animations */
+@keyframes chest-land {
+  0%   { transform: translateY(-80px) scale(1.2); opacity: 0; }
+  70%  { transform: translateY(6px) scale(0.95); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+@keyframes chest-shake {
+  0%, 100% { transform: translateX(0); }
+  25%       { transform: translateX(-5px) rotate(-3deg); }
+  75%       { transform: translateX(5px) rotate(3deg); }
+}
+
+@keyframes chest-burst {
+  0%   { transform: scale(1); opacity: 1; }
+  50%  { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(0.1); opacity: 0; }
+}
+
+@keyframes beam-leak {
+  from { opacity: 0.3; height: 20px; }
+  to   { opacity: 0.9; height: 50px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chestLand, .chestShake, .chestBurst { animation: none; }
+  .beamLeak, .claimBtn { animation: none; }
+  .itemCard { animation: none; }
+}

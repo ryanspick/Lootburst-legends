@@ -1,0 +1,145 @@
+// 12×12 templates for enemies (48×48 canvas)
+export type EnemyTemplateKey = 'slime'|'bat'|'goblin'|'mushroom'|'skull'|'gear'|'ghost'|'crystal'|'mimic'
+
+export const ENEMY_TEMPLATES: Record<EnemyTemplateKey, string[]> = {
+  slime: [
+    '............',
+    '....KKKKKK..',
+    '...KBBBBBBK.',
+    '...KBAABBBBK',
+    '...KBBBXBBXK',
+    '...KBBBBBBK.',
+    '...KBBBBBBK.',
+    '...KBBBBBBK.',
+    '....KKBBKK..',
+    '.....KBBK...',
+    '......KK....',
+    '.....SSSSSS.',
+  ],
+  bat: [
+    'KPPPPKKPPPPK',
+    'KPPPAKKPPPAK',
+    'KKKKBBBBKKKK',
+    '...KBBBBK...',
+    '...KBXBXK...',
+    '...KBBBBK...',
+    '....KBBK....',
+    '....KBBK....',
+    '.....KK.....',
+    '............',
+    '............',
+    '....SSSS....',
+  ],
+  goblin: [
+    '............',
+    '..K......K..',
+    '..KKKKKKKK..',
+    '..KHHHHHHHK.',
+    '..KHHXHXHHK.',
+    '..KAHHHHHAK.',
+    '..KKKKKKKK..',
+    '...KBBBBK...',
+    '...KBBBBK...',
+    '...KDDDDDK..',
+    '...KLLKLLK..',
+    '...KFFKFFK..',
+  ],
+  mushroom: [
+    '............',
+    '....KKKK....',
+    '...KBBBBK...',
+    '..KBBBBBBK..',
+    '.KBBBBBBBBK.',
+    '.KBBXBBXBBK.',
+    '.KBBBBBBBKK.',
+    '....KHHK....',
+    '....KHHK....',
+    '....KHHK....',
+    '....KFFK....',
+    '....SSSS....',
+  ],
+  skull: [
+    '............',
+    '....KKKK....',
+    '...KBBBBK...',
+    '..KBBBBBBK..',
+    '..KBPXBXPK..',
+    '..KBBBBBBK..',
+    '...KBBBBK...',
+    '...KPKPKK...',
+    '....KBBK....',
+    '...KDDDDK...',
+    '....KKKK....',
+    '....SSSS....',
+  ],
+  gear: [
+    '....KPPPK...',
+    '...KBPPPBK..',
+    '.KPKBBBBKPK.',
+    '.KPKBBBBKPK.',
+    'KPPKBBBBKPPK',
+    '.KPKBXBBKPK.',
+    '.KPKBBBBKPK.',
+    '.KPKBBBBKPK.',
+    '...KBPPPBK..',
+    '....KPPPK...',
+    '............',
+    '....SSSSSS..',
+  ],
+  ghost: [
+    '............',
+    '....KKKK....',
+    '...KAAAAK...',
+    '..KAAAAAK...',
+    '..KAAXAAXK..',
+    '..KAAAAAAK..',
+    '..KAAAAAAK..',
+    '..KAAAAAAK..',
+    '..KAAAAAAK..',
+    '..KAKKAKKK..',
+    '...KAKKAK...',
+    '............',
+  ],
+  crystal: [
+    '.....KK.....',
+    '....KBBK....',
+    '...KBBBBBK..',
+    '..KBBBBBBBBK',
+    '..KBAABBBBBK',
+    '..KBBBBBBBAK',
+    '..KBBXBBBBAK',
+    '..KBBBBBBBK.',
+    '...KBBBBBK..',
+    '....KBBBK...',
+    '.....KBK....',
+    '....SSSSSS..',
+  ],
+  mimic: [
+    '............',
+    '...KKKKKK...',
+    '..KBBBBBBK..',
+    '..KBAABBBK..',
+    '..KBBBBBBK..',
+    '..KKKKKKKKK.',
+    '..KPXPXPXPK.',
+    '..KBBBBBBK..',
+    '..KBBBBBBK..',
+    '...KKKKKKK..',
+    '............',
+    '....SSSSSS..',
+  ],
+}
+
+export function tagsToEnemyTemplate(tags: string[]): EnemyTemplateKey {
+  const t = tags.map(s => s.toLowerCase()).join(' ')
+  if (t.includes('slime')) return 'slime'
+  if (t.includes('bat') || t.includes('flying')) return 'bat'
+  if (t.includes('goblin')) return 'goblin'
+  if (t.includes('mushroom')) return 'mushroom'
+  if (t.includes('undead') || t.includes('skull')) return 'skull'
+  if (t.includes('machine') || t.includes('gear')) return 'gear'
+  if (t.includes('ghost')) return 'ghost'
+  if (t.includes('ice') || t.includes('crystal')) return 'crystal'
+  if (t.includes('mimic') || t.includes('gold')) return 'mimic'
+  return 'slime'
+}

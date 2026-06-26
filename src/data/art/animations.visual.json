@@ -1,0 +1,36 @@
+{
+  "clips": {
+    "idle":          { "frames": 4, "fps": 5,  "loop": true,  "priority": 0 },
+    "walk":          { "frames": 6, "fps": 9,  "loop": true,  "priority": 1 },
+    "basic_attack":  { "frames": 4, "fps": 12, "loop": false, "priority": 2 },
+    "skill_cast":    { "frames": 4, "fps": 10, "loop": false, "priority": 3 },
+    "ultimate_pose": { "frames": 6, "fps": 8,  "loop": false, "priority": 4 },
+    "hit":           { "frames": 2, "fps": 12, "loop": false, "priority": 5 },
+    "ko":            { "frames": 4, "fps": 8,  "loop": false, "priority": 6 },
+    "victory":       { "frames": 4, "fps": 5,  "loop": true,  "priority": 1 }
+  },
+  "motionPrimitives": {
+    "bob":             { "amplitudePx": 4,   "speedMs": 2000 },
+    "pulse":           { "min": 0.95, "max": 1.05, "speedMs": 1500 },
+    "wobble":          { "amplitudeDeg": 6,  "speedMs": 300 },
+    "floatUp":         { "distancePx": 40,   "durationMs": 800 },
+    "bounceOut":       { "durationMs": 600 },
+    "squashStretch":   { "intensity": 0.3,   "durationMs": 200 },
+    "orbit":           { "radiusPx": 20,     "speedMs": 3000 },
+    "magnetToTarget":  { "speedMultiplier": 4 },
+    "rarityShimmer":   { "speedMs": 2000,    "intensityPct": 0.4 },
+    "glint":           { "durationMs": 600,  "intervalMs": 4000 },
+    "drift":           { "speedPx": 0.3 }
+  },
+  "entityDefaults": {
+    "hero":   { "defaultClip": "idle", "spriteSize": [48, 48], "shadowOffsetY": 4 },
+    "enemy":  { "defaultClip": "idle", "spriteSize": [32, 32], "shadowOffsetY": 3 },
+    "boss":   { "defaultClip": "idle", "spriteSize": [128, 128], "shadowOffsetY": 12 },
+    "pet":    { "defaultClip": "idle", "spriteSize": [32, 32], "shadowOffsetY": 3 },
+    "mount":  { "defaultClip": "idle", "spriteSize": [64, 64], "shadowOffsetY": 6 }
+  },
+  "hitFlash": {
+    "durationMs": 80,
+    "color": "#ffffff"
+  }
+}

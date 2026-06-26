@@ -1,0 +1,139 @@
+{
+  "caps": {
+    "normal":    350,
+    "boss":      500,
+    "legendary": 600,
+    "mythic":    700,
+    "lowVfx":    120
+  },
+  "emitters": {
+    "hitSpark": {
+      "count": 8,
+      "colors": ["#ffffff", "#ffdd44", "#ff8800"],
+      "speedMin": 60, "speedMax": 180,
+      "sizeMin": 1.5, "sizeMax": 3,
+      "lifeMin": 150, "lifeMax": 350,
+      "gravity": 200
+    },
+    "coinBurst": {
+      "count": 12,
+      "colors": ["#ffd700", "#ffaa00", "#ffe566"],
+      "speedMin": 80, "speedMax": 220,
+      "sizeMin": 2, "sizeMax": 4,
+      "lifeMin": 400, "lifeMax": 900,
+      "gravity": 300
+    },
+    "gemScatter": {
+      "count": 8,
+      "colors": ["#aa44ff", "#ff44aa", "#44aaff"],
+      "speedMin": 60, "speedMax": 160,
+      "sizeMin": 2, "sizeMax": 4,
+      "lifeMin": 500, "lifeMax": 1100,
+      "gravity": 200
+    },
+    "explosion": {
+      "count": 20,
+      "colors": ["#ff6600", "#ffaa00", "#ff3300", "#ffffff"],
+      "speedMin": 80, "speedMax": 240,
+      "sizeMin": 2, "sizeMax": 6,
+      "lifeMin": 200, "lifeMax": 600,
+      "gravity": 120
+    },
+    "poisonBubbles": {
+      "count": 12,
+      "colors": ["#aaff00", "#66ff44", "#44cc00"],
+      "speedMin": 20, "speedMax": 60,
+      "sizeMin": 3, "sizeMax": 7,
+      "lifeMin": 600, "lifeMax": 1400,
+      "gravity": -40
+    },
+    "freezeCrack": {
+      "count": 16,
+      "colors": ["#00ffff", "#aaeeff", "#ffffff"],
+      "speedMin": 40, "speedMax": 120,
+      "sizeMin": 1, "sizeMax": 3,
+      "lifeMin": 300, "lifeMax": 700,
+      "gravity": 50
+    },
+    "shieldBoing": {
+      "count": 10,
+      "colors": ["#00ffff", "#ffffff", "#aaeeff"],
+      "speedMin": 30, "speedMax": 100,
+      "sizeMin": 2, "sizeMax": 5,
+      "lifeMin": 200, "lifeMax": 500,
+      "gravity": 0
+    },
+    "goldBeam": {
+      "count": 30,
+      "colors": ["#ffd700", "#ffe566", "#ffaa00"],
+      "speedMin": 10, "speedMax": 40,
+      "sizeMin": 1, "sizeMax": 2,
+      "lifeMin": 800, "lifeMax": 1800,
+      "gravity": -60
+    },
+    "rainbowMythicBurst": {
+      "count": 80,
+      "colors": ["#ff0000","#ff8800","#ffff00","#00ff00","#00ffff","#ff00ff","#ffffff"],
+      "speedMin": 60, "speedMax": 300,
+      "sizeMin": 2, "sizeMax": 6,
+      "lifeMin": 500, "lifeMax": 1400,
+      "gravity": 100
+    },
+    "chestVolcano": {
+      "count": 40,
+      "colors": ["#ffd700", "#ffaa00", "#ff6600", "#ffffff"],
+      "speedMin": 100, "speedMax": 360,
+      "sizeMin": 2, "sizeMax": 5,
+      "lifeMin": 600, "lifeMax": 1600,
+      "gravity": 280
+    },
+    "capsuleCrack": {
+      "count": 16,
+      "colors": ["#ffffff", "#aaaaff", "#ffaaff"],
+      "speedMin": 40, "speedMax": 140,
+      "sizeMin": 1, "sizeMax": 4,
+      "lifeMin": 300, "lifeMax": 800,
+      "gravity": 80
+    },
+    "upgradeCardSparkle": {
+      "count": 20,
+      "colors": ["#ffd700", "#ffffff", "#aa44ff"],
+      "speedMin": 20, "speedMax": 80,
+      "sizeMin": 1, "sizeMax": 3,
+      "lifeMin": 400, "lifeMax": 1000,
+      "gravity": -20
+    },
+    "slashArc": {
+      "count": 6,
+      "colors": ["#ffffff", "#aaffff"],
+      "speedMin": 120, "speedMax": 280,
+      "sizeMin": 2, "sizeMax": 4,
+      "lifeMin": 100, "lifeMax": 250,
+      "gravity": 0
+    },
+    "projectileTrail": {
+      "count": 4,
+      "colors": ["#ffffff", "#44aaff"],
+      "speedMin": 0, "speedMax": 20,
+      "sizeMin": 1, "sizeMax": 2,
+      "lifeMin": 80, "lifeMax": 200,
+      "gravity": 0
+    },
+    "critPop": {
+      "count": 12,
+      "colors": ["#ffffff", "#ffff00"],
+      "speedMin": 50, "speedMax": 150,
+      "sizeMin": 1, "sizeMax": 3,
+      "lifeMin": 150, "lifeMax": 400,
+      "gravity": 60
+    }
+  },
+  "rarityBeams": {
+    "common":    { "color": "#ffffff",               "width": 4,  "durationMs": 400 },
+    "uncommon":  { "color": "#44ff44",               "width": 6,  "durationMs": 500 },
+    "rare":      { "color": "#4488ff",               "width": 8,  "durationMs": 800,  "vertical": true },
+    "epic":      { "color": "#aa44ff",               "width": 10, "durationMs": 1000, "spiral": true },
+    "legendary": { "color": "#ffd700",               "width": 14, "durationMs": 2000, "slowMo": 0.4 },
+    "mythic":    { "color": "rainbow",               "width": 18, "durationMs": 3000, "screenDarken": true }
+  }
+}

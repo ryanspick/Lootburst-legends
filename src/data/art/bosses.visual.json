@@ -1,0 +1,121 @@
+{
+  "bosses": [
+    {
+      "id": "boss_king_slime_pop",
+      "displayName": "King Slime Pop",
+      "element": "poison",
+      "spriteSize": 128,
+      "phases": 2,
+      "deathStyle": "inflates_then_pops",
+      "animationProfile": "slime_boss",
+      "vfxProfile": "slime_death",
+      "entranceStyle": "drop_from_ceiling",
+      "tags": ["slime", "jelly", "multi-phase", "starter-boss"],
+      "spritePrompt": "128x128 transparent pixel boss, huge green cyan slime monarch, gold crown, jelly bounce, glowing core."
+    },
+    {
+      "id": "boss_goblin_minecart_ace",
+      "displayName": "Goblin Minecart Ace",
+      "element": "machine",
+      "spriteSize": 128,
+      "phases": 2,
+      "deathStyle": "minecart_flips_sparks",
+      "animationProfile": "vehicle_boss",
+      "vfxProfile": "machine_death",
+      "entranceStyle": "charge_from_side",
+      "tags": ["goblin", "machine", "vehicle", "gold"],
+      "spritePrompt": "128x128 transparent pixel boss, goblin riding flaming minecart, goggles, copper sparks, rail track aura."
+    },
+    {
+      "id": "boss_mushroom_matriarch",
+      "displayName": "Mushroom Matriarch",
+      "element": "poison",
+      "spriteSize": 128,
+      "phases": 3,
+      "deathStyle": "cap_cracks_spores",
+      "animationProfile": "spore_boss",
+      "vfxProfile": "poison_death",
+      "entranceStyle": "grow_from_ground",
+      "tags": ["mushroom", "nature", "poison", "spores"],
+      "spritePrompt": "128x128 transparent pixel boss, giant matriarch mushroom, cracked cap, spore cloud aura, glowing eyes under cap."
+    },
+    {
+      "id": "boss_neon_bone_hydra",
+      "displayName": "Neon Bone Hydra",
+      "element": "shadow",
+      "spriteSize": 192,
+      "phases": 3,
+      "deathStyle": "heads_shatter_sequence",
+      "animationProfile": "hydra_boss",
+      "vfxProfile": "neon_death",
+      "entranceStyle": "rise_from_void",
+      "tags": ["hydra", "shadow", "neon", "multi-head"],
+      "spritePrompt": "192x192 transparent pixel boss, three-headed neon bone hydra, glowing pink-purple joints, dark void aura."
+    },
+    {
+      "id": "boss_tax_collector_mimic",
+      "displayName": "Tax Collector Mimic",
+      "element": "gold",
+      "spriteSize": 128,
+      "phases": 2,
+      "deathStyle": "safe_opens_gold_sprays",
+      "animationProfile": "mimic_boss",
+      "vfxProfile": "gold_death",
+      "entranceStyle": "disguise_then_reveal",
+      "tags": ["mimic", "gold", "treasure", "deceptive"],
+      "spritePrompt": "128x128 transparent pixel boss, giant mimic safe with suited arms, gold coins stuffed inside, monocle, sinister grin."
+    },
+    {
+      "id": "boss_pumpkin_gearlord",
+      "displayName": "Pumpkin Gearlord",
+      "element": "machine",
+      "spriteSize": 128,
+      "phases": 2,
+      "deathStyle": "gears_fly_outward",
+      "animationProfile": "gear_boss",
+      "vfxProfile": "machine_gear_death",
+      "entranceStyle": "mechanical_unfold",
+      "tags": ["pumpkin", "machine", "gears", "seasonal"],
+      "spritePrompt": "128x128 transparent pixel boss, mechanical pumpkin lord, gear arms, glowing eye lanterns, copper and orange palette."
+    },
+    {
+      "id": "boss_void_arcade_dragon",
+      "displayName": "Void Arcade Dragon",
+      "element": "void",
+      "spriteSize": 192,
+      "phases": 3,
+      "deathStyle": "glitches_rainbow_shards",
+      "animationProfile": "arcade_dragon_boss",
+      "vfxProfile": "glitch_death",
+      "entranceStyle": "glitch_in",
+      "tags": ["dragon", "void", "arcade", "glitch", "elite-boss"],
+      "spritePrompt": "192x192 transparent pixel boss, dark arcade dragon, cyan magenta CRT glow, glitch wings, bullet pattern silhouette."
+    },
+    {
+      "id": "boss_moon_vault",
+      "displayName": "The Moon Vault",
+      "element": "holy",
+      "spriteSize": 192,
+      "phases": 2,
+      "deathStyle": "locks_shatter_door_beams",
+      "animationProfile": "vault_boss",
+      "vfxProfile": "lunar_death",
+      "entranceStyle": "descend_from_sky",
+      "tags": ["vault", "moon", "silver", "locked", "elite-boss"],
+      "spritePrompt": "192x192 transparent pixel boss, colossal moon-silver bank vault, floating keys, beam of light from door crack, lunar glow."
+    },
+    {
+      "id": "boss_star_eater_cherub",
+      "displayName": "Star-Eater Cherub",
+      "element": "void",
+      "spriteSize": 192,
+      "phases": 3,
+      "deathStyle": "implode_cosmic_shockwave",
+      "animationProfile": "cherub_boss",
+      "vfxProfile": "cosmic_death",
+      "entranceStyle": "descend_angelic_reveal",
+      "tags": ["cherub", "cosmic", "void", "final-boss"],
+      "spritePrompt": "192x192 transparent pixel boss, cherub with star-eating void maw, galaxy wings, halo cracked, constellation body."
+    }
+  ]
+}

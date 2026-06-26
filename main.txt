@@ -1,0 +1,419 @@
+```txt
+You are working on a mobile-first pixel idle roguelite squad collector game called Lootburst Legends.
+
+Your first job is NOT to code immediately.
+
+Your first job is to carefully read the entire claude prompt suite in this repo/folder and turn it into a coherent implementation plan, then execute it in continual passes.
+
+The prompt suite files are:
+inside  lootburst_claude_prompt_suite/
+
+00_README.md
+01_MASTER_BUILD_PROMPT.md
+02_ART_DIRECTION_VISUAL_BIBLE.md
+03_PROJECT_STRUCTURE_AND_ASSET_PIPELINE.md
+04_PIXEL_ART_GENERATION_PROMPTS.md
+05_PLACEHOLDER_ART_GENERATOR.md
+06_ANIMATION_RUNTIME.md
+07_VFX_PARTICLE_ENGINE.md
+08_RARITY_SPECTACLE.md
+09_CAPSULE_MACHINE.md
+10_RIFT_RUN_PRESENTATION.md
+11_BOSS_PRESENTATION_AND_DEATH.md
+12_LOOT_BURST_AND_REWARDS.md
+13_UI_COMPONENTS_AND_MOBILE_POLISH.md
+14_MENU_IDLE_MOTION.md
+15_HERO_COLLECTION_AND_SQUAD.md
+16_GEAR_PETS_MOUNTS_COSMETICS.md
+17_ZONE_BACKGROUNDS_AND_PARALLAX.md
+18_SOUND_AND_HAPTICS.md
+19_OFFLINE_REWARDS_AND_HUB.md
+20_SAFE_MONETISATION_GUARDRAILS.md
+21_VISUAL_GALLERY_AND_QA.md
+22_MOBILE_PERFORMANCE_AND_ACCESSIBILITY.md
+23_INITIAL_VISUAL_DATA_ROSTER.md
+24_claude_CHUNK_PROMPTS.md
+25_ASSET_PROMPTS.json
+26_TASK_CHECKLIST.md
+
+CORE GOAL
+
+Build the game around look, feel, art, animation, VFX, rarity spectacle, and sensory reward first.
+
+The priority is not a dry RPG system.
+
+The priority is:
+
+Vampire Survivors + AFK Arena + Pokémon capsule machine + tiny pixel loot explosion simulator.
+
+Everything should feel:
+
+- bright
+- poppy
+- animated
+- juicy
+- collectible
+- tactile
+- mobile-friendly
+- dopamine-heavy
+- readable at small scale
+- pixel-art consistent
+- visually coherent
+- immediately rewarding
+
+The screen should never feel dead.
+
+Every major interaction should have:
+
+- motion
+- pop
+- particles
+- screen feedback
+- sound hook placeholders
+- rarity colour language
+- reward anticipation
+- satisfying completion feedback
+
+READING PHASE
+
+Before making changes, read every prompt file carefully.
+
+Do this in order:
+
+1. Read 00_README.md
+2. Read 01_MASTER_BUILD_PROMPT.md
+3. Read 02_ART_DIRECTION_VISUAL_BIBLE.md
+4. Read 03_PROJECT_STRUCTURE_AND_ASSET_PIPELINE.md
+5. Read all remaining files in numerical order
+6. Read 25_ASSET_PROMPTS.json carefully for concrete asset generation direction
+7. Read 26_TASK_CHECKLIST.md last and use it as your execution checklist
+
+After reading, create or update these internal project files:
+
+docs/claude_CONTEXT_SUMMARY.md
+docs/claude_IMPLEMENTATION_PLAN.md
+docs/claude_PASS_LOG.md
+docs/claude_NEXT_CONTEXT_HANDOFF.md
+
+If the docs folder does not exist, create it.
+
+claude_CONTEXT_SUMMARY.md should contain:
+
+- the game identity
+- the visual pillars
+- the art style
+- the animation style
+- the VFX style
+- the rarity language
+- the mobile UI principles
+- the core gameplay loop
+- the capsule machine loop
+- the rift run loop
+- the loot burst loop
+- the hero/squad/gear/pet/mount collection loop
+- the monetisation guardrails
+- what must never be lost in future context windows
+
+claude_IMPLEMENTATION_PLAN.md should contain:
+
+- a pass-by-pass build plan
+- exact files likely to be touched
+- priority order
+- what should be implemented now
+- what should remain as scaffolding
+- what visual systems should be reusable
+- what data should be schema-driven
+- what should be procedural rather than manually animated
+
+claude_PASS_LOG.md should contain:
+
+- each pass completed
+- files changed
+- systems added
+- known issues
+- remaining tasks
+- visual QA notes
+
+claude_NEXT_CONTEXT_HANDOFF.md is critical.
+
+At the end of every implementation pass, update this file so a claude context window can continue without losing direction.
+
+It must include:
+
+- current state of the project
+- what prompt files have already been applied
+- what systems are complete
+- what systems are partial
+- what files were changed
+- what remains next
+- any design decisions made
+- any bugs or compromises
+- the next exact claude instruction to run
+
+CONTINUAL PASS RULE
+
+Work in continual implementation passes.
+
+Do not attempt everything in one giant edit.
+
+Each pass should be coherent, testable, and focused.
+
+Use this pass order unless the existing project structure forces a better order:
+
+PASS 0 — Context ingestion
+Read all prompt files. Create the four claude docs listed above. Do not build major features yet.
+
+PASS 1 — Project structure and visual foundation
+Set up the asset folders, visual constants, rarity constants, palette constants, animation constants, VFX constants, and reusable presentation helpers.
+
+PASS 2 — Pixel art placeholder generation system
+Implement the placeholder pixel-art generator or asset registration layer. The game should have attractive generated placeholders immediately, even before final AI art is imported.
+
+PASS 3 — Animation runtime
+Implement reusable sprite animation, bobbing, squash/stretch, hit flash, attack anticipation, ultimate pose, victory bounce, idle breathing, menu floating, and card glint systems.
+
+PASS 4 — VFX and particle engine
+Implement reusable pixel VFX: sparkles, coin sprays, beams, slashes, shockwaves, explosions, trails, glows, freeze cracks, poison bubbles, fire bursts, shield bubbles, and rainbow mythic effects.
+
+PASS 5 — Rarity spectacle system
+Implement rarity-specific presentation for common, uncommon, rare, epic, legendary, and mythic rewards. This must include colour language, beams, screen shake, pause/hit-stop, slow motion, card borders, chest reactions, and reward reveal pacing.
+
+PASS 6 — Capsule machine
+Build the capsule pull screen as a physical toy machine. Capsule drops, bounces, cracks, leaks colour, fires rarity beam, reveals silhouette, slams name, converts duplicates to shards, and visibly fills star meter.
+
+PASS 7 — Rift run presentation
+Build or improve the 90-second rift run. Focus on visual chaos, upgrade card choices every 20–30 seconds, wave readability, squad movement, enemy swarms, damage numbers, projectiles, pickups, and loot magnetism.
+
+PASS 8 — Boss presentation
+Implement boss entrance, silhouette readability, attack tells, boss HP bar polish, phase flashes, death pause, cracks, screen shake, loot vacuum delay, chest volcano, and reward sequence.
+
+PASS 9 — Loot burst and reward flow
+Implement loot explosion, reward sorting, rarity beams, chest burst, gear cards, shard meters, XP gain, gold count-up, claim sweep, and post-run upgrade nudges.
+
+PASS 10 — Hero collection and squad screen
+Implement hero cards, rarity borders, idle animation, class/element tags, star-up visuals, gear slots, squad slots, power changes, and tiny personality motion.
+
+PASS 11 — Gear, pets, mounts, cosmetics
+Implement collectible visual hooks: gear cards, toy slot, pet idle movement, mount cards, cosmetic trails, portrait frames, chest-opening animations, duplicate shard behaviour.
+
+PASS 12 — Mobile UI polish
+Make all screens mobile-first. Improve spacing, touch target size, font clarity, contrast, card readability, bottom navigation, sticky primary actions, modal pacing, and one-thumb usability.
+
+PASS 13 — Menu idle motion
+Add motion to every non-combat screen: bobbing heroes, floating islands, rotating coins, breathing chests, glinting cards, drifting particles, pulsing buttons, parallax backgrounds.
+
+PASS 14 — Sound and haptic placeholders
+Add a clean sound-event abstraction and haptic-event abstraction even if real audio files are not present yet. Every major interaction should call a semantic event like reward.legendary, capsule.drop, boss.death, button.pop, loot.coinPing.
+
+PASS 15 — Offline rewards and hub
+Make offline rewards visually exciting. They should appear as a contained loot burst, not as a boring text modal.
+
+PASS 16 — Safe monetisation scaffolding
+Only add ethical scaffolding: visible odds, pity display, duplicate protection, optional rewarded ad placeholders, no forced ads, no hidden odds, no fake scarcity, no child-targeted pressure.
+
+PASS 17 — Visual gallery and QA screen
+Create a dev/gallery screen where all heroes, enemies, VFX, rarity beams, cards, capsules, chests, pets, and UI components can be previewed quickly.
+
+PASS 18 — Performance and accessibility pass
+Ensure effects are scalable. Add reduced motion, reduced flash, low-end particle cap, readable damage number settings, and mobile performance guards.
+
+PASS 19 — Final polish pass
+Run through the task checklist and tighten anything that looks generic, dead, static, dull, unreadable, or inconsistent.
+
+ABSOLUTE VISUAL RULES
+
+Every screen must answer:
+
+- What is moving?
+- What is glowing?
+- What can the player tap?
+- What reward is being teased?
+- What is the rarest thing visible?
+- What makes the player want one more run?
+- What makes this look like a polished pixel mobile game rather than a generic AI web app?
+
+Use candy-dark pixel fantasy as the core direction:
+
+- deep navy backgrounds
+- hot pink magic
+- gold loot beams
+- cyan shields
+- lime poison
+- orange explosions
+- purple void
+- white crit flashes
+- rainbow mythic effects
+
+Avoid:
+
+- flat grey panels
+- generic fantasy brown UI
+- static menus
+- tiny unreadable text
+- boring rectangular buttons
+- dead backgrounds
+- linear dry RPG screens
+- unanimated reward modals
+- effects that obscure gameplay permanently
+- casino framing
+- predatory gacha language
+
+PIXEL ART RULES
+
+The art must look deliberately pixel-authored, not like blurry generated art.
+
+Use:
+
+- crisp pixel edges
+- limited palettes per asset
+- strong silhouettes
+- readable 48x48 or 64x64 units
+- thick/dark outline where useful
+- colour-coded elements
+- exaggerated weapons/hats/auras
+- chibi/tiny proportions
+- clear rarity glows
+- simple animation frames enhanced by engine VFX
+
+Do not depend on hundreds of bespoke hand animations.
+
+Use production-friendly animation:
+
+- small sprite pose
+- reusable VFX
+- reusable particles
+- reusable beams
+- reusable hit-stop
+- reusable screen shake
+- reusable trails
+- reusable shockwaves
+- reusable reward reveals
+
+Most flashiness should be procedural in-engine.
+
+ASSET PIPELINE RULES
+
+Create clean asset folder structure, ideally like:
+
+assets/
+  pixel/
+    heroes/
+    enemies/
+    bosses/
+    pets/
+    mounts/
+    gear/
+    relics/
+    capsules/
+    chests/
+    tiles/
+    backgrounds/
+    ui/
+    vfx/
+  generated/
+  placeholders/
+  audio/
+  metadata/
+
+Data should describe art requirements.
+
+Use schemas/data files where possible for:
+
+- heroes
+- enemies
+- bosses
+- gear
+- pets
+- mounts
+- relics
+- rarity definitions
+- VFX definitions
+- animation definitions
+- capsule banners
+- reward tables
+- zones
+
+Each entity should support fields like:
+
+- id
+- displayName
+- rarity
+- element
+- role
+- tags
+- silhouetteNotes
+- palette
+- spritePrompt
+- animationProfile
+- vfxProfile
+- soundProfile
+- rewardProfile
+
+CODE QUALITY RULES
+
+Implement cleanly.
+
+Prefer:
+
+- reusable systems
+- data-driven definitions
+- small components
+- central constants
+- clear naming
+- no duplicated rarity logic
+- no hardcoded effect timings scattered everywhere
+- no one-off animation hacks unless documented
+
+Where existing architecture exists, integrate with it rather than replacing everything blindly.
+
+Preserve working systems unless they conflict with the visual direction.
+
+Do not break the app.
+
+Run available tests/build/lint after meaningful passes.
+
+If commands fail, record the issue in claude_PASS_LOG.md and continue with safe fixes.
+
+CONTEXT WINDOW RULES
+
+Because this project may exceed one claude context window, always leave a handoff.
+
+At the end of each claude run, update:
+
+docs/claude_CONTEXT_SUMMARY.md
+docs/claude_PASS_LOG.md
+docs/claude_NEXT_CONTEXT_HANDOFF.md
+
+The handoff must be detailed enough that the next claude context can continue immediately.
+
+At the end of every response, include:
+
+1. Pass completed
+2. Files changed
+3. What was implemented
+4. What remains
+5. Any failed checks
+6. Exact next suggested prompt
+
+The exact next suggested prompt should look like this:
+
+"Read docs/claude_CONTEXT_SUMMARY.md, docs/claude_PASS_LOG.md, docs/claude_NEXT_CONTEXT_HANDOFF.md, then continue from the next incomplete pass. Preserve the candy-dark pixel fantasy direction, dopamine-heavy reward flow, reusable VFX/animation architecture, and mobile-first UI rules."
+
+FIRST ACTION NOW
+
+Start with PASS 0.
+
+Read the full prompt suite.
+
+Create:
+
+docs/claude_CONTEXT_SUMMARY.md
+docs/claude_IMPLEMENTATION_PLAN.md
+docs/claude_PASS_LOG.md
+docs/claude_NEXT_CONTEXT_HANDOFF.md
+
+Do not skip files.
+
+Do not start coding features until the context summary and implementation plan exist.
+
+

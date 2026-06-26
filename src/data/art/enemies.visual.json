@@ -1,0 +1,13 @@
+{
+  "enemies": [
+    { "id": "enemy_slime", "displayName": "Slime", "element": "poison", "tier": "normal", "spriteSize": 48, "animationProfile": "slime_enemy", "vfxProfile": "slime_death", "tags": ["slime", "basic"] },
+    { "id": "enemy_bat", "displayName": "Bat", "element": "shadow", "tier": "normal", "spriteSize": 48, "animationProfile": "bat_enemy", "vfxProfile": "shadow_puff", "tags": ["bat", "flying"] },
+    { "id": "enemy_goblin", "displayName": "Goblin", "element": "machine", "tier": "normal", "spriteSize": 48, "animationProfile": "goblin_enemy", "vfxProfile": "machine_spark", "tags": ["goblin", "basic"] },
+    { "id": "enemy_mushroom", "displayName": "Mushroom Spore", "element": "nature", "tier": "normal", "spriteSize": 48, "animationProfile": "mushroom_enemy", "vfxProfile": "spore_puff", "tags": ["mushroom", "nature"] },
+    { "id": "enemy_skull", "displayName": "Skull", "element": "shadow", "tier": "normal", "spriteSize": 48, "animationProfile": "skull_enemy", "vfxProfile": "bone_scatter", "tags": ["undead"] },
+    { "id": "enemy_gear_bug", "displayName": "Gear Bug", "element": "machine", "tier": "normal", "spriteSize": 48, "animationProfile": "gear_bug_enemy", "vfxProfile": "gear_pop", "tags": ["machine", "bug"] },
+    { "id": "enemy_ghost", "displayName": "Ghost", "element": "shadow", "tier": "normal", "spriteSize": 48, "animationProfile": "ghost_enemy", "vfxProfile": "ghost_fade", "tags": ["ghost", "flying"] },
+    { "id": "enemy_elite_crystal_golem", "displayName": "Crystal Golem", "element": "ice", "tier": "elite", "spriteSize": 64, "animationProfile": "golem_enemy", "vfxProfile": "crystal_shatter", "tags": ["elite", "ice", "golem"] },
+    { "id": "enemy_elite_gold_mimic", "displayName": "Gold Mimic", "element": "gold", "tier": "elite", "spriteSize": 64, "animationProfile": "mimic_enemy", "vfxProfile": "gold_burst", "tags": ["elite", "gold", "mimic"] }
+  ]
+}

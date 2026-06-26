@@ -1,0 +1,69 @@
+{
+  "mounts": [
+    {
+      "id": "mount_golden_boar",
+      "displayName": "Golden Boar",
+      "rarity": "rare",
+      "element": "earth",
+      "palette": ["#ffd700", "#aa6600", "#8b4513"],
+      "spriteSize": [64, 64],
+      "idleEffect": "hoof_dust",
+      "runEffect": "gold_trail",
+      "hubAppearance": "stands left of hero, snorts gold dust",
+      "unlockSource": "boss_chest",
+      "tags": ["beast", "ground"]
+    },
+    {
+      "id": "mount_void_serpent",
+      "displayName": "Void Serpent",
+      "rarity": "epic",
+      "element": "void",
+      "palette": ["#440066", "#aa22ff", "#000000"],
+      "spriteSize": [64, 48],
+      "idleEffect": "void_wisps",
+      "runEffect": "shadow_trail",
+      "hubAppearance": "coils at hero feet, eyes glow purple",
+      "unlockSource": "capsule_only",
+      "tags": ["serpent", "void", "slithers"]
+    },
+    {
+      "id": "mount_crystal_stag",
+      "displayName": "Crystal Stag",
+      "rarity": "legendary",
+      "element": "ice",
+      "palette": ["#00ffff", "#aaeeff", "#ffffff"],
+      "spriteSize": [64, 64],
+      "idleEffect": "ice_crystal_breath",
+      "runEffect": "frost_hoofprints",
+      "hubAppearance": "stands tall beside hero, antlers glow cyan",
+      "unlockSource": "event_only",
+      "tags": ["beast", "ground", "majestic"]
+    },
+    {
+      "id": "mount_rainbow_drake",
+      "displayName": "Rainbow Drake",
+      "rarity": "mythic",
+      "element": "arcane",
+      "palette": ["#ff0000","#ff8800","#ffff00","#00ff00","#00ffff","#ff00ff"],
+      "spriteSize": [80, 64],
+      "idleEffect": "rainbow_wing_shimmer",
+      "runEffect": "rainbow_contrail",
+      "hubAppearance": "hovers behind hero, small rainbow arc under wings",
+      "unlockSource": "capsule_only",
+      "tags": ["drake", "flying", "premium"]
+    },
+    {
+      "id": "mount_iron_tortoise",
+      "displayName": "Iron Tortoise",
+      "rarity": "uncommon",
+      "element": "earth",
+      "palette": ["#556655", "#334433", "#88aa88"],
+      "spriteSize": [64, 48],
+      "idleEffect": "shell_glow",
+      "runEffect": "earth_rumble",
+      "hubAppearance": "sleeps next to hero with small 'Zzz'",
+      "unlockSource": "event_quest",
+      "tags": ["beast", "ground", "tank"]
+    }
+  ]
+}

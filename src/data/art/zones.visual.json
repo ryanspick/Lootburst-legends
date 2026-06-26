@@ -1,0 +1,39 @@
+{
+  "zones": [
+    {
+      "id": "zone_candy_cavern_rift",
+      "displayName": "Candy Cavern Rift",
+      "layers": { "far": "deep navy cave wall, pink crystal formations", "mid": "cyan fog, stalactites", "near": "gold floor cracks glowing", "particles": "floating pink crystal dust, gold motes" },
+      "palette": ["#0a0d1a", "#ff69b4", "#00ffff", "#ffd700"],
+      "ambientVfx": ["pink_crystal_sparkle", "gold_crack_glow", "cyan_fog_drift"]
+    },
+    {
+      "id": "zone_goblin_glitter_mines",
+      "displayName": "Goblin Glitter Mines",
+      "layers": { "far": "dark mine walls with copper veins", "mid": "rail tracks, swinging lanterns", "near": "falling gold dust, green goblin shapes in shadow", "particles": "copper sparks, coal dust" },
+      "palette": ["#1a1c2c", "#cd7f32", "#ffd700", "#22c55e"],
+      "ambientVfx": ["copper_spark", "lantern_swing", "dust_fall"]
+    },
+    {
+      "id": "zone_moon_vault",
+      "displayName": "Moon Vault",
+      "layers": { "far": "dark blue vault walls, silver door", "mid": "moonlight beams, floating keys", "near": "blue stone floor", "particles": "silver mote drift, key glint" },
+      "palette": ["#0a0d1a", "#c8c8c8", "#0ea5e9", "#ffd700"],
+      "ambientVfx": ["moonbeam_sweep", "key_float", "silver_mote"]
+    },
+    {
+      "id": "zone_void_arcade",
+      "displayName": "Void Arcade",
+      "layers": { "far": "dark purple void, cyan/magenta grid lines", "mid": "glitch blocks, pixel art power-ups scattered", "near": "bullet-pattern light trails on floor", "particles": "glitch pixel scatter, CRT scanline flicker" },
+      "palette": ["#12152e", "#00ffff", "#ff00ff", "#8a2be2"],
+      "ambientVfx": ["glitch_flash", "grid_pulse", "void_particle"]
+    },
+    {
+      "id": "zone_starforge_nursery",
+      "displayName": "Starforge Nursery",
+      "layers": { "far": "cosmic forge, nebula behind gold anvils", "mid": "star clouds, forge embers", "near": "constellation floor pattern", "particles": "rainbow sparks, star motes, forge embers" },
+      "palette": ["#060810", "#ffd700", "#ff69b4", "#ffffff"],
+      "ambientVfx": ["forge_ember", "star_mote", "rainbow_spark_drift"]
+    }
+  ]
+}
