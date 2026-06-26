@@ -18,9 +18,9 @@ export const ENEMY_ENGAGE_RADIUS = 80
 export const BOSS_X = CENTER_X
 export const BOSS_Y_POS = 85
 
-// Enemy drift speed in px/ms
-export const ENEMY_DRIFT_SPEED = 0.055
-export const ELITE_DRIFT_SPEED  = 0.035
+// Enemy drift speed in px/ms — slow enough that players see them coming (~3s to engage)
+export const ENEMY_DRIFT_SPEED = 0.038
+export const ELITE_DRIFT_SPEED  = 0.022  // elites lumber in — scary but telegraphed
 
 // Hero formations — centered inside the spawn ring (CENTER_X=180, CENTER_Y=300)
 export const HERO_SLOTS_3 = [

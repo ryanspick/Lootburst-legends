@@ -533,7 +533,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
                   data-tier={lvl}
                   disabled={!unlocked}
                   onClick={() => unlocked && setRiftTier(lvl)}
-                  title={unlocked ? `${tData.name} • ×${tData.rewardMult} rewards` : `Unlock after ${tData.unlockAfterRifts} rifts`}
+                  title={unlocked ? `${tData.name} • ×${tData.rewardMult} rewards` : `Complete ${tData.unlockAfterRifts} Normal rifts to unlock`}
                 >
                   {tData.label}
                   {!unlocked && <span className={styles.tierLock}>🔒</span>}

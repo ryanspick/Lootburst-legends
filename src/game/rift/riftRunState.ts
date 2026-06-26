@@ -21,10 +21,12 @@ let _lootId = 0
 let _projId = 0
 
 // Attack timing constants (milliseconds)
-const BASIC_CD = 1200       // base interval between basic attacks
-const SKILL_CD = 5000       // skill cooldown after use
-const ULTIMATE_CD = 12000   // ultimate cooldown after use
-const ENEMY_ATK_CD = 1500   // enemy attack interval (faster = more pressure)
+const BASIC_CD      = 1100   // slightly faster basics = more responsive feel
+const SKILL_CD      = 4500
+const ULTIMATE_CD   = 11000
+const ENEMY_ATK_CD  = 2200   // normal enemies — slow hits so packs don't burst-kill
+const ELITE_ATK_CD  = 3200   // elites hit slow but hard
+const BOSS_ATK_CD   = 1800   // bosses attack frequently but for moderate damage
 
 // Stagger per hero slot so they don't all fire simultaneously
 const BASIC_STAGGER = 400
@@ -41,9 +43,9 @@ function makeHeroEntity(
   if (!def) throw new Error(`Unknown hero: ${heroId}`)
   const idx = heroesData.heroes.indexOf(def)
   const pos = getHeroSlot(slotIndex, totalHeroes)
-  const baseHp  = 600 + idx * 50
-  const baseAtk = 80  + idx * 10
-  const baseDef = 20
+  const baseHp  = 1000 + idx * 80   // generous HP — early runs should feel winnable
+  const baseAtk = 105  + idx * 15   // strong attack = kills feel satisfying
+  const baseDef = 32
   return {
     id: heroId,
     displayName: def.displayName,
@@ -73,15 +75,15 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
   const def = enemiesData.enemies.find(e => e.id === enemyId)
   if (!def) throw new Error(`Unknown enemy: ${enemyId}`)
   const isElite = def.tier === 'elite'
-  const base = isElite ? Math.round(1800 * diffMult) : Math.round(400 * diffMult)
-  const atkScale = 1 + (diffMult - 1) * 0.7
+  const base = isElite ? Math.round(1400 * diffMult) : Math.round(280 * diffMult)
+  const atkScale = 1 + (diffMult - 1) * 0.65
   return {
     id: `${enemyId}_${index}_${Date.now()}`,
     displayName: def.displayName,
     hp: base,
     maxHp: base,
-    atk: isElite ? Math.round(65 * atkScale) : Math.round(20 * atkScale),
-    def: isElite ? 10 : 3,
+    atk: isElite ? Math.round(36 * atkScale) : Math.round(10 * atkScale),
+    def: isElite ? 8 : 2,
     spd: 0.8,
     x,
     y,
@@ -91,7 +93,8 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
     assetId: enemyId,
     spriteDataUrl: getGeneratedSprite(enemyId),
     alive: true,
-    hitstunMs: Math.random() * 1000,  // random initial offset so enemies stagger attacks
+    // Wide stagger so a full pack doesn't burst-attack simultaneously
+    hitstunMs: 800 + Math.random() * 2800,
     flashMs: 0,
     deathAnimMs: 0,
     basicCdMs: 0,
@@ -104,14 +107,15 @@ function makeBossEntity(bossId: string, diffMult = 1): CombatEntity {
   const def = bossesData.bosses.find(b => b.id === bossId)
   if (!def) throw new Error(`Unknown boss: ${bossId}`)
   const isFinal = bossId === 'boss_king_slime_pop'
-  const atkScale = 1 + (diffMult - 1) * 0.7
+  const atkScale = 1 + (diffMult - 1) * 0.65
   return {
     id: bossId,
     displayName: def.displayName,
-    hp: isFinal ? Math.round(5500 * diffMult) : Math.round(6500 * diffMult),
-    maxHp: isFinal ? Math.round(5500 * diffMult) : Math.round(6500 * diffMult),
-    atk: isFinal ? Math.round(80 * atkScale) : Math.round(50 * atkScale),
-    def: 20,
+    // Final boss must be significantly harder than mid-boss
+    hp: isFinal ? Math.round(22000 * diffMult) : Math.round(9000 * diffMult),
+    maxHp: isFinal ? Math.round(22000 * diffMult) : Math.round(9000 * diffMult),
+    atk: isFinal ? Math.round(55 * atkScale) : Math.round(32 * atkScale),
+    def: isFinal ? 35 : 22,
     spd: 0.5,
     x: BOSS_X,
     y: BOSS_Y_POS,
@@ -460,7 +464,9 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       heroTarget.deathAnimMs = 500
     }
 
-    enemy.hitstunMs = enemy.role === 'boss' ? ENEMY_ATK_CD * 0.7 : ENEMY_ATK_CD
+    enemy.hitstunMs = enemy.role === 'boss' ? BOSS_ATK_CD
+      : enemy.rarity === 'rare' ? ELITE_ATK_CD
+      : ENEMY_ATK_CD
   }
 
   // Wipe detection — all heroes died this tick
@@ -519,7 +525,8 @@ function applyProjectileHit(
   const [mainTarget] = hitList
 
   for (const t of hitList) {
-    const finalDmg = (isAoe && t !== mainTarget) ? Math.max(1, Math.round(p.dmg * 0.38)) : p.dmg
+    // AOE splash is weaker — ultimates feel powerful on primary without clearing full waves
+    const finalDmg = (isAoe && t !== mainTarget) ? Math.max(1, Math.round(p.dmg * 0.22)) : p.dmg
     t.hp -= finalDmg
     t.flashMs = p.abilityType === 'ultimate' ? 220
       : p.abilityType === 'skill' ? 150

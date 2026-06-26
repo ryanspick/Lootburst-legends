@@ -9,11 +9,11 @@ export interface RiftTier {
 }
 
 export const RIFT_TIERS: readonly RiftTier[] = [
-  { level: 1, label: 'I',   name: 'NORMAL',   enemyMult: 1.0, rewardMult:  1, color: '#44aaff', unlockAfterRifts:  0 },
-  { level: 2, label: 'II',  name: 'HARD',     enemyMult: 1.4, rewardMult:  3, color: '#44dd88', unlockAfterRifts:  3 },
-  { level: 3, label: 'III', name: 'BRUTAL',   enemyMult: 2.1, rewardMult:  8, color: '#ffaa00', unlockAfterRifts:  8 },
-  { level: 4, label: 'IV',  name: 'INFERNAL', enemyMult: 3.2, rewardMult: 22, color: '#ff5544', unlockAfterRifts: 15 },
-  { level: 5, label: 'V',   name: 'VOID',     enemyMult: 5.0, rewardMult: 60, color: '#cc44ff', unlockAfterRifts: 25 },
+  { level: 1, label: 'I',   name: 'NORMAL',   enemyMult: 1.0, rewardMult:   1, color: '#44aaff', unlockAfterRifts:   0 },
+  { level: 2, label: 'II',  name: 'HARD',     enemyMult: 1.6, rewardMult:   5, color: '#44dd88', unlockAfterRifts:  10 },
+  { level: 3, label: 'III', name: 'BRUTAL',   enemyMult: 2.8, rewardMult:  18, color: '#ffaa00', unlockAfterRifts:  25 },
+  { level: 4, label: 'IV',  name: 'INFERNAL', enemyMult: 4.5, rewardMult:  55, color: '#ff5544', unlockAfterRifts:  50 },
+  { level: 5, label: 'V',   name: 'VOID',     enemyMult: 7.0, rewardMult: 150, color: '#cc44ff', unlockAfterRifts: 100 },
 ]
 
 export function getRiftTier(level: number): RiftTier {
