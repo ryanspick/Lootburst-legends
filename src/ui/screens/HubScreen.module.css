@@ -699,3 +699,269 @@
   color: var(--text-muted);
   letter-spacing: 0.5px;
 }
+
+/* ── Notification stack ──────────────────────────────────────────── */
+.notifStack {
+  position: absolute;
+  top: 48px;
+  left: 8px;
+  right: 8px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.notifCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  pointer-events: all;
+  cursor: pointer;
+  animation: notifSlideIn 0.25s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  backdrop-filter: blur(6px);
+}
+
+@keyframes notifSlideIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.notifGold {
+  background: linear-gradient(135deg, rgba(255, 180, 0, 0.18), rgba(255, 100, 0, 0.12));
+  border-color: #ffd70066;
+  box-shadow: 0 2px 12px rgba(255, 200, 0, 0.18);
+}
+
+.notifGreen {
+  background: linear-gradient(135deg, rgba(0, 220, 100, 0.16), rgba(0, 180, 80, 0.10));
+  border-color: #00cc6644;
+  box-shadow: 0 2px 12px rgba(0, 200, 80, 0.15);
+}
+
+.notifGray {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: #ffffff18;
+}
+
+.notifIcon {
+  font-size: 20px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.notifBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.notifTitle {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--text-primary);
+  letter-spacing: 0.5px;
+}
+
+.notifDetail {
+  font-size: 10px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notifTimer {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: bold;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.notifTimerRed {
+  color: #ff4444;
+  animation: pulseRed 1s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.notifCta {
+  background: linear-gradient(135deg, #ffd700, #ff8800);
+  border: none;
+  border-radius: 6px;
+  color: #0a0d1a;
+  font-size: 10px;
+  font-weight: bold;
+  font-family: inherit;
+  padding: 5px 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+  transition: transform 0.1s, filter 0.1s;
+}
+
+.notifCta:hover  { filter: brightness(1.15); }
+.notifCta:active { transform: scale(0.95); }
+
+/* ── Post-run offer modal ────────────────────────────────────────── */
+.postRunOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fadeIn 0.2s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.postRunModal {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 16px;
+  padding: 24px 20px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.postRunFree {
+  background: linear-gradient(160deg, #0a2a18, #0d1a0a);
+  border: 2px solid #00cc6688;
+  box-shadow: 0 0 40px rgba(0, 200, 80, 0.25), inset 0 0 20px rgba(0, 200, 80, 0.06);
+}
+
+.postRunPaid {
+  background: linear-gradient(160deg, #1a0a2e, #0f0a22);
+  border: 2px solid #cc44ff88;
+  box-shadow: 0 0 40px rgba(200, 60, 255, 0.3), inset 0 0 20px rgba(180, 60, 255, 0.08);
+}
+
+.postRunIconWrap {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
+  animation: iconFloat 2s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+
+.postRunTitle {
+  font-size: 20px;
+  font-weight: bold;
+  color: #fff;
+  letter-spacing: 1.5px;
+  text-align: center;
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.6);
+}
+
+.postRunSub {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.postRunItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.postRunItem {
+  font-size: 13px;
+  color: var(--text-primary);
+  font-weight: bold;
+}
+
+.postRunItem::before {
+  content: '▸ ';
+  color: var(--text-muted);
+}
+
+.offerCountdown {
+  font-size: 12px;
+  color: #ff8844;
+  letter-spacing: 0.5px;
+}
+
+.postRunFreeBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #00cc66, #008844);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  font-family: inherit;
+  padding: 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: filter 0.15s, transform 0.1s;
+  box-shadow: 0 4px 16px rgba(0, 200, 80, 0.35);
+}
+
+.postRunFreeBtn:hover  { filter: brightness(1.12); }
+.postRunFreeBtn:active { transform: scale(0.97); }
+
+.postRunPaidBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #cc44ff, #8822cc);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: bold;
+  font-family: inherit;
+  padding: 12px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  transition: filter 0.15s, transform 0.1s;
+  box-shadow: 0 4px 16px rgba(180, 40, 255, 0.4);
+}
+
+.postRunPaidBtn:hover  { filter: brightness(1.12); }
+.postRunPaidBtn:active { transform: scale(0.97); }
+
+.postRunDismiss {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px;
+  letter-spacing: 0.5px;
+  transition: color 0.15s;
+}
+
+.postRunDismiss:hover { color: var(--text-primary); }

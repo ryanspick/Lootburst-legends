@@ -11,17 +11,34 @@ import VisualGallery from '@/ui/screens/VisualGallery'
 import RiftRunScreen from '@/ui/screens/RiftRunScreen'
 import ShopScreen from '@/ui/screens/ShopScreen'
 import ParticleCanvas from '@/vfx/ParticleCanvas'
+import { rollPostRunOffer, type PostRunOffer } from '@/game/progression/dailyRewards'
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('run')
   const [showGallery, setShowGallery] = useState(false)
   const [inRift, setInRift] = useState(false)
+  const [postRunOffer, setPostRunOffer] = useState<PostRunOffer | null>(null)
+  const [lastRunKills, setLastRunKills] = useState(0)
+
+  function handleRiftExit(kills = 0) {
+    setInRift(false)
+    setLastRunKills(kills)
+    const offer = rollPostRunOffer(kills)
+    if (offer) setPostRunOffer(offer)
+  }
 
   function renderMain() {
     if (showGallery) return <VisualGallery onClose={() => setShowGallery(false)} />
-    if (inRift) return <RiftRunScreen onExit={() => setInRift(false)} />
+    if (inRift) return <RiftRunScreen onExit={handleRiftExit} />
     switch (tab) {
-      case 'run':      return <HubScreen onEnterRift={() => setInRift(true)} onOpenShop={() => setTab('shop')} />
+      case 'run':      return (
+        <HubScreen
+          onEnterRift={() => setInRift(true)}
+          onOpenShop={() => setTab('shop')}
+          postRunOffer={postRunOffer}
+          onDismissOffer={() => setPostRunOffer(null)}
+        />
+      )
       case 'squad':    return <SquadScreen />
       case 'capsule':  return <CapsuleScreen />
       case 'shop':     return <ShopScreen onClose={() => setTab('run')} />

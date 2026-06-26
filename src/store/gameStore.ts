@@ -1,6 +1,10 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { Rarity } from '@/constants/palette'
+import {
+  getRewardForStreak, CHEST_COOLDOWN_MS, STREAK_GRACE_MS, FREE_KEY_CD_MS,
+  type DayReward,
+} from '@/game/progression/dailyRewards'
 
 export interface OwnedHero {
   id: string
@@ -54,6 +58,12 @@ interface GameState {
   // New-player shop offer (20-hour window from first open)
   gemOfferExpiresAt: number  // 0 = not yet initialised
 
+  // Daily chest + login streak
+  lastDailyChestAt: number   // 0 = never claimed
+  loginStreak: number        // 0 = never tracked
+  lastLoginDate: string      // 'YYYY-MM-DD'
+  nextFreeKeyAt: number      // 0 = key available immediately
+
   // Actions
   addGold: (amount: number) => void
   spendGold: (amount: number) => boolean
@@ -75,7 +85,10 @@ interface GameState {
   recordRiftResult: (result: { kills: number; goldEarned: number }) => void
   recordCapsulePull: () => void
   setLastSeen: () => void
-  initGemOffer: () => void  // call on first shop open to start 20h countdown
+  initGemOffer: () => void
+  checkDailyLogin: () => void
+  claimDailyChest: () => DayReward
+  claimFreeKey: () => void
 }
 
 let gearInstanceCounter = 0
@@ -113,8 +126,12 @@ export const useGameStore = create<GameState>()(
       totalGoldEarned: 284_220,
       totalCapsulePulls: 67,
       highestPower: 6400,
-      lastSeenAt: Date.now() - 2 * 3_600_000, // default: 2h ago so first load shows offline reward
+      lastSeenAt: Date.now() - 2 * 3_600_000,
       gemOfferExpiresAt: 0,
+      lastDailyChestAt: 0,
+      loginStreak: 0,
+      lastLoginDate: '',
+      nextFreeKeyAt: 0,
 
       addGold: (amount) => set(s => ({ gold: s.gold + amount, totalGoldEarned: s.totalGoldEarned + amount })),
       spendGold: (amount) => {
@@ -239,6 +256,36 @@ export const useGameStore = create<GameState>()(
         if (get().gemOfferExpiresAt === 0)
           set({ gemOfferExpiresAt: Date.now() + 20 * 3_600_000 })
       },
+      checkDailyLogin: () => {
+        const today = new Date().toISOString().split('T')[0]
+        const { lastLoginDate, loginStreak } = get()
+        if (lastLoginDate === today) return
+        const yesterday = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
+        const streakBroken = lastLoginDate
+          ? new Date(today).getTime() - new Date(lastLoginDate).getTime() > STREAK_GRACE_MS
+          : false
+        set({
+          loginStreak: streakBroken ? 1 : loginStreak + 1,
+          lastLoginDate: today,
+        })
+      },
+      claimDailyChest: () => {
+        const { loginStreak, addGear } = get()
+        const reward = getRewardForStreak(Math.max(1, loginStreak))
+        set(s => ({
+          gold: s.gold + reward.gold,
+          totalGoldEarned: s.totalGoldEarned + reward.gold,
+          gems: s.gems + reward.gems,
+          keys: s.keys + reward.keys,
+          lastDailyChestAt: Date.now(),
+        }))
+        if (reward.gearId) addGear(reward.gearId)
+        return reward
+      },
+      claimFreeKey: () => set(s => ({
+        keys: s.keys + 1,
+        nextFreeKeyAt: Date.now() + FREE_KEY_CD_MS,
+      })),
     }),
     {
       name: 'lootburst-game-state',
@@ -260,6 +307,10 @@ export const useGameStore = create<GameState>()(
         highestPower: s.highestPower,
         lastSeenAt: s.lastSeenAt,
         gemOfferExpiresAt: s.gemOfferExpiresAt,
+        lastDailyChestAt: s.lastDailyChestAt,
+        loginStreak: s.loginStreak,
+        lastLoginDate: s.lastLoginDate,
+        nextFreeKeyAt: s.nextFreeKeyAt,
       }),
     }
   )

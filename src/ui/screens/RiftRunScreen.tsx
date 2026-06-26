@@ -37,7 +37,7 @@ const FALLBACK_HERO_IDS = [
 ]
 
 interface Props {
-  onExit: () => void
+  onExit: (kills?: number) => void
 }
 
 const CANVAS_W = 360
@@ -340,7 +340,7 @@ export default function RiftRunScreen({ onExit }: Props) {
           )}
         </div>
         <div className={styles.hudRight}>
-          <button className={styles.exitBtn} onClick={onExit}>✕</button>
+          <button className={styles.exitBtn} onClick={() => onExit()}>✕</button>
         </div>
       </div>
 
@@ -467,7 +467,7 @@ export default function RiftRunScreen({ onExit }: Props) {
             {postRun.newRecords.length > 0 && (
               <div className={styles.newRecord}>🏆 NEW RECORD: {postRun.newRecords.join(', ')}</div>
             )}
-            <button className={styles.postRunBtn} onClick={onExit}>
+            <button className={styles.postRunBtn} onClick={() => onExit(stats.kills)}>
               RETURN TO HUB
             </button>
           </div>

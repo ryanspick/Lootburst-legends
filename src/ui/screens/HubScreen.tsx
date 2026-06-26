@@ -10,18 +10,30 @@ import type { OfflineReward } from '@/game/offline/offlineRewardController'
 import { pulse } from '@/animation/motionPrimitives'
 import { heroIdleBob, chestPulse, iconBob } from '@/animation/idleMotion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { emitCoinBurst, emitGoldBeam } from '@/vfx/emitters'
+import { emitCoinBurst, emitGoldBeam, emitGemScatter, emitGearDropGlow } from '@/vfx/emitters'
 import { playSound } from '@/audio/soundEvents'
 import { generateChestSprite, generateCapsuleSprite } from '@/art/generated'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot } from '@/store/gameStore'
 import { getUnlockedTiers, getRiftTier } from '@/game/rift/riftTiers'
 import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine } from '@/game/gear/gearStats'
+import {
+  CHEST_COOLDOWN_MS, STREAK_GRACE_MS, getRewardForStreak, getNextReward,
+  type PostRunOffer,
+} from '@/game/progression/dailyRewards'
 import heroesData from '@/data/art/heroes.visual.json'
 import gearData from '@/data/art/gear.visual.json'
 import petsData from '@/data/art/pets.visual.json'
 import type { Rarity } from '@/constants/palette'
 import styles from './HubScreen.module.css'
+
+function fmtMs(ms: number): string {
+  if (ms <= 0) return '00:00:00'
+  const s = Math.floor(ms / 1000)
+  const h = Math.floor(s / 3600)
+  const m = Math.floor((s % 3600) / 60)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
 
 const GEAR_SLOTS: GearSlot[] = ['weapon', 'trinket', 'relic']
 const RARITY_ORDER: Record<string, number> = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 }
@@ -34,15 +46,22 @@ const BOOST_CATALOG = [
   { id: 'boost_fury_elixir',  icon: '🔥', name: 'Fury Elixir',   desc: '+25% attack damage this run',    cost: 200 },
 ]
 
-interface HubProps { onEnterRift?: () => void; onOpenShop?: () => void }
+interface HubProps {
+  onEnterRift?: () => void
+  onOpenShop?: () => void
+  postRunOffer?: PostRunOffer | null
+  onDismissOffer?: () => void
+}
 
-export default function HubScreen({ onEnterRift, onOpenShop }: HubProps = {}) {
+export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDismissOffer }: HubProps = {}) {
   const rafRef = useRef<number>(0)
   const [timeMs, setTimeMs] = useState(0)
   const [offlineReward, setOfflineReward] = useState<OfflineReward | null>(null)
   const [showShop, setShowShop] = useState(false)
   const [showGear, setShowGear] = useState(false)
   const [gearHeroIdx, setGearHeroIdx] = useState(0)
+  const [offerTimeLeft, setOfferTimeLeft] = useState<number>(0)
+  const offerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [gearPickerSlot, setGearPickerSlot] = useState<GearSlot | null>(null)
   const reducedMotion = useReducedMotion()
   const chestImg = generateChestSprite('epic', 'closed')
@@ -63,9 +82,30 @@ export default function HubScreen({ onEnterRift, onOpenShop }: HubProps = {}) {
   const selectedRiftTier = useGameStore(s => s.selectedRiftTier)
   const setRiftTier = useGameStore(s => s.setRiftTier)
   const totalRifts = useGameStore(s => s.totalRifts)
-  const ownedGear = useGameStore(s => s.ownedGear)
-  const equipGear = useGameStore(s => s.equipGear)
-  const unequipHeroSlot = useGameStore(s => s.unequipHeroSlot)
+  const ownedGear        = useGameStore(s => s.ownedGear)
+  const equipGear        = useGameStore(s => s.equipGear)
+  const unequipHeroSlot  = useGameStore(s => s.unequipHeroSlot)
+  const lastDailyChestAt = useGameStore(s => s.lastDailyChestAt)
+  const loginStreak      = useGameStore(s => s.loginStreak)
+  const nextFreeKeyAt    = useGameStore(s => s.nextFreeKeyAt)
+  const claimDailyChest  = useGameStore(s => s.claimDailyChest)
+  const claimFreeKey     = useGameStore(s => s.claimFreeKey)
+  const checkDailyLogin  = useGameStore(s => s.checkDailyLogin)
+  const addGear          = useGameStore(s => s.addGear)
+
+  // Computed (driven by timeMs so countdowns update each rAF frame)
+  const nowMs            = Date.now()
+  const chestReady       = lastDailyChestAt === 0 || nowMs - lastDailyChestAt >= CHEST_COOLDOWN_MS
+  const nextChestMs      = Math.max(0, lastDailyChestAt + CHEST_COOLDOWN_MS - nowMs)
+  const streakEndsMs     = Math.max(0, lastDailyChestAt + STREAK_GRACE_MS - nowMs)
+  const streakAtRisk     = chestReady && loginStreak > 1
+  const streakDying      = streakAtRisk && streakEndsMs < 8 * 3_600_000 && lastDailyChestAt > 0
+  const effectiveStreak  = Math.max(1, loginStreak)
+  const currentReward    = getRewardForStreak(effectiveStreak)
+  const nextReward       = getNextReward(effectiveStreak)
+  const isNextJackpot    = nextReward.isJackpot ?? false
+  const freeKeyReady     = nextFreeKeyAt === 0 || nowMs >= nextFreeKeyAt
+  const nextKeyMs        = Math.max(0, nextFreeKeyAt - nowMs)
 
   const unlockedTiers = getUnlockedTiers(totalRifts)
   const activeTierData = getRiftTier(selectedRiftTier)
@@ -84,6 +124,22 @@ export default function HubScreen({ onEnterRift, onOpenShop }: HubProps = {}) {
     rafRef.current = requestAnimationFrame(frame)
     return () => cancelAnimationFrame(rafRef.current)
   }, [])
+
+  // Daily login check on mount
+  useEffect(() => { checkDailyLogin() }, [])
+
+  // Post-run offer countdown
+  useEffect(() => {
+    if (!postRunOffer) { setOfferTimeLeft(0); return }
+    setOfferTimeLeft(postRunOffer.expiresInMs)
+    offerTimerRef.current = setInterval(() => {
+      setOfferTimeLeft(prev => {
+        if (prev <= 1000) { clearInterval(offerTimerRef.current!); onDismissOffer?.(); return 0 }
+        return prev - 1000
+      })
+    }, 1000)
+    return () => clearInterval(offerTimerRef.current!)
+  }, [postRunOffer])
 
   // Calculate offline reward on mount
   useEffect(() => {
@@ -110,6 +166,32 @@ export default function HubScreen({ onEnterRift, onOpenShop }: HubProps = {}) {
     addGems(offlineReward.gemsEarned)
     emitCoinBurst({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 30)
     setOfflineReward(null)
+  }
+
+  function handleClaimDailyChest() {
+    const reward = claimDailyChest()
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2
+    emitCoinBurst({ x: cx, y: cy }, 25)
+    if (reward.gems > 0) emitGemScatter({ x: cx, y: cy }, reward.gems)
+    if (reward.gearId) emitGearDropGlow({ x: cx, y: cy }, 'rare')
+    playSound('ui_chest_open')
+  }
+
+  function handleClaimFreeKey() {
+    claimFreeKey()
+    emitCoinBurst({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 8)
+    playSound('ui_button_pop')
+  }
+
+  function handleClaimOffer(offer: PostRunOffer) {
+    const cx = window.innerWidth / 2, cy = window.innerHeight / 2
+    if (offer.gold)   addGold(offer.gold)
+    if (offer.gems)   addGems(offer.gems)
+    if (offer.gearId) addGear(offer.gearId)
+    emitCoinBurst({ x: cx, y: cy }, offer.type === 'paid' ? 50 : 20)
+    if (offer.gems) emitGemScatter({ x: cx, y: cy }, offer.gems)
+    if (offer.gearId) emitGearDropGlow({ x: cx, y: cy }, 'epic')
+    onDismissOffer?.()
   }
 
   const pulseScale = pulse(timeMs)
@@ -218,6 +300,86 @@ export default function HubScreen({ onEnterRift, onOpenShop }: HubProps = {}) {
           reward={offlineReward}
           onClaim={handleClaimOffline}
         />
+      )}
+
+      {/* ── Notification stack ──────────────────────────────────── */}
+      <div className={styles.notifStack}>
+        {chestReady ? (
+          <div className={`${styles.notifCard} ${styles.notifGold}`} onClick={handleClaimDailyChest}>
+            <span className={styles.notifIcon}>🎁</span>
+            <div className={styles.notifBody}>
+              <span className={styles.notifTitle}>DAY {effectiveStreak} CHEST READY!</span>
+              <span className={styles.notifDetail}>{currentReward.label}</span>
+              {isNextJackpot && (
+                <span className={styles.notifDetail} style={{ color: '#ff44ff' }}>🏆 JACKPOT NEXT!</span>
+              )}
+            </div>
+            <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimDailyChest() }}>CLAIM</button>
+          </div>
+        ) : (
+          <div className={`${styles.notifCard} ${styles.notifGray}`}>
+            <span className={styles.notifIcon}>{streakDying ? '🔥' : '⏳'}</span>
+            <div className={styles.notifBody}>
+              <span className={styles.notifTitle}>{streakDying ? '⚠️ STREAK AT RISK!' : 'NEXT CHEST'}</span>
+              <span className={styles.notifDetail}>
+                {streakDying
+                  ? `Day ${effectiveStreak} streak breaks in ${fmtMs(streakEndsMs)}`
+                  : `Day ${Math.min(effectiveStreak + 1, 7)}: ${nextReward.label}`}
+              </span>
+            </div>
+            <span className={`${styles.notifTimer} ${streakDying ? styles.notifTimerRed : ''}`}>
+              {fmtMs(streakDying ? streakEndsMs : nextChestMs)}
+            </span>
+          </div>
+        )}
+        {freeKeyReady ? (
+          <div className={`${styles.notifCard} ${styles.notifGreen}`} onClick={handleClaimFreeKey}>
+            <span className={styles.notifIcon}>🔑</span>
+            <div className={styles.notifBody}>
+              <span className={styles.notifTitle}>FREE KEY READY!</span>
+              <span className={styles.notifDetail}>Tap to collect • renews in 8h</span>
+            </div>
+            <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimFreeKey() }}>CLAIM</button>
+          </div>
+        ) : (
+          <div className={`${styles.notifCard} ${styles.notifGray}`}>
+            <span className={styles.notifIcon}>🔑</span>
+            <div className={styles.notifBody}>
+              <span className={styles.notifTitle}>FREE KEY IN</span>
+              <span className={styles.notifDetail}>8h free key • tap capsule tab to use</span>
+            </div>
+            <span className={styles.notifTimer}>{fmtMs(nextKeyMs)}</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── Post-run offer modal ────────────────────────────────── */}
+      {postRunOffer && (
+        <div className={styles.postRunOverlay}>
+          <div className={`${styles.postRunModal} ${postRunOffer.type === 'paid' ? styles.postRunPaid : styles.postRunFree}`}>
+            <div className={styles.postRunIconWrap}>{postRunOffer.icon}</div>
+            <div className={styles.postRunTitle}>{postRunOffer.title}</div>
+            <div className={styles.postRunSub}>{postRunOffer.subtitle}</div>
+            <div className={styles.postRunItems}>
+              {postRunOffer.items.map((item, i) => (
+                <span key={i} className={styles.postRunItem}>{item}</span>
+              ))}
+            </div>
+            <div className={styles.offerCountdown}>
+              ⏳ Expires in <strong>{Math.ceil(offerTimeLeft / 1000)}s</strong>
+            </div>
+            {postRunOffer.type === 'free' ? (
+              <button className={styles.postRunFreeBtn} onClick={() => handleClaimOffer(postRunOffer)}>
+                🎁 CLAIM FREE REWARD
+              </button>
+            ) : (
+              <button className={styles.postRunPaidBtn} onClick={() => handleClaimOffer(postRunOffer)}>
+                💎 GET IT — {postRunOffer.price}
+              </button>
+            )}
+            <button className={styles.postRunDismiss} onClick={onDismissOffer}>No thanks</button>
+          </div>
+        </div>
       )}
 
       {/* Boost shop */}
