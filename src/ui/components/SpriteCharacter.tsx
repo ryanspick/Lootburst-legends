@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { getAsset } from '@/art/assetLoader'
 import { getGeneratedSprite } from '@/art/generated'
 import { RARITY_COLOURS } from '@/constants/palette'
 import type { Rarity } from '@/constants/palette'
@@ -30,10 +31,19 @@ export default function SpriteCharacter({
   const imgRef = useRef<HTMLImageElement>(null)
 
   useEffect(() => {
-    const img = imgRef.current
-    if (!img) return
-    const dataUrl = getGeneratedSprite(assetId)
-    if (dataUrl) img.src = dataUrl
+    let cancelled = false
+    const el = imgRef.current
+    if (!el) return
+
+    // Try PNG override first (async), fall back to procedural immediately
+    const procUrl = getGeneratedSprite(assetId)
+    if (procUrl && el) el.src = procUrl
+
+    getAsset(assetId).then(loaded => {
+      if (!cancelled && loaded && el) el.src = loaded.src
+    })
+
+    return () => { cancelled = true }
   }, [assetId])
 
   const rc = RARITY_COLOURS[rarity]

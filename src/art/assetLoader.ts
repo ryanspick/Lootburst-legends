@@ -28,6 +28,10 @@ function loadImage(url: string): Promise<HTMLImageElement | null> {
 }
 
 export async function getAsset(id: string): Promise<HTMLImageElement | null> {
+  // Flat override — drop any PNG as /public/assets/sprites/{id}.png to replace procedural art
+  const flat = await loadImage(`/assets/sprites/${id}.png`)
+  if (flat) return flat
+
   const entry = getManifestEntry(id)
   if (!entry) {
     const dataUrl = getGeneratedSprite(id)

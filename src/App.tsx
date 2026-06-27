@@ -17,6 +17,7 @@ import AchievementToast from '@/ui/components/AchievementToast'
 import { rollPostRunOffer, type PostRunOffer } from '@/game/progression/dailyRewards'
 import { setMuted, setVolume } from '@/audio/soundEvents'
 import { playTrack, stopMusic, setMusicMuted } from '@/audio/musicEngine'
+import { requestNotificationPermission, restoreNotificationSchedule } from '@/notifications/pushNotifications'
 import { setReducedMotionVfx } from '@/vfx/ParticleEngine'
 import { useGameStore } from '@/store/gameStore'
 
@@ -47,6 +48,16 @@ export default function App() {
 
   // Start hub music (deferred — AudioContext requires user gesture in most browsers)
   useEffect(() => { playTrack('hub') }, [])
+
+  // Request notification permission after a short delay (not on first frame)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      requestNotificationPermission().then(granted => {
+        if (granted) restoreNotificationSchedule()
+      })
+    }, 8000)  // wait 8s — don't interrupt first-time experience
+    return () => clearTimeout(t)
+  }, [])
 
   const triggerAchievementCheck = useCallback(() => {
     const newIds = checkAchievements()

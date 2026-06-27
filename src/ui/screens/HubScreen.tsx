@@ -12,6 +12,11 @@ import { heroIdleBob, chestPulse, iconBob } from '@/animation/idleMotion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { emitCoinBurst, emitGoldBeam, emitGemScatter, emitGearDropGlow } from '@/vfx/emitters'
 import { playSound } from '@/audio/soundEvents'
+import {
+  scheduleChestNotification, scheduleFreeKeyNotification,
+  cancelChestNotification, cancelFreeKeyNotification,
+  notificationsGranted,
+} from '@/notifications/pushNotifications'
 import { generateChestSprite, generateCapsuleSprite } from '@/art/generated'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot } from '@/store/gameStore'
@@ -157,6 +162,25 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
 
   // Daily login check on mount
   useEffect(() => { checkDailyLogin() }, [])
+
+  // Schedule push notifications when chest/key ready times change
+  useEffect(() => {
+    if (!notificationsGranted()) return
+    if (!chestReady && lastDailyChestAt > 0) {
+      scheduleChestNotification(lastDailyChestAt + CHEST_COOLDOWN_MS)
+    } else {
+      cancelChestNotification()
+    }
+  }, [lastDailyChestAt, chestReady])
+
+  useEffect(() => {
+    if (!notificationsGranted()) return
+    if (!freeKeyReady && nextFreeKeyAt > 0) {
+      scheduleFreeKeyNotification(nextFreeKeyAt)
+    } else {
+      cancelFreeKeyNotification()
+    }
+  }, [nextFreeKeyAt, freeKeyReady])
 
   // Post-run offer countdown — display only, no auto-dismiss
   useEffect(() => {
