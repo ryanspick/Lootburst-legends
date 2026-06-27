@@ -79,6 +79,24 @@ export function computeRunGearBonuses(gearIds: string[]): RunGearBonuses {
   return b
 }
 
+export function computeSquadPower(
+  heroIds: string[],
+  heroesData: { heroes: Array<{ id: string }> },
+  equippedGearIds: string[],
+): number {
+  let power = 0
+  for (let i = 0; i < heroIds.length; i++) {
+    const idx = heroesData.heroes.findIndex(h => h.id === heroIds[i])
+    if (idx === -1) continue
+    const baseHp  = 1000 + idx * 80
+    const baseAtk = 105  + idx * 15
+    const baseDef = 32
+    const gear = computeHeroGearBonuses(equippedGearIds)
+    power += Math.round((baseAtk + gear.atk) * 8 + (baseHp + gear.hp) * 0.3 + (baseDef + gear.def) * 4)
+  }
+  return power
+}
+
 export function getGearStatLine(gearId: string): string {
   const s = GEAR_STATS[gearId]
   if (!s) return ''

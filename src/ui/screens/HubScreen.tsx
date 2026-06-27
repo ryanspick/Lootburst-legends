@@ -16,7 +16,7 @@ import { generateChestSprite, generateCapsuleSprite } from '@/art/generated'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot } from '@/store/gameStore'
 import { getUnlockedTiers, getRiftTier } from '@/game/rift/riftTiers'
-import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine } from '@/game/gear/gearStats'
+import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine, computeSquadPower } from '@/game/gear/gearStats'
 import {
   CHEST_COOLDOWN_MS, STREAK_GRACE_MS, getRewardForStreak, getNextReward,
   type PostRunOffer,
@@ -95,7 +95,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const claimDailyChest  = useGameStore(s => s.claimDailyChest)
   const claimFreeKey     = useGameStore(s => s.claimFreeKey)
   const checkDailyLogin  = useGameStore(s => s.checkDailyLogin)
-  const addGear          = useGameStore(s => s.addGear)
+  const addGear             = useGameStore(s => s.addGear)
+  const updateHighestPower  = useGameStore(s => s.updateHighestPower)
 
   // Computed (driven by timeMs so countdowns update each rAF frame)
   const nowMs            = Date.now()
@@ -127,6 +128,14 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
     .filter(Boolean)
     .map(id => heroesData.heroes.find(h => h.id === id))
     .filter(Boolean) as typeof heroesData.heroes
+
+  const equippedGearIds = ownedGear.filter(g => g.equipped).map(g => g.id)
+  const squadPower = computeSquadPower(squadHeroIds.filter(Boolean), heroesData, equippedGearIds)
+
+  // Update highestPower when squad changes
+  useEffect(() => {
+    if (squadPower > 0) updateHighestPower(squadPower)
+  }, [squadPower])
 
   // rAF time for idle motion
   useEffect(() => {
@@ -594,7 +603,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             ⚔️ ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>90s Run</span>
           </PixelButton>
         </div>
-        <span className={styles.riftSubtext}>Squad Power: 4,280</span>
+        <span className={styles.riftSubtext}>Squad Power: {squadPower.toLocaleString()}</span>
       </div>
     </div>
   )

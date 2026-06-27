@@ -27,10 +27,14 @@ export default function App() {
   const [postRunOffer, setPostRunOffer] = useState<PostRunOffer | null>(null)
   const [pendingAchievements, setPendingAchievements] = useState<string[]>([])
 
-  const soundMuted      = useGameStore(s => s.soundMuted)
-  const soundVolume     = useGameStore(s => s.soundVolume)
-  const vfxReduced      = useGameStore(s => s.vfxReduced)
+  const soundMuted        = useGameStore(s => s.soundMuted)
+  const soundVolume       = useGameStore(s => s.soundVolume)
+  const vfxReduced        = useGameStore(s => s.vfxReduced)
   const checkAchievements = useGameStore(s => s.checkAchievements)
+  const ownedHeroCount    = useGameStore(s => s.ownedHeroes.length)
+  const ownedGearCount    = useGameStore(s => s.ownedGear.length)
+  const squadFull         = useGameStore(s => s.squadHeroIds.filter(Boolean).length >= 3)
+  const highestPower      = useGameStore(s => s.highestPower)
 
   // Sync persisted settings → audio / vfx systems
   useEffect(() => { setMuted(soundMuted)            }, [soundMuted])
@@ -44,6 +48,9 @@ export default function App() {
 
   // Check on mount to seed already-earned achievements silently (no toast for pre-existing)
   useEffect(() => { checkAchievements() }, [])
+
+  // Re-check when collection / squad / power state changes
+  useEffect(() => { triggerAchievementCheck() }, [ownedHeroCount, ownedGearCount, squadFull, highestPower])
 
   function handleRiftExit(kills = 0) {
     setInRift(false)

@@ -130,6 +130,7 @@ interface GameState {
   setSoundVolume: (v: number)  => void
   setVfxReduced:  (v: boolean) => void
   checkAchievements: () => string[]   // returns newly unlocked achievement IDs
+  updateHighestPower: (power: number) => void
 }
 
 let gearInstanceCounter = 0
@@ -448,6 +449,9 @@ export const useGameStore = create<GameState>()(
       setSoundMuted:  (v) => set({ soundMuted: v }),
       setSoundVolume: (v) => set({ soundVolume: Math.max(0, Math.min(1, v)) }),
       setVfxReduced:  (v) => set({ vfxReduced: v }),
+
+      updateHighestPower: (power) =>
+        set(s => ({ highestPower: Math.max(s.highestPower, power) })),
 
       checkAchievements: () => {
         const s = get()
