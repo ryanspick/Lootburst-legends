@@ -1,6 +1,7 @@
 import { BOTTOM_NAV_TABS, type TabId } from '@/constants/ui'
 import { useGameStore } from '@/store/gameStore'
 import { CHEST_COOLDOWN_MS } from '@/game/progression/dailyRewards'
+import { playSound } from '@/audio/soundEvents'
 import styles from './BottomNav.module.css'
 
 interface Props {
@@ -35,7 +36,7 @@ export default function BottomNav({ active, onChange, onGallery }: Props) {
           <button
             key={tab.id}
             className={`${styles.tab} ${active === tab.id ? styles.active : ''}`}
-            onClick={() => onChange(tab.id as TabId)}
+            onClick={() => { playSound('ui_tab_slide'); onChange(tab.id as TabId) }}
             aria-label={tab.label}
           >
             <span className={styles.iconWrap}>

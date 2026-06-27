@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { UpgradeChoice } from '@/game/rift/riftTypes'
 import RarityFrame from './RarityFrame'
+import { playSound } from '@/audio/soundEvents'
 import styles from './UpgradeCardChoice.module.css'
 
 interface Props {
@@ -16,9 +17,12 @@ export default function UpgradeCardChoice({ choice, onPick }: Props) {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [])
 
+  useEffect(() => { playSound('ui_upgrade_card_flip') }, [])
+
   function handlePick(id: string) {
     if (picked) return
     setPicked(id)
+    playSound('ui_claim_sweep')
     timerRef.current = setTimeout(() => onPick(id), 400)
   }
 

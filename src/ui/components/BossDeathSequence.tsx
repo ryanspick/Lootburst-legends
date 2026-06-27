@@ -3,6 +3,7 @@ import type { CombatEntity } from '@/game/rift/riftTypes'
 import { ELEMENT_COLOURS, RARITY_COLOURS } from '@/constants/palette'
 import { triggerShake } from '@/animation/screenShake'
 import { emitExplosion, emitChestVolcano, emitGoldBeam } from '@/vfx/emitters'
+import { playSound } from '@/audio/soundEvents'
 import styles from './BossDeathSequence.module.css'
 
 interface Props {
@@ -25,9 +26,11 @@ export default function BossDeathSequence({ boss, killCount, goldEarned, onDone 
 
   useEffect(() => {
     // Immediate shockwave VFX
+    playSound('combat_boss_death_boom')
     triggerShake('bossDeath')
     emitExplosion({ x: window.innerWidth / 2, y: window.innerHeight * 0.42 }, 60, boss.element)
     setTimeout(() => {
+      playSound('reward_chest_volcano')
       emitGoldBeam({ x: window.innerWidth / 2, y: window.innerHeight * 0.42 })
       emitChestVolcano({ x: window.innerWidth / 2, y: window.innerHeight * 0.42 }, 8)
     }, 200)

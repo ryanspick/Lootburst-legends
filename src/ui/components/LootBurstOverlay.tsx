@@ -5,6 +5,7 @@ import { emitChestVolcano, emitGoldBeam, emitCoinBurst } from '@/vfx/emitters'
 import { playRarityReveal } from '@/vfx/rarityReveal'
 import { triggerShake } from '@/animation/screenShake'
 import { generateChestSprite } from '@/art/generated'
+import { playSound } from '@/audio/soundEvents'
 import styles from './LootBurstOverlay.module.css'
 
 export interface LootItem {
@@ -58,10 +59,13 @@ export default function LootBurstOverlay({ items, gold = 0, xp = 0, onClaim }: P
       t += delay
       timers.push(setTimeout(() => {
         setPhase(captured)
+        if (captured === 'chest_land')  playSound('reward_chest_rattle')
+        if (captured === 'chest_shake') playSound('reward_chest_crack')
         if (captured === 'chest_burst') {
           const rect = chestRef.current?.getBoundingClientRect()
           const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2
           const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2
+          playSound('reward_chest_volcano')
           triggerShake('bossDeath')
           emitChestVolcano({ x: cx, y: cy }, items.length)
           emitGoldBeam({ x: cx, y: cy })

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CombatEntity } from '@/game/rift/riftTypes'
 import { ELEMENT_COLOURS } from '@/constants/palette'
 import SpriteCharacter from './SpriteCharacter'
+import { playSound } from '@/audio/soundEvents'
 import styles from './BossEntrance.module.css'
 
 interface Props {
@@ -17,6 +18,7 @@ export default function BossEntrance({ boss, onDone }: Props) {
   onDoneRef.current = onDone
 
   useEffect(() => {
+    playSound('rarity_epic_bass')
     const seq: Array<[Step, number]> = [
       ['dim',  300],
       ['glyph', 500],
@@ -28,7 +30,10 @@ export default function BossEntrance({ boss, onDone }: Props) {
     const timers: ReturnType<typeof setTimeout>[] = []
     for (const [s, delay] of seq) {
       t += delay
-      const tid = setTimeout(() => setStep(s), t)
+      const tid = setTimeout(() => {
+        setStep(s)
+        if (s === 'name') playSound('combat_boss_death_boom')
+      }, t)
       timers.push(tid)
     }
     const doneTid = setTimeout(() => onDoneRef.current(), t)
