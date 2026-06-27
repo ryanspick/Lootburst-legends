@@ -4,6 +4,7 @@ import type { Rarity } from '@/constants/palette'
 import { RARITY_COLOURS } from '@/constants/palette'
 import { emitCoinBurst, emitRarityBurst } from '@/vfx/emitters'
 import { triggerShake } from '@/animation/screenShake'
+import { playSound } from '@/audio/soundEvents'
 import styles from './RewardSummary.module.css'
 
 interface Props {
@@ -43,6 +44,7 @@ export default function RewardSummary({ reward, killCount, totalDamage, elapsedM
 
   useEffect(() => {
     emitCoinBurst({ x: window.innerWidth / 2, y: window.innerHeight * 0.3 }, 20)
+    playSound(isWipe ? 'combat_shield_boing' : 'reward_level_up_flourish')
     if (!isWipe && (bestRarity === 'epic' || bestRarity === 'legendary' || bestRarity === 'mythic')) {
       triggerShake('heavySkill')
       emitRarityBurst({ x: window.innerWidth / 2, y: window.innerHeight * 0.3 }, bestRarity)
