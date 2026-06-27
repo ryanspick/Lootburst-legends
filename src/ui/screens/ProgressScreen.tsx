@@ -37,9 +37,14 @@ export default function ProgressScreen() {
   const dailyQuestsClaimed = useGameStore(s => s.dailyQuestsClaimed)
   const claimDailyQuest = useGameStore(s => s.claimDailyQuest)
   const checkQuestRollover = useGameStore(s => s.checkQuestRollover)
+  const runHistory = useGameStore(s => s.runHistory)
   const ownedCosmeticIds = useGameStore(s => s.ownedCosmeticIds)
   const equippedCosmetics = useGameStore(s => s.equippedCosmetics)
   const equipCosmetic = useGameStore(s => s.equipCosmetic)
+  const equippedPetId   = useGameStore(s => s.equippedPetId)
+  const equippedMountId = useGameStore(s => s.equippedMountId)
+  const equipPet   = useGameStore(s => s.equipPet)
+  const equipMount = useGameStore(s => s.equipMount)
 
   useEffect(() => { checkQuestRollover() }, [])
 
@@ -86,22 +91,26 @@ export default function ProgressScreen() {
             <span className={styles.sectionCount}>{petsData.pets.length} / {petsData.pets.length}</span>
           </div>
           <div className={styles.petGrid}>
-            {petsData.pets.map(pet => (
-              <div key={pet.id} className={styles.petCard}>
-                <RarityFrame rarity={pet.rarity as Rarity} size={60} animate>
-                  <SpriteCharacter
-                    assetId={pet.id}
-                    rarity={pet.rarity as Rarity}
-                    size={48}
-                    animate
-                  />
-                </RarityFrame>
-                <span className={styles.petName}>{pet.displayName}</span>
-                <span className={styles.petRarity} data-rarity={pet.rarity}>
-                  {pet.rarity.toUpperCase()}
-                </span>
-              </div>
-            ))}
+            {petsData.pets.map(pet => {
+              const equipped = equippedPetId === pet.id
+              return (
+                <div
+                  key={pet.id}
+                  className={`${styles.petCard} ${equipped ? styles.petEquipped : ''}`}
+                  onClick={() => equipPet(pet.id)}
+                >
+                  <RarityFrame rarity={pet.rarity as Rarity} size={60} animate>
+                    <SpriteCharacter assetId={pet.id} rarity={pet.rarity as Rarity} size={48} animate />
+                  </RarityFrame>
+                  <span className={styles.petName}>{pet.displayName}</span>
+                  <span className={styles.petRarity} data-rarity={pet.rarity}>
+                    {pet.rarity.toUpperCase()}
+                  </span>
+                  <span className={styles.petEffect}>{pet.combatEffect.replace(/_/g, ' ')}</span>
+                  {equipped && <span className={styles.petEquippedBadge}>ACTIVE</span>}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -126,13 +135,25 @@ export default function ProgressScreen() {
           {selectedMount && (() => {
             const m = mountsData.mounts.find(x => x.id === selectedMount)
             if (!m) return null
+            const MOUNT_STAT_LABELS: Record<string, string> = {
+              mount_iron_tortoise: '+15% Hero HP',
+              mount_golden_boar:   '+20% Gold',
+              mount_void_serpent:  '+10% ATK · +5% Crit',
+              mount_crystal_stag:  '+10% ATK · +10% HP',
+              mount_rainbow_drake: '+15% ATK · +15% HP · +10% Gold',
+            }
+            const isEquipped = equippedMountId === m.id
             return (
               <div className={styles.mountDetail}>
                 <div className={styles.mountDetailName}>{m.displayName}</div>
-                <div className={styles.mountDetailRow}>
-                  <span className={styles.mountDetailLabel}>Idle effect</span>
-                  <span className={styles.mountDetailValue}>{m.idleEffect.replace(/_/g, ' ')}</span>
-                </div>
+                {MOUNT_STAT_LABELS[m.id] && (
+                  <div className={styles.mountDetailRow}>
+                    <span className={styles.mountDetailLabel}>Run bonus</span>
+                    <span className={styles.mountDetailValue} style={{ color: '#44ccff' }}>
+                      {MOUNT_STAT_LABELS[m.id]}
+                    </span>
+                  </div>
+                )}
                 <div className={styles.mountDetailRow}>
                   <span className={styles.mountDetailLabel}>Element</span>
                   <span className={styles.mountDetailValue}>{m.element}</span>
@@ -141,6 +162,12 @@ export default function ProgressScreen() {
                   <span className={styles.mountDetailLabel}>Source</span>
                   <span className={styles.mountDetailValue}>{m.unlockSource.replace(/_/g, ' ')}</span>
                 </div>
+                <button
+                  className={`${styles.mountEquipBtn} ${isEquipped ? styles.mountEquipActive : ''}`}
+                  onClick={() => equipMount(m.id)}
+                >
+                  {isEquipped ? '✓ EQUIPPED' : 'EQUIP'}
+                </button>
               </div>
             )
           })()}
@@ -272,6 +299,48 @@ export default function ProgressScreen() {
               </div>
             ))}
           </div>
+
+          {runHistory.length > 0 && (
+            <>
+              <div className={styles.sectionHeader} style={{ marginTop: 8 }}>
+                <span className={styles.sectionTitle}>PERSONAL BESTS</span>
+              </div>
+              <div className={styles.statList}>
+                {[
+                  { label: 'Best Kill Run',  value: Math.max(...runHistory.map(r => r.kills)).toLocaleString() + ' kills' },
+                  { label: 'Best Gold Run',  value: Math.max(...runHistory.map(r => r.goldEarned)).toLocaleString() + ' 💰' },
+                  { label: 'Win Rate',       value: Math.round(runHistory.filter(r => !r.wasWipe).length / runHistory.length * 100) + '%' },
+                  { label: 'Highest Tier',   value: 'T' + Math.max(...runHistory.map(r => r.tierLevel)) },
+                ].map(({ label, value }) => (
+                  <div key={label} className={styles.statRow}>
+                    <span className={styles.statLabel}>{label}</span>
+                    <strong className={styles.statValue}>{value}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div className={styles.sectionHeader} style={{ marginTop: 16 }}>
+                <span className={styles.sectionTitle}>RECENT RUNS</span>
+                <span className={styles.sectionCount}>{runHistory.length} saved</span>
+              </div>
+              <div className={styles.runHistoryList}>
+                {runHistory.map((run, i) => {
+                  const secs = Math.floor(run.elapsedMs / 1000)
+                  const timeStr = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
+                  const date = new Date(run.timestamp)
+                  const dateStr = `${date.getMonth() + 1}/${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`
+                  return (
+                    <div key={i} className={`${styles.runRow} ${run.wasWipe ? styles.runWipe : styles.runWin}`}>
+                      <span className={styles.runIcon}>{run.wasWipe ? '✖' : '✦'}</span>
+                      <span className={styles.runDetail}>T{run.tierLevel} · {run.kills} kills · {timeStr}</span>
+                      <span className={styles.runGold}>+{run.goldEarned.toLocaleString()} 💰</span>
+                      <span className={styles.runDate}>{dateStr}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
 

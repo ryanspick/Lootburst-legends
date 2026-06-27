@@ -1,0 +1,48 @@
+.hint {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  background: rgba(10, 10, 30, 0.92);
+  border: 1.5px solid #ffd700;
+  border-radius: 10px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 280px;
+  width: max-content;
+  pointer-events: none;
+  z-index: 60;
+  box-shadow: 0 0 16px #ffd70044, 0 4px 20px #00000088;
+  opacity: 0;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.hint.in {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-12px);
+}
+
+.hint.hold {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0px);
+}
+
+.hint.out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-8px);
+}
+
+.icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 7px;
+  color: #ffffffdd;
+  line-height: 1.7;
+  letter-spacing: 0.3px;
+}

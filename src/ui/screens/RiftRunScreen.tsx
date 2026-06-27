@@ -32,6 +32,7 @@ import { getCosmeticById } from '@/data/cosmeticsData'
 import heroesData from '@/data/art/heroes.visual.json'
 import FloatingCurrency from '@/ui/components/FloatingCurrency'
 import type { FloatEmit } from '@/ui/components/FloatingCurrency'
+import CombatHint from '@/ui/components/CombatHint'
 import { playTrack } from '@/audio/musicEngine'
 import { useGameStore } from '@/store/gameStore'
 import styles from './RiftRunScreen.module.css'
@@ -97,6 +98,11 @@ export default function RiftRunScreen({ onExit }: Props) {
   const floatIdRef = useRef(0)
   const emittedLootRef = useRef(new Set<number>())
   const goldHudRef = useRef<HTMLSpanElement>(null)
+
+  // First-run contextual hints (only during totalRifts === 0)
+  const isFirstRift = totalRifts === 0
+  const [combatHint, setCombatHint] = useState<{ msg: string; icon: string } | null>(null)
+  const shownHintsRef = useRef(new Set<string>())
   const lastGoldFlushRef = useRef(0)
   const lastFlushedGoldRef = useRef(0)
   // Wave queue — completion-based spawning
@@ -305,6 +311,10 @@ export default function RiftRunScreen({ onExit }: Props) {
               triggerUpgradeChoice(state)
               setUpgradeChoice({ cards: state.upgradeChoice!.cards, pickedId: null })
               setPhase('upgrade_choice')
+              if (isFirstRift && !shownHintsRef.current.has('cards')) {
+                shownHintsRef.current.add('cards')
+                setCombatHint({ msg: 'Pick an upgrade — cards power up your squad!', icon: '✨' })
+              }
               break
             case 'boss_warning': {
               const bId = event.data?.bossId as string
@@ -325,6 +335,10 @@ export default function RiftRunScreen({ onExit }: Props) {
               setWavePresentation(null)
               prevBossAliveRef.current = true
               playTrack('boss')
+              if (isFirstRift && !shownHintsRef.current.has('boss')) {
+                shownHintsRef.current.add('boss')
+                setCombatHint({ msg: 'BOSS FIGHT! Your squad fights automatically!', icon: '⚠️' })
+              }
               break
             }
             case 'final_boss': {
@@ -472,6 +486,17 @@ export default function RiftRunScreen({ onExit }: Props) {
 
       {/* Floating currency particles */}
       <FloatingCurrency emissions={floatEmissions} onDone={handleFloatDone} />
+
+      {/* First-rift contextual hint */}
+      {combatHint && (
+        <CombatHint
+          key={combatHint.msg}
+          message={combatHint.msg}
+          icon={combatHint.icon}
+          durationMs={4500}
+          onDone={() => setCombatHint(null)}
+        />
+      )}
 
       {/* HUD overlay */}
       <div className={styles.hud}>
