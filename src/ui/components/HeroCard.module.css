@@ -1,0 +1,154 @@
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px 10px;
+  background: #0e0e22;
+  border: 1px solid #2233aa33;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.card:hover { transform: translateY(-3px); }
+.card:active { transform: scale(0.97); }
+
+.card.selected {
+  border-color: var(--rarity-c, #4488ff);
+  box-shadow: 0 0 16px var(--rarity-g, #4488ff44);
+  animation: cardFloat 2.4s ease-in-out infinite;
+}
+
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-3px); }
+}
+
+.card.inSquad::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  border: 2px solid #44ff8888;
+  pointer-events: none;
+}
+
+.card.locked {
+  opacity: 0.5;
+  filter: grayscale(0.6);
+  cursor: not-allowed;
+}
+
+.card[data-rarity='rare']      { --rarity-c: #4488ff; --rarity-g: #4488ff33; }
+.card[data-rarity='epic']      { --rarity-c: #aa44ff; --rarity-g: #aa44ff33; }
+.card[data-rarity='legendary'] { --rarity-c: #ffd700; --rarity-g: #ffd70033; }
+.card[data-rarity='mythic']    { --rarity-c: #ff44ff; --rarity-g: #ff44ff33; }
+
+.rarityStripe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 12px 12px 0 0;
+}
+
+.rarityStripe[data-rarity='common']    { background: #666; }
+.rarityStripe[data-rarity='uncommon']  { background: #44aa44; }
+.rarityStripe[data-rarity='rare']      { background: #4488ff; }
+.rarityStripe[data-rarity='epic']      { background: #aa44ff; }
+.rarityStripe[data-rarity='legendary'] { background: linear-gradient(90deg, #ffd700, #ffaa00); }
+.rarityStripe[data-rarity='mythic']    { background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #ff00ff); background-size: 200%; animation: rainbowShift 1s linear infinite; }
+
+@keyframes rainbowShift {
+  from { background-position: 0; }
+  to   { background-position: 200%; }
+}
+
+.lockIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 22px;
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.name {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #ccd;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80px;
+}
+
+.role {
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: capitalize;
+}
+
+.squadPip {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  font-family: monospace;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #44ff88;
+  background: #001a0a;
+  border: 1px solid #44ff8844;
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+/* ── Cosmetic frames (come last to win cascade) ─────────────────────────── */
+.card[data-frame='frame_silver'] {
+  border-color: #b0c8d4;
+}
+.card[data-frame='frame_gold'] {
+  border-color: #ffd700;
+  box-shadow: 0 0 8px #ffd70044;
+}
+.card.selected[data-frame='frame_gold'] {
+  box-shadow: 0 0 18px #ffd700aa;
+}
+.card[data-frame='frame_neon'] {
+  border-color: #44aaff;
+  animation: frameNeonPulse 1.4s ease-in-out infinite;
+}
+.card[data-frame='frame_mythic'] {
+  animation: frameMythicBorder 2.8s linear infinite;
+}
+
+@keyframes frameNeonPulse {
+  0%, 100% { border-color: #44aaff; box-shadow: 0 0 6px #44aaff66; }
+  50%       { border-color: #ff44ff; box-shadow: 0 0 14px #ff44ffaa; }
+}
+
+@keyframes frameMythicBorder {
+  0%   { border-color: #ff4444; box-shadow: 0 0 8px #ff444466; }
+  16%  { border-color: #ffaa00; box-shadow: 0 0 8px #ffaa0066; }
+  33%  { border-color: #ffff44; box-shadow: 0 0 8px #ffff4466; }
+  50%  { border-color: #44ff88; box-shadow: 0 0 8px #44ff8866; }
+  66%  { border-color: #4488ff; box-shadow: 0 0 8px #4488ff66; }
+  83%  { border-color: #cc44ff; box-shadow: 0 0 8px #cc44ff66; }
+  100% { border-color: #ff4444; box-shadow: 0 0 8px #ff444466; }
+}

@@ -75,7 +75,8 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
   const def = enemiesData.enemies.find(e => e.id === enemyId)
   if (!def) throw new Error(`Unknown enemy: ${enemyId}`)
   const isElite = def.tier === 'elite'
-  const base = isElite ? Math.round(1400 * diffMult) : Math.round(280 * diffMult)
+  // HP scaled down for horde mode (10× enemy counts): normal ~20%, elite ~25%
+  const base = isElite ? Math.round(350 * diffMult) : Math.round(56 * diffMult)
   const atkScale = 1 + (diffMult - 1) * 0.65
   return {
     id: `${enemyId}_${index}_${Date.now()}`,
@@ -230,6 +231,7 @@ export function createInitialRiftState(
     hasReviveToken: false,
     riftTierLevel: options?.tierLevel ?? 1,
     rewardMult: options?.rewardMult ?? 1,
+    bossPhase: 1,
   }
 
   for (const id of (options?.startBoosts ?? [])) {
@@ -464,7 +466,8 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       heroTarget.deathAnimMs = 500
     }
 
-    enemy.hitstunMs = enemy.role === 'boss' ? BOSS_ATK_CD
+    enemy.hitstunMs = enemy.role === 'boss'
+      ? (enemy.enraged ? Math.round(BOSS_ATK_CD * 0.6) : BOSS_ATK_CD)
       : enemy.rarity === 'rare' ? ELITE_ATK_CD
       : ENEMY_ATK_CD
   }
@@ -575,6 +578,51 @@ function applyProjectileHit(
     } else if (p.isCrit) {
       emitCritPop({ x: t.x, y: t.y })
       triggerHitstop(65)
+    }
+
+    // Boss phase 2 — enrage at 50% HP
+    if (t.role === 'boss' && t.alive && !t.enrageTriggered && t.hp <= t.maxHp * 0.5) {
+      t.enrageTriggered = true
+      t.enraged = true
+      t.flashMs = 800
+      t.hitstunMs = 0
+      state.bossPhase = 2
+      triggerShake('bossDeath')
+      triggerHitstop(200)
+      emitExplosion({ x: t.x, y: t.y }, 30, t.element)
+      state.impactFlashMs = 180
+      state.impactFlashColor = '#ff2200'
+      // Spawn 2 reinforcement minions
+      for (let i = 0; i < 2; i++) {
+        const pool = enemiesData.enemies.filter(e => e.tier === 'elite' || e.tier === 'normal')
+        const def = pool[Math.floor(Math.random() * pool.length)]
+        if (def) {
+          const minion: CombatEntity = {
+            id: `enrage_minion_${i}_${Date.now()}`,
+            displayName: def.displayName,
+            hp: Math.round(800 * (state.difficultyMult ?? 1)),
+            maxHp: Math.round(800 * (state.difficultyMult ?? 1)),
+            atk: Math.round(40 * (state.difficultyMult ?? 1)),
+            def: 5,
+            spd: 120,
+            x: t.x + (i === 0 ? -80 : 80),
+            y: t.y + 40,
+            rarity: 'uncommon',
+            role: 'enemy',
+            element: t.element,
+            assetId: def.id,
+            spriteDataUrl: null,
+            alive: true,
+            hitstunMs: 600,
+            flashMs: 0,
+            deathAnimMs: 0,
+            basicCdMs: 0,
+            skillCdMs: 0,
+            ultimateCdMs: 0,
+          }
+          state.enemies.push(minion)
+        }
+      }
     }
 
     if (t.hp <= 0 && t.alive) {

@@ -1,0 +1,70 @@
+.beam {
+  position: fixed;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 100vh;
+  z-index: 60;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  animation: beamAppear 0.12s ease-out forwards, beamFade 0.4s ease-in 1.0s forwards;
+}
+
+@keyframes beamAppear {
+  from { opacity: 0; transform: translateX(-50%) scaleY(0.2); }
+  to   { opacity: 1; transform: translateX(-50%) scaleY(1); }
+}
+
+@keyframes beamFade {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.core {
+  position: absolute;
+  bottom: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(to top, var(--beam-color), var(--beam-color)88, transparent);
+  filter: blur(1px);
+}
+
+.wide {
+  position: absolute;
+  bottom: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(to top, var(--beam-glow), transparent 70%);
+  opacity: 0.35;
+  filter: blur(8px);
+}
+
+.flare {
+  position: absolute;
+  bottom: 0;
+  width: 120px;
+  height: 40%;
+  background: radial-gradient(ellipse at bottom, var(--beam-glow) 0%, transparent 70%);
+  opacity: 0.25;
+  filter: blur(16px);
+}
+
+.sideRays {
+  position: absolute;
+  bottom: 30%;
+  width: 0;
+  height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ray {
+  position: absolute;
+  width: 2px;
+  height: 80px;
+  background: linear-gradient(to top, var(--beam-color), transparent);
+  transform-origin: bottom center;
+  opacity: 0.5;
+}

@@ -1,0 +1,94 @@
+.slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 90px;
+  height: 100px;
+  background: #0e0e22;
+  border: 1px solid #2233aa33;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.2s;
+  overflow: hidden;
+}
+
+.slot:hover { transform: translateY(-2px); }
+.slot:active { transform: scale(0.96); }
+
+.slot.empty {
+  border-style: dashed;
+  border-color: #2233aa44;
+}
+
+.slot.active {
+  border-color: var(--rarity-color, #4488ff);
+  box-shadow: 0 0 14px var(--rarity-color, #4488ff44);
+}
+
+.slot[data-rarity='rare']      { --rarity-color: #4488ff; }
+.slot[data-rarity='epic']      { --rarity-color: #aa44ff; }
+.slot[data-rarity='legendary'] { --rarity-color: #ffd700; }
+.slot[data-rarity='mythic']    { --rarity-color: #ff44ff; }
+
+.spriteWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: heroBob 2.2s ease-in-out infinite;
+}
+
+@keyframes heroBob {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-4px); }
+}
+
+.name {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #aabbcc;
+  text-transform: uppercase;
+}
+
+.remove {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 10px;
+  color: #445566;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.slot:hover .remove { opacity: 1; }
+
+.activeRing {
+  position: absolute;
+  inset: -1px;
+  border-radius: 12px;
+  border: 2px solid var(--rarity-color, #4488ff);
+  pointer-events: none;
+  animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
+.emptyGlyph {
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: #2233aa55;
+}
+
+.emptyLabel {
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #2233aa55;
+}

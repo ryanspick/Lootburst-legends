@@ -39,6 +39,9 @@ export interface CombatEntity {
   basicCdMs: number
   skillCdMs: number
   ultimateCdMs: number
+  // Boss-only
+  enraged?: boolean
+  enrageTriggered?: boolean
 }
 
 export interface Projectile {
@@ -165,6 +168,9 @@ export interface RiftRunState {
   // Rift tier
   riftTierLevel: number
   rewardMult: number
+
+  // Boss phase tracking (React reads this for BossHpBar)
+  bossPhase: 1 | 2
 }
 
 export interface TimelineEvent {

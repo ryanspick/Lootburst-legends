@@ -1,0 +1,45 @@
+.slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  background: #0e0e22;
+  border: 1px solid #2233aa33;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+  padding: 0;
+}
+
+.slot:hover { transform: scale(1.06); }
+.slot:active { transform: scale(0.96); }
+
+.slot.empty { border-style: dashed; }
+
+.slot.highlighted {
+  border-color: #4488ff66;
+  box-shadow: 0 0 12px #4488ff33;
+}
+
+.slot.filled { border-color: transparent; }
+
+.emptyInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.slotIcon {
+  font-size: 20px;
+  opacity: 0.3;
+}
+
+.slotLabel {
+  font-family: monospace;
+  font-size: 7px;
+  letter-spacing: 1px;
+  color: #2233aa55;
+  text-transform: uppercase;
+}

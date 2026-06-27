@@ -1,0 +1,114 @@
+.panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  background: #0e0e22;
+  border: 1px solid #2233aa33;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.panel[data-rarity='rare']      { border-color: #4488ff44; }
+.panel[data-rarity='epic']      { border-color: #aa44ff44; }
+.panel[data-rarity='legendary'] { border-color: #ffd70044; }
+.panel[data-rarity='mythic']    { border-color: #ff44ff44; }
+
+.glowBg {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 80px;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.top {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  position: relative;
+}
+
+.spriteArea {
+  flex: 0 0 auto;
+}
+
+.info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.name {
+  font-family: monospace;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.meta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.element {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  border: 1px solid;
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+
+.role {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #8899aa;
+  padding: 2px 0;
+  text-transform: capitalize;
+}
+
+.shards {
+  font-family: monospace;
+  font-size: 10px;
+  color: #8899aa;
+}
+
+.tags {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: #556677;
+  background: #0a0a1a;
+  border: 1px solid #2233aa33;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.lockedHint {
+  font-family: monospace;
+  font-size: 11px;
+  color: #6677aa;
+  background: #0a0a1a;
+  border: 1px dashed #334455;
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-align: center;
+  letter-spacing: 0.5px;
+}

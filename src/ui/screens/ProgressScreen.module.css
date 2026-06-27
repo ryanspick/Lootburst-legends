@@ -136,6 +136,189 @@
 .mountDetailLabel { color: var(--text-muted); }
 .mountDetailValue { color: var(--text-secondary); text-transform: capitalize; }
 
+/* Daily Quests */
+.questList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.questCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.questReady {
+  border-color: #44cc88;
+  box-shadow: 0 0 6px #44cc8844;
+}
+
+.questClaimed {
+  opacity: 0.5;
+}
+
+.questBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.questLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.questRewards {
+  display: flex;
+  gap: 8px;
+}
+
+.questReward {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.questProgress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.questTrack {
+  flex: 1;
+  height: 4px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.questFill {
+  height: 100%;
+  background: linear-gradient(90deg, #4488ff, #44cc88);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.questPct {
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.questCheck {
+  font-size: 18px;
+  color: #44cc88;
+  flex-shrink: 0;
+}
+
+/* Achievements */
+.achieveList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.achieveCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.achieveDone {
+  background: #0d1020;
+}
+
+.achieveLocked {
+  opacity: 0.8;
+}
+
+.achieveIcon {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 28px;
+  text-align: center;
+}
+
+.achieveBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.achieveTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.achieveCheck {
+  color: #44ff88;
+}
+
+.achieveDesc {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.achieveProgress {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.achieveTrack {
+  flex: 1;
+  height: 4px;
+  background: #1a1a2e;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.achieveFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.achievePct {
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.achieveRarity {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  opacity: 0.7;
+}
+
 /* Empty */
 .emptyState {
   display: flex;
@@ -148,3 +331,89 @@
 .emptyIcon { font-size: 48px; }
 .emptyText { font-size: 15px; color: var(--text-secondary); }
 .emptyHint { font-size: 12px; color: var(--text-muted); text-align: center; }
+
+/* ── Cosmetics tab ──────────────────────────────────────────────────────── */
+.cosmeticTypeSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cosmeticGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.cosmeticCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  text-align: center;
+  min-height: 110px;
+}
+
+.cosmeticCard:active { transform: scale(0.97); }
+
+.cosmeticOwned:hover {
+  border-color: #4488ff;
+}
+
+.cosmeticEquipped {
+  border-width: 2px;
+}
+
+.cosmeticLocked {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cosmeticIcon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.cosmeticName {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.cosmeticDesc {
+  font-family: monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+
+.cosmeticRarityBadge {
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 2px 6px;
+  border-radius: 8px;
+  background: #0e0e22;
+}
+
+.cosmeticEquippedBadge {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: #44ff88;
+  letter-spacing: 0.5px;
+}
+
+.cosmeticLockedBadge {
+  font-size: 14px;
+  opacity: 0.5;
+}

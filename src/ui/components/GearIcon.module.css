@@ -1,0 +1,53 @@
+.icon {
+  position: relative;
+  display: inline-flex;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.icon:hover { transform: translateY(-2px) scale(1.05); }
+.icon:active { transform: scale(0.96); }
+
+.icon.selected {
+  filter: drop-shadow(0 0 8px var(--rarity-glow, #4488ff));
+  animation: gearFloat 2s ease-in-out infinite;
+}
+
+@keyframes gearFloat {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-3px); }
+}
+
+.icon[data-rarity='rare']      { --rarity-glow: #4488ff; }
+.icon[data-rarity='epic']      { --rarity-glow: #aa44ff; }
+.icon[data-rarity='legendary'] { --rarity-glow: #ffd700; }
+.icon[data-rarity='mythic']    { --rarity-glow: #ff44ff; }
+
+.fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.equippedPip {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 14px;
+  height: 14px;
+  background: #44ff88;
+  color: #000;
+  font-family: monospace;
+  font-size: 8px;
+  font-weight: 700;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #000;
+}

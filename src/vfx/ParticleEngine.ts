@@ -32,9 +32,9 @@ function acquire(): ParticleField | null {
   return p
 }
 
-function release(p: ParticleField) {
-  const i = _active.indexOf(p)
-  if (i !== -1) _active.splice(i, 1)
+function releaseAt(index: number) {
+  const p = _active[index]
+  _active.splice(index, 1)
   _pool.push(p)
 }
 
@@ -44,6 +44,7 @@ export function setReducedMotionVfx(v: boolean) { _reducedMotion = v }
 export function getActiveCount() { return _active.length }
 
 export function spawnParticle(config: Partial<ParticleField>): ParticleField | null {
+  if (_reducedMotion) return null
   if (_lowVfxMode && _active.length >= 60) return null
   const p = acquire()
   if (!p) return null
@@ -52,25 +53,23 @@ export function spawnParticle(config: Partial<ParticleField>): ParticleField | n
 }
 
 export function updateParticles(deltaMs: number) {
+  const dt = deltaMs / 1000
   for (let i = _active.length - 1; i >= 0; i--) {
     const p = _active[i]
     p.ageMs += deltaMs
-    if (p.ageMs >= p.lifetimeMs) { release(p); continue }
-
-    p.vx += p.ax * deltaMs / 1000
-    p.vy += (p.ay + p.gravity) * deltaMs / 1000
-    p.x += p.vx * deltaMs / 1000
-    p.y += p.vy * deltaMs / 1000
-    p.rotation += p.rotationSpeed * deltaMs / 1000
+    if (p.ageMs >= p.lifetimeMs) { releaseAt(i); continue }
+    p.vx += p.ax * dt
+    p.vy += (p.ay + p.gravity) * dt
+    p.x  += p.vx * dt
+    p.y  += p.vy * dt
+    p.rotation += p.rotationSpeed * dt
   }
 }
 
 export function renderParticles(ctx: CanvasRenderingContext2D, width: number, height: number) {
   ctx.clearRect(0, 0, width, height)
 
-  const sorted = [..._active].sort((a, b) => a.zIndex - b.zIndex)
-
-  for (const p of sorted) {
+  for (const p of _active) {
     const t = p.ageMs / p.lifetimeMs
     const alpha = p.startAlpha + (p.endAlpha - p.startAlpha) * t
     const scale = p.startScale + (p.endScale - p.startScale) * t

@@ -4,6 +4,8 @@ import RarityFrame from '@/ui/components/RarityFrame'
 import LootBurstOverlay from '@/ui/components/LootBurstOverlay'
 import SparkleLayer from '@/ui/components/SparkleLayer'
 import DuplicateShardConversion from '@/ui/components/DuplicateShardConversion'
+import PityMeter from '@/ui/components/PityMeter'
+import OddsPanel from '@/ui/components/OddsPanel'
 import type { LootItem } from '@/ui/components/LootBurstOverlay'
 import { playRarityReveal } from '@/vfx/rarityReveal'
 import { playSound } from '@/audio/soundEvents'
@@ -60,6 +62,7 @@ export default function CapsuleScreen() {
   const incrementPity = useGameStore(s => s.incrementPity)
   const resetPity = useGameStore(s => s.resetPity)
   const recordCapsulePull = useGameStore(s => s.recordCapsulePull)
+  const capsuleSkin = useGameStore(s => s.equippedCosmetics?.capsule ?? 'capsule_classic')
 
   const rarities: Rarity[] = ['common','uncommon','rare','epic','legendary','mythic']
 
@@ -145,7 +148,7 @@ export default function CapsuleScreen() {
 
       {/* Machine visual */}
       <div className={styles.machine}>
-        <div className={`${styles.machineBody} ${pulling ? styles.machineActive : ''}`}>
+        <div className={`${styles.machineBody} ${pulling ? styles.machineActive : ''}`} data-skin={capsuleSkin}>
           <div className={styles.capsuleWindow}>
             {lastResult ? (
               <RarityFrame rarity={lastResult} size={72} animate>
@@ -179,19 +182,7 @@ export default function CapsuleScreen() {
       </div>
 
       {/* Pity meter */}
-      <div className={styles.pitySection}>
-        <div className={styles.pityHeader}>
-          <span>Legendary Pity</span>
-          <span className={styles.pityCount}>{pity}/{PITY_MAX}</span>
-        </div>
-        <div className={styles.pityBar}>
-          <div className={styles.pityFill} style={{ width: `${(pity / PITY_MAX) * 100}%` }} />
-          {[25, 50, 75].map(mark => (
-            <div key={mark} className={styles.pityMark} style={{ left: `${mark}%` }} />
-          ))}
-        </div>
-        <span className={styles.pityGuarantee}>Legendary guaranteed in {PITY_MAX - pity} pulls</span>
-      </div>
+      <PityMeter pulls={pity} pityThreshold={PITY_MAX} guaranteedRarity="LEGENDARY" />
 
       {/* Gem balance */}
       <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
@@ -220,18 +211,11 @@ export default function CapsuleScreen() {
       </div>
 
       {/* Odds */}
-      <details className={styles.odds}>
-        <summary className={styles.oddsSummary}>📊 View Odds</summary>
-        <div className={styles.oddsGrid}>
-          {ODDS.map(o => (
-            <div key={o.rarity} className={styles.oddsRow} data-rarity={o.rarity}>
-              <span className={styles.oddsRarity}>{o.rarity.toUpperCase()}</span>
-              <span className={styles.oddsPct}>{o.pct}%</span>
-            </div>
-          ))}
-        </div>
-        <p className={styles.oddsNote}>Duplicate heroes convert to {DUPE_SHARDS} Shards. Max-star heroes give bonus Shards.</p>
-      </details>
+      <OddsPanel
+        odds={ODDS.map(o => ({ rarity: o.rarity, chance: o.pct }))}
+        pullCost={PULL_COSTS.single}
+        currency="💎"
+      />
 
       {/* Duplicate shard conversion toast */}
       {dupeNotif && (

@@ -21,6 +21,7 @@ import {
   CHEST_COOLDOWN_MS, STREAK_GRACE_MS, getRewardForStreak, getNextReward,
   type PostRunOffer,
 } from '@/game/progression/dailyRewards'
+import { rollDailyQuests, getDailyQuestDate, buildActiveQuests } from '@/game/progression/dailyQuests'
 import heroesData from '@/data/art/heroes.visual.json'
 import gearData from '@/data/art/gear.visual.json'
 import petsData from '@/data/art/pets.visual.json'
@@ -85,6 +86,9 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const ownedGear        = useGameStore(s => s.ownedGear)
   const equipGear        = useGameStore(s => s.equipGear)
   const unequipHeroSlot  = useGameStore(s => s.unequipHeroSlot)
+  const dailyQuestDate = useGameStore(s => s.dailyQuestDate)
+  const dailyQuestProgress = useGameStore(s => s.dailyQuestProgress)
+  const dailyQuestsClaimed = useGameStore(s => s.dailyQuestsClaimed)
   const lastDailyChestAt = useGameStore(s => s.lastDailyChestAt)
   const loginStreak      = useGameStore(s => s.loginStreak)
   const nextFreeKeyAt    = useGameStore(s => s.nextFreeKeyAt)
@@ -106,6 +110,15 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const isNextJackpot    = nextReward.isJackpot ?? false
   const freeKeyReady     = nextFreeKeyAt === 0 || nowMs >= nextFreeKeyAt
   const nextKeyMs        = Math.max(0, nextFreeKeyAt - nowMs)
+
+  const today = getDailyQuestDate()
+  const questDefs = rollDailyQuests(today)
+  const activeQuests = buildActiveQuests(
+    questDefs,
+    dailyQuestDate === today ? dailyQuestProgress : {},
+    dailyQuestDate === today ? dailyQuestsClaimed : [],
+  )
+  const questsClaimable = activeQuests.filter(q => q.progress >= q.target && !q.claimed).length
 
   const unlockedTiers = getUnlockedTiers(totalRifts)
   const activeTierData = getRiftTier(selectedRiftTier)
@@ -332,6 +345,16 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             </span>
           </div>
         )}
+        {questsClaimable > 0 && (
+          <div className={`${styles.notifCard} ${styles.notifGreen}`}>
+            <span className={styles.notifIcon}>📋</span>
+            <div className={styles.notifBody}>
+              <span className={styles.notifTitle}>{questsClaimable} QUEST{questsClaimable > 1 ? 'S' : ''} READY!</span>
+              <span className={styles.notifDetail}>Claim rewards in Progress → Stats</span>
+            </div>
+          </div>
+        )}
+
         {freeKeyReady ? (
           <div className={`${styles.notifCard} ${styles.notifGreen}`} onClick={handleClaimFreeKey}>
             <span className={styles.notifIcon}>🔑</span>

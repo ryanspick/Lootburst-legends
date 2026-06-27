@@ -1,0 +1,98 @@
+.wrap {
+  width: 100%;
+  background: #0a0a18;
+  border: 1px solid #2233aa33;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+}
+
+.toggle:hover { background: #ffffff06; }
+
+.toggleLabel {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #556677;
+  flex: 1;
+  text-align: left;
+}
+
+.toggleIcon {
+  font-size: 8px;
+  color: #556677;
+}
+
+.pullCost {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #88aaff;
+}
+
+.table {
+  padding: 4px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-top: 1px solid #2233aa22;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rarityLabel {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 1px;
+  width: 72px;
+  flex: 0 0 72px;
+}
+
+.barTrack {
+  flex: 1;
+  height: 6px;
+  background: #1a1a2e;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  border-radius: 3px;
+  opacity: 0.8;
+  transition: width 0.5s ease;
+}
+
+.pct {
+  font-family: monospace;
+  font-size: 10px;
+  font-weight: 600;
+  width: 48px;
+  text-align: right;
+  flex: 0 0 48px;
+}
+
+.disclaimer {
+  font-family: monospace;
+  font-size: 8px;
+  color: #334455;
+  line-height: 1.4;
+  border-top: 1px solid #1a1a2e;
+  padding-top: 6px;
+  margin-top: 4px;
+}

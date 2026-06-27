@@ -1,11 +1,17 @@
 import { useEffect, useRef } from 'react'
-import { updateParticles, renderParticles } from './ParticleEngine'
+import { updateParticles, renderParticles, setReducedMotionVfx } from './ParticleEngine'
 import { tickShake } from '@/animation/screenShake'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 export default function ParticleCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const rafRef = useRef<number>(0)
   const lastRef = useRef<number>(0)
+  const reducedMotion = useReducedMotion()
+
+  useEffect(() => {
+    setReducedMotionVfx(reducedMotion)
+  }, [reducedMotion])
 
   useEffect(() => {
     const canvas = canvasRef.current

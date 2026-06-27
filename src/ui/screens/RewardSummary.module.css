@@ -1,0 +1,244 @@
+.screen {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 20px 24px;
+  gap: 16px;
+  background: linear-gradient(180deg, #08081a 0%, #0d0d22 60%, #0a0a18 100%);
+  overflow-y: auto;
+  animation: screenIn 0.5s cubic-bezier(0.2, 1.2, 0.3, 1) forwards;
+}
+
+@keyframes screenIn {
+  from { transform: translateY(60px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.runResult {
+  font-family: monospace;
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px currentColor;
+  animation: slamIn 0.4s cubic-bezier(0.1, 1.6, 0.3, 1) forwards;
+}
+
+.headerWipe .runResult {
+  animation: slamIn 0.4s cubic-bezier(0.1, 1.6, 0.3, 1) forwards,
+             dangerPulse 1s ease-in-out infinite 0.5s;
+}
+
+@keyframes slamIn {
+  from { transform: scale(2.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+@keyframes dangerPulse {
+  0%, 100% { text-shadow: 0 0 12px #ff2200; }
+  50%       { text-shadow: 0 0 32px #ff4400, 0 0 60px #ff000044; }
+}
+
+.newRecord {
+  font-family: monospace;
+  font-size: 12px;
+  letter-spacing: 3px;
+  color: #ffd700;
+  background: #ffd70011;
+  border: 1px solid #ffd70044;
+  padding: 3px 12px;
+  border-radius: 20px;
+  animation: fadeUp 0.4s ease-out 0.3s both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Stats ──────────────────────────────────────────────────────── */
+
+.statsGrid {
+  display: flex;
+  gap: 12px;
+  animation: fadeUp 0.4s ease-out 0.6s both;
+}
+
+.statBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #0e0e22;
+  border: 1px solid #2233aa33;
+  border-radius: 10px;
+  padding: 10px 18px;
+  min-width: 80px;
+}
+
+.statNum {
+  font-family: monospace;
+  font-size: 20px;
+  font-weight: 900;
+  color: #ddeeff;
+  text-shadow: 0 0 8px #4488ff44;
+}
+
+.statLbl {
+  font-family: monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: #556677;
+}
+
+/* ── Currency ───────────────────────────────────────────────────── */
+
+.currencyRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.4s ease-out 0.9s both;
+}
+
+.currencyChip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0e0e22;
+  border: 1px solid #2233aa33;
+  border-radius: 20px;
+  padding: 6px 14px;
+}
+
+.currencyIcon { font-size: 18px; }
+
+.currencyAmt {
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* ── Loot ───────────────────────────────────────────────────────── */
+
+.lootSection {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: fadeUp 0.4s ease-out 1.2s both;
+}
+
+.lootTitle {
+  font-family: monospace;
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: #556677;
+  text-align: center;
+}
+
+.lootGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lootCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px;
+  background: #0e0e22;
+  border: 1px solid;
+  border-radius: 8px;
+  animation: slideInRight 0.3s cubic-bezier(0.2, 1.2, 0.3, 1) both;
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(40px); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+.lootCard[data-rarity='legendary'],
+.lootCard[data-rarity='mythic'] {
+  animation: slideInRight 0.3s cubic-bezier(0.2, 1.2, 0.3, 1) both,
+             legendaryPulse 2s ease-in-out infinite 0.5s;
+}
+
+@keyframes legendaryPulse {
+  0%, 100% { box-shadow: none; }
+  50%       { box-shadow: 0 0 16px currentColor; }
+}
+
+.lootEmoji { font-size: 20px; flex: 0 0 auto; }
+
+.lootName {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ddeeff;
+  flex: 1;
+}
+
+.lootRarity {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+
+/* ── Heroes leveled ─────────────────────────────────────────────── */
+
+.heroesRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  animation: fadeUp 0.4s ease-out 1.4s both;
+}
+
+.heroLeveledChip {
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #44ff88;
+  background: #001a0a;
+  border: 1px solid #44ff8844;
+  border-radius: 20px;
+  padding: 4px 12px;
+}
+
+/* ── CTA ─────────────────────────────────────────────────────────── */
+
+.ctaRow {
+  margin-top: auto;
+  padding-top: 12px;
+  animation: fadeUp 0.4s ease-out 0.1s both;
+}
+
+.ctaBtn {
+  font-family: monospace;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #fff;
+  background: #0e0e22;
+  border: 1px solid;
+  border-radius: 12px;
+  padding: 14px 40px;
+  cursor: pointer;
+  transition: transform 0.1s, box-shadow 0.2s;
+}
+
+.ctaBtn:hover { transform: translateY(-2px); }
+.ctaBtn:active { transform: scale(0.97); }

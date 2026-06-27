@@ -1,0 +1,103 @@
+.wrap {
+  position: absolute;
+  top: 38%;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: waveSlide 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) forwards,
+             waveFade 0.4s ease-in 1.3s forwards;
+}
+
+@keyframes waveSlide {
+  from { transform: translateX(-120%); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+
+@keyframes waveFade {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(120%); }
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  background: linear-gradient(90deg, transparent, #0a0a1a 15%, #0a0a1a 85%, transparent);
+  border-top: 1px solid #3344aa44;
+  border-bottom: 1px solid #3344aa44;
+  padding: 10px 0;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #2233aa18, transparent);
+  animation: shimmer 1s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.wrap.boss .bar {
+  background: linear-gradient(90deg, transparent, #1a0a0a 15%, #1a0a0a 85%, transparent);
+  border-top-color: #aa334455;
+  border-bottom-color: #aa334455;
+}
+
+.swoopLeft,
+.swoopRight {
+  flex: 0 0 24px;
+  height: 100%;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.zone {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 4px;
+  color: #556699;
+  text-transform: uppercase;
+}
+
+.label {
+  font-family: monospace;
+  font-size: 28px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  color: #aaddff;
+  text-shadow: 0 0 20px #4488ff88;
+}
+
+.label[data-boss='true'] {
+  color: #ff6644;
+  text-shadow: 0 0 20px #ff220088;
+  animation: bossPulse 0.3s ease-in-out infinite alternate;
+}
+
+@keyframes bossPulse {
+  from { text-shadow: 0 0 16px #ff220088; }
+  to   { text-shadow: 0 0 32px #ff4400cc; }
+}
+
+.sub {
+  font-family: monospace;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #778899;
+  text-transform: uppercase;
+}

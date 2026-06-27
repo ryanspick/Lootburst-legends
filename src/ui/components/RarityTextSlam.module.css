@@ -1,0 +1,86 @@
+.wrap {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.slam .rarityText {
+  animation: slamIn 0.22s cubic-bezier(0.1, 1.8, 0.3, 1) forwards;
+}
+
+.hold .rarityText {
+  animation: slamHold 0.2s ease-out forwards;
+}
+
+.out .rarityText {
+  animation: slamOut 0.4s ease-in forwards;
+}
+
+@keyframes slamIn {
+  from { transform: scale(4) translateY(-20px); opacity: 0; }
+  to   { transform: scale(1.08) translateY(0);  opacity: 1; }
+}
+
+@keyframes slamHold {
+  from { transform: scale(1.08); }
+  to   { transform: scale(1.0); }
+}
+
+@keyframes slamOut {
+  from { transform: scale(1.0); opacity: 1; }
+  to   { transform: scale(0.7); opacity: 0; }
+}
+
+.rarityText {
+  font-family: monospace;
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.wrap[data-rarity='mythic'] .rarityText {
+  font-size: 44px;
+  background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #ff00ff, #ff0000);
+  background-size: 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: slamIn 0.22s cubic-bezier(0.1, 1.8, 0.3, 1) forwards,
+             rainbowShift 1s linear infinite;
+}
+
+@keyframes rainbowShift {
+  from { background-position: 0%; }
+  to   { background-position: 200%; }
+}
+
+.subText {
+  font-family: monospace;
+  font-size: 14px;
+  letter-spacing: 3px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease-out 0.3s forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.rainbowBar {
+  width: 200px;
+  height: 3px;
+  background: linear-gradient(90deg, #ff0000, #ff8800, #ffff00, #00ff00, #00ffff, #ff00ff);
+  background-size: 200%;
+  border-radius: 2px;
+  animation: fadeIn 0.3s ease-out 0.4s forwards, rainbowShift 0.8s linear infinite;
+  opacity: 0;
+}

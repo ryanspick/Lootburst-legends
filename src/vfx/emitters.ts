@@ -420,6 +420,43 @@ export function emitGearDropGlow(pos: Pos, rarity: Rarity) {
   }
 }
 
+export function emitRarityBurst(pos: Pos, rarity: Rarity) {
+  const RARITY_PALETTES: Record<string, string[]> = {
+    rare:      ['#4488ff', '#88aaff', '#ffffff', '#aaccff'],
+    epic:      ['#aa44ff', '#cc88ff', '#ffffff', '#ff88ff'],
+    legendary: ['#ffd700', '#ffaa00', '#ffffff', '#ffe866'],
+    mythic:    ['#ff00ff', '#ff0000', '#ffff00', '#00ffff', '#ffffff'],
+  }
+  const palette = RARITY_PALETTES[rarity] ?? RARITY_PALETTES.rare
+  const count = rarity === 'mythic' ? 60 : rarity === 'legendary' ? 45 : 30
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * Math.PI * 2
+    const speed = rand(120, 280)
+    spawnParticle({
+      x: pos.x, y: pos.y,
+      vx: Math.cos(angle) * speed + randPM(40),
+      vy: Math.sin(angle) * speed + randPM(40),
+      lifetimeMs: rand(500, 1200),
+      startScale: rand(1.2, 2.8), endScale: 0,
+      color: palette[i % palette.length],
+      shape: i % 3 === 0 ? 'star' : i % 3 === 1 ? 'diamond' : 'circle',
+      zIndex: 65, blendMode: 'add',
+    })
+  }
+  // Core flash
+  for (let i = 0; i < 8; i++) {
+    spawnParticle({
+      x: pos.x + randPM(10), y: pos.y + randPM(10),
+      vx: randPM(30), vy: rand(-60, -20),
+      lifetimeMs: rand(200, 400),
+      startScale: rand(2, 4), endScale: 0,
+      color: '#ffffff',
+      shape: 'circle',
+      zIndex: 66, blendMode: 'add',
+    })
+  }
+}
+
 export function emitComboText(pos: Pos, combo: number) {
   const colors = ['#ffdd00', '#ff8800', '#ff4400', '#ff00ff', '#ffffff']
   const color = colors[Math.min(combo - 2, colors.length - 1)]
@@ -431,6 +468,20 @@ export function emitComboText(pos: Pos, combo: number) {
       startScale: 1, endScale: 0,
       color, shape: i % 2 === 0 ? 'star' : 'diamond',
       zIndex: 52, blendMode: 'add',
+    })
+  }
+}
+
+export function emitHeroTrail(pos: Pos, color: string) {
+  for (let i = 0; i < 2; i++) {
+    spawnParticle({
+      x: pos.x + randPM(10), y: pos.y + randPM(10),
+      vx: randPM(12), vy: rand(-25, 8),
+      lifetimeMs: rand(180, 340),
+      startScale: rand(0.5, 1.1), endScale: 0,
+      startAlpha: 0.75, endAlpha: 0,
+      color, shape: 'circle',
+      zIndex: 18, blendMode: 'add',
     })
   }
 }

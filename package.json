@@ -11,6 +11,7 @@
     "art:placeholders": "tsx scripts/generate-placeholder-pixel-art.ts",
     "validate:visuals": "tsx scripts/validate-visuals.ts",
     "export:asset-prompts": "tsx scripts/export-asset-prompts.ts",
+    "generate:audio": "tsx scripts/generate-sfx.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"

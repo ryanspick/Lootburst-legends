@@ -27,42 +27,6 @@
   gap: 8px;
 }
 
-.squadSlot {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  padding: 8px 4px;
-  cursor: pointer;
-  min-height: 72px;
-  transition: border-color 0.15s;
-}
-
-.squadSlot:not(.squadEmpty):hover {
-  border-color: #ef4444;
-}
-
-.squadEmpty {
-  border-style: dashed;
-  border-color: #332244;
-  cursor: default;
-}
-
-.squadEmptyIcon {
-  font-size: 24px;
-  color: #332244;
-}
-
-.squadSlotName {
-  font-size: 9px;
-  color: var(--text-muted);
-  text-align: center;
-}
-
 /* Synergy */
 .synergyRow {
   display: flex;
@@ -70,19 +34,11 @@
   flex-wrap: wrap;
 }
 
-.synergyBadge {
+.synergyEmpty {
   font-size: 10px;
   color: var(--text-muted);
-  border: 1px solid var(--panel-border);
-  border-radius: 12px;
-  padding: 2px 8px;
-  background: var(--panel-bg);
-}
-
-.synergyBadge[data-active="true"] {
-  color: var(--gold);
-  border-color: var(--gold);
-  animation: pulse-scale 2s ease-in-out infinite;
+  font-family: monospace;
+  opacity: 0.6;
 }
 
 /* Detail panel */
@@ -90,75 +46,10 @@
   padding: 10px !important;
 }
 
-.detailRow {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-}
-
-.detailInfo {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.heroName {
-  font-size: 15px;
-  font-weight: bold;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.heroTags {
-  display: flex;
-  gap: 5px;
-  flex-wrap: wrap;
-}
-
-.heroTag {
-  font-size: 9px;
-  font-weight: bold;
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  padding: 1px 5px;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-}
-
-.stars {
-  display: flex;
-  gap: 1px;
-  font-size: 14px;
-}
-
-.starFull { color: #ffd700; }
-.starEmpty { color: #333355; }
-
 .gearSlots {
   display: flex;
   gap: 4px;
-}
-
-.gearSlot {
-  width: 26px;
-  height: 26px;
-  background: var(--bg-dark-indigo);
-  border: 1px dashed #332244;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gearSlotIcon { font-size: 12px; opacity: 0.4; }
-
-.detailActions {
-  display: flex;
-  gap: 6px;
   margin-top: 8px;
-  flex-wrap: wrap;
 }
 
 /* Hero grid */
@@ -166,57 +57,4 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 6px;
-}
-
-.heroCard {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: 6px;
-  padding: 5px 3px;
-  cursor: pointer;
-  transition: transform 0.1s, border-color 0.15s, box-shadow 0.15s;
-}
-
-.heroCard:active { transform: scale(0.93); }
-
-.heroCard.selected {
-  border-color: var(--gold);
-  box-shadow: 0 0 10px rgba(255,215,0,0.35);
-}
-
-.heroCard.inSquad {
-  border-color: #22c55e44;
-}
-
-.cardName {
-  font-size: 8px;
-  color: var(--text-secondary);
-  text-align: center;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  padding: 0 2px;
-}
-
-.squadIndicator {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 12px;
-  height: 12px;
-  background: #22c55e;
-  border-radius: 50%;
-  font-size: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #000;
-  font-weight: bold;
 }

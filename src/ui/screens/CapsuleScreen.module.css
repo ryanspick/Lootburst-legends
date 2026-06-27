@@ -40,7 +40,28 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 0 20px rgba(59,130,246,0.2), inset 0 0 20px rgba(0,0,0,0.5);
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.3s, border-color 0.3s;
+}
+
+/* Capsule skins */
+.machineBody[data-skin='capsule_crystal'] {
+  border-color: #4488ff;
+  box-shadow: 0 0 24px #4488ffaa, inset 0 0 20px #4488ff18;
+}
+.machineBody[data-skin='capsule_dark'] {
+  border-color: #6622aa;
+  box-shadow: 0 0 24px #6622aaaa, inset 0 0 20px #330066;
+  background: linear-gradient(180deg, #1a0a2a 0%, #0a0020 100%);
+}
+.machineBody[data-skin='capsule_divine'] {
+  border-color: #ffd700;
+  box-shadow: 0 0 28px #ffd700cc, inset 0 0 16px #ffd70022;
+  animation: divinePulse 2s ease-in-out infinite;
+}
+
+@keyframes divinePulse {
+  0%, 100% { box-shadow: 0 0 24px #ffd700aa, inset 0 0 16px #ffd70022; }
+  50%       { box-shadow: 0 0 40px #ffd700dd, inset 0 0 24px #ffd70044; }
 }
 
 .machineActive {

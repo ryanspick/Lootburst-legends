@@ -19,12 +19,16 @@ import { ZONES } from '@/game/rift/zoneBackgrounds'
 import UpgradeCardChoice from '@/ui/components/UpgradeCardChoice'
 import BossHpBar from '@/ui/components/BossHpBar'
 import BossEntrance from '@/ui/components/BossEntrance'
+import BossDeathSequence from '@/ui/components/BossDeathSequence'
+import WavePresentation from '@/ui/components/WavePresentation'
 import LootBurstOverlay from '@/ui/components/LootBurstOverlay'
 import type { LootItem } from '@/ui/components/LootBurstOverlay'
+import RewardSummary from '@/ui/screens/RewardSummary'
 import type { Rarity } from '@/constants/palette'
 import { triggerShake, setReducedMotion } from '@/animation/screenShake'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
-import { emitCoinBurst } from '@/vfx/emitters'
+import { emitCoinBurst, emitHeroTrail } from '@/vfx/emitters'
+import { getCosmeticById } from '@/data/cosmeticsData'
 import FloatingCurrency from '@/ui/components/FloatingCurrency'
 import type { FloatEmit } from '@/ui/components/FloatingCurrency'
 import { useGameStore } from '@/store/gameStore'
@@ -50,6 +54,7 @@ export default function RiftRunScreen({ onExit }: Props) {
   const lastTsRef = useRef<number>(0)
   const rafRef = useRef<number>(0)
   const timeMsRef = useRef<number>(0)
+  const trailTimerRef = useRef<number>(0)
 
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
   const totalRifts = useGameStore(s => s.totalRifts)
@@ -76,8 +81,13 @@ export default function RiftRunScreen({ onExit }: Props) {
   const [bossWarning, setBossWarning] = useState(false)
   const [bossEntrance, setBossEntrance] = useState<RiftRunState['boss']>(null)
   const [bossSnap, setBossSnap] = useState<RiftRunState['boss']>(null)
+  const [bossPhase, setBossPhase] = useState<1 | 2>(1)
   const [showLootBurst, setShowLootBurst] = useState(false)
   const [showRevivePrompt, setShowRevivePrompt] = useState(false)
+  const [bossDeathSnap, setBossDeathSnap] = useState<{ boss: RiftRunState['boss']; killCount: number; goldCollected: number } | null>(null)
+  const [showBossDeath, setShowBossDeath] = useState(false)
+  const [wavePresentation, setWavePresentation] = useState<{ waveIndex: number; enemyCount: number; isBoss?: boolean } | null>(null)
+  const prevBossAliveRef = useRef<boolean | null>(null)
   const zoneIdxRef = useRef(Math.floor(Math.random() * ZONES.length))
   const [showZoneName, setShowZoneName] = useState(false)
   const [floatEmissions, setFloatEmissions] = useState<FloatEmit[]>([])
@@ -194,6 +204,18 @@ export default function RiftRunScreen({ onExit }: Props) {
         state.elapsedMs += dt
         tickCombat(state, dt)
 
+        // Hero trail cosmetic
+        if (ts - trailTimerRef.current >= 80) {
+          trailTimerRef.current = ts
+          const trailId = useGameStore.getState().equippedCosmetics?.trail ?? 'trail_default'
+          const trailDef = getCosmeticById(trailId)
+          if (trailDef?.trailColor) {
+            for (const hero of state.heroes) {
+              if (hero.alive) emitHeroTrail({ x: hero.x, y: hero.y }, trailDef.trailColor)
+            }
+          }
+        }
+
         // Hero wipe detected inside tickCombat — check for revive before ending run.
         // Read via ref to escape TypeScript's control-flow narrowing of state.phase.
         if (stateRef.current!.phase === 'post_run') {
@@ -210,6 +232,19 @@ export default function RiftRunScreen({ onExit }: Props) {
           }
           rafRef.current = requestAnimationFrame(loop)
           return
+        }
+
+        // Detect boss death (transition alive→dead)
+        if (state.boss) {
+          const wasAlive = prevBossAliveRef.current
+          const isAlive = state.boss.alive
+          if (wasAlive === true && !isAlive && !showBossDeath) {
+            setBossDeathSnap({ boss: { ...state.boss }, killCount: state.killCount, goldCollected: state.goldCollected })
+            setShowBossDeath(true)
+          }
+          prevBossAliveRef.current = isAlive
+        } else {
+          prevBossAliveRef.current = null
         }
 
         // Boss warning countdown
@@ -230,6 +265,7 @@ export default function RiftRunScreen({ onExit }: Props) {
               const count = (event.data?.count as number) ?? 3
               const pattern = (event.data?.pattern as SpawnPattern) ?? 'ring'
               spawnWave(state, wave, count, pattern)
+              setWavePresentation({ waveIndex: wave, enemyCount: count })
               break
             }
             case 'upgrade_choice':
@@ -249,15 +285,23 @@ export default function RiftRunScreen({ onExit }: Props) {
             case 'mid_boss': {
               const bId = event.data?.bossId as string
               spawnBoss(state, bId)
+              state.bossPhase = 1
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
+              setBossPhase(1)
+              setWavePresentation(null)   // clear any active wave card — BossEntrance handles the announcement
+              prevBossAliveRef.current = true
               break
             }
             case 'final_boss': {
               const bId = event.data?.bossId as string
               spawnBoss(state, bId)
+              state.bossPhase = 1
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
+              setBossPhase(1)
+              setWavePresentation(null)   // clear any active wave card — BossEntrance handles the announcement
+              prevBossAliveRef.current = true
               break
             }
             case 'end_run':
@@ -296,8 +340,10 @@ export default function RiftRunScreen({ onExit }: Props) {
         if (Math.round(timeMsRef.current / 200) !== Math.round((timeMsRef.current - dt) / 200)) {
           setStats({ kills: state.killCount, gold: state.goldCollected, elapsedMs: state.elapsedMs })
           // Boss HP snap for React HUD
-          if (state.boss) setBossSnap({ ...state.boss })
-          else setBossSnap(null)
+          if (state.boss) {
+            setBossSnap({ ...state.boss })
+            if (state.bossPhase === 2 && bossPhase !== 2) setBossPhase(2)
+          } else setBossSnap(null)
         }
       }
 
@@ -347,7 +393,7 @@ export default function RiftRunScreen({ onExit }: Props) {
       {/* Boss HP bar — shown when boss is alive */}
       {bossSnap && bossSnap.alive && (
         <div className={styles.bossBarWrap}>
-          <BossHpBar boss={bossSnap} phase={1} maxPhases={2} />
+          <BossHpBar boss={bossSnap} phase={bossPhase} maxPhases={2} />
         </div>
       )}
 
@@ -407,9 +453,31 @@ export default function RiftRunScreen({ onExit }: Props) {
         </div>
       )}
 
+      {/* Wave presentation banner — keyed so a new wave always remounts with fresh timers */}
+      {wavePresentation && (
+        <WavePresentation
+          key={`wave_${wavePresentation.waveIndex}_${wavePresentation.enemyCount}`}
+          waveIndex={wavePresentation.waveIndex}
+          enemyCount={wavePresentation.enemyCount}
+          isBossWave={wavePresentation.isBoss}
+          zoneName={ZONES[zoneIdxRef.current]?.displayName}
+          onDone={() => setWavePresentation(null)}
+        />
+      )}
+
       {/* Boss entrance sequence */}
       {bossEntrance && (
         <BossEntrance boss={bossEntrance} onDone={() => setBossEntrance(null)} />
+      )}
+
+      {/* Boss death cinematic */}
+      {showBossDeath && bossDeathSnap?.boss && (
+        <BossDeathSequence
+          boss={bossDeathSnap.boss}
+          killCount={bossDeathSnap.killCount}
+          goldEarned={Math.round(bossDeathSnap.goldCollected)}
+          onDone={() => setShowBossDeath(false)}
+        />
       )}
 
       {/* Upgrade choice */}
@@ -437,41 +505,13 @@ export default function RiftRunScreen({ onExit }: Props) {
       )}
 
       {phase === 'post_run' && postRun && !showLootBurst && (
-        <div className={styles.postRunOverlay}>
-          <div className={styles.postRunPanel}>
-            <h2 className={styles.postRunTitle}>RIFT COMPLETE</h2>
-            <div className={styles.postRunStats}>
-              <div className={styles.postRunRow}>
-                <span>Kills</span><strong>{stateRef.current?.killCount ?? 0}</strong>
-              </div>
-              <div className={styles.postRunRow}>
-                <span>Gold Earned</span><strong style={{ color: 'var(--gold)' }}>+{postRun.goldEarned}</strong>
-              </div>
-              <div className={styles.postRunRow}>
-                <span>Gems Earned</span><strong style={{ color: '#aa44ff' }}>+{postRun.gemsEarned}</strong>
-              </div>
-              <div className={styles.postRunRow}>
-                <span>XP</span><strong style={{ color: '#44ccff' }}>+{Math.round(postRun.xpEarned)}</strong>
-              </div>
-            </div>
-            {postRun.lootItems.length > 0 && (
-              <div className={styles.postRunLoot}>
-                <div className={styles.postRunLootTitle}>LOOT DROPS</div>
-                {postRun.lootItems.map((item, i) => (
-                  <div key={i} className={styles.postRunLootItem} data-rarity={item.rarity}>
-                    {item.name}
-                  </div>
-                ))}
-              </div>
-            )}
-            {postRun.newRecords.length > 0 && (
-              <div className={styles.newRecord}>🏆 NEW RECORD: {postRun.newRecords.join(', ')}</div>
-            )}
-            <button className={styles.postRunBtn} onClick={() => onExit(stats.kills)}>
-              RETURN TO HUB
-            </button>
-          </div>
-        </div>
+        <RewardSummary
+          reward={postRun}
+          killCount={stateRef.current?.killCount ?? 0}
+          totalDamage={stateRef.current?.totalDamageDealt ?? 0}
+          elapsedMs={stateRef.current?.elapsedMs ?? 0}
+          onContinue={() => onExit(stats.kills)}
+        />
       )}
     </div>
   )

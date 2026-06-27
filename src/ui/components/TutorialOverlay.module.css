@@ -1,0 +1,203 @@
+/* Full-screen overlay — non-blocking by default so nav taps pass through */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(4, 4, 20, 0.72);
+}
+
+/* Welcome / done steps: block input, centre the card */
+.overlayFull {
+  pointer-events: all;
+  justify-content: center;
+  align-items: center;
+  background: rgba(4, 4, 20, 0.88);
+}
+
+/* Bottom-sheet card (nav-guide steps) */
+.card {
+  pointer-events: all;
+  position: relative;
+  background: var(--panel-bg);
+  border: 2px solid var(--gold);
+  border-radius: 18px 18px 0 0;
+  padding: 20px 20px 0;
+  /* Pushes content above the 64px bottom nav */
+  padding-bottom: 76px;
+  box-shadow: 0 -6px 40px rgba(255, 215, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  animation: slideUp 0.25s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* Centred full-card (for fullscreen steps) */
+.cardFull {
+  border-radius: 18px;
+  margin: 24px;
+  padding-bottom: 24px;
+  animation: scaleIn 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.88); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+/* Skip button — top-right of card */
+.skipBtn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 6px 8px;
+  pointer-events: all;
+}
+
+.cardEmoji {
+  font-size: 52px;
+  line-height: 1;
+  margin-top: 8px;
+}
+
+.cardTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.cardBody {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.55;
+  max-width: 290px;
+}
+
+/* Step progress dots */
+.dots {
+  display: flex;
+  gap: 7px;
+  margin: 4px 0 2px;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--panel-border);
+  transition: background 0.2s, transform 0.2s;
+}
+
+.dotActive {
+  background: var(--gold);
+  transform: scale(1.35);
+}
+
+.dotDone {
+  background: #44cc88;
+}
+
+/* Primary CTA button */
+.ctaBtn {
+  width: 100%;
+  max-width: 288px;
+  background: linear-gradient(135deg, #ffd700, #ffaa00);
+  color: #0a0a1a;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 15px 32px;
+  cursor: pointer;
+  letter-spacing: 1px;
+  pointer-events: all;
+  transition: transform 0.1s, filter 0.15s;
+  box-shadow: 0 4px 20px rgba(255, 215, 0, 0.35);
+}
+
+.ctaBtn:active { transform: scale(0.95); filter: brightness(0.9); }
+
+/* "Tap X below" nav hint */
+.navHint {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.navHint strong { color: var(--gold); }
+
+/* "skip step" tiny link */
+.nextBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  padding: 4px 8px;
+  pointer-events: all;
+  opacity: 0.6;
+}
+
+/* ─── Nav-tab highlight ring ─────────────────────────────────────────────── */
+.tabHighlight {
+  position: fixed;
+  width: 44px;
+  height: 44px;
+  bottom: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 14px #ffd700cc, 0 0 28px #ffd70055;
+  animation: tutRingPulse 1s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes tutRingPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 14px #ffd700cc, 0 0 28px #ffd70055;
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow: 0 0 22px #ffd700ff, 0 0 44px #ffd70099;
+  }
+}
+
+/* Downward-pointing arrow between card and tab */
+.navArrow {
+  position: fixed;
+  bottom: 64px;
+  width: 16px;
+  height: 22px;
+  background: var(--gold);
+  clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+  animation: arrowBounce 0.75s ease-in-out infinite;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+@keyframes arrowBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(5px); }
+}

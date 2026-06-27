@@ -5,6 +5,11 @@ import {
   getRewardForStreak, CHEST_COOLDOWN_MS, STREAK_GRACE_MS, FREE_KEY_CD_MS,
   type DayReward,
 } from '@/game/progression/dailyRewards'
+import {
+  rollDailyQuests, getDailyQuestDate, type QuestType,
+} from '@/game/progression/dailyQuests'
+import { FREE_COSMETIC_IDS, getCosmeticById } from '@/data/cosmeticsData'
+import type { CosmeticType } from '@/data/cosmeticsData'
 
 export interface OwnedHero {
   id: string
@@ -67,6 +72,23 @@ interface GameState {
   lastLoginDate: string      // 'YYYY-MM-DD'
   nextFreeKeyAt: number      // 0 = key available immediately
 
+  // Daily quests
+  dailyQuestDate: string                 // 'YYYY-MM-DD' of current quests
+  dailyQuestProgress: Record<string, number>
+  dailyQuestsClaimed: string[]
+
+  // Cosmetics
+  ownedCosmeticIds: string[]
+  equippedCosmetics: Record<CosmeticType, string>
+
+  // Tutorial: -1 = complete/skipped, 0+ = active step
+  tutorialStep: number
+
+  // Settings
+  soundMuted:  boolean
+  soundVolume: number    // 0–1
+  vfxReduced:  boolean   // overrides system prefers-reduced-motion
+
   // Actions
   addGold: (amount: number) => void
   spendGold: (amount: number) => boolean
@@ -93,6 +115,16 @@ interface GameState {
   checkDailyLogin: () => void
   claimDailyChest: () => DayReward
   claimFreeKey: () => void
+  tickDailyQuest: (type: QuestType, amount: number) => void
+  claimDailyQuest: (questId: string) => { gold: number; gems: number }
+  checkQuestRollover: () => void
+  unlockCosmetic: (id: string) => void
+  equipCosmetic: (id: string) => void
+  advanceTutorialStep: () => void
+  completeTutorial: () => void
+  setSoundMuted:  (v: boolean) => void
+  setSoundVolume: (v: number)  => void
+  setVfxReduced:  (v: boolean) => void
 }
 
 let gearInstanceCounter = 0
@@ -137,6 +169,15 @@ export const useGameStore = create<GameState>()(
       loginStreak: 0,
       lastLoginDate: '',
       nextFreeKeyAt: 0,
+      dailyQuestDate: '',
+      dailyQuestProgress: {},
+      dailyQuestsClaimed: [],
+      ownedCosmeticIds: FREE_COSMETIC_IDS,
+      equippedCosmetics: { trail: 'trail_default', frame: 'frame_default', capsule: 'capsule_classic' } as Record<CosmeticType, string>,
+      tutorialStep: 0,
+      soundMuted:  false,
+      soundVolume: 0.7,
+      vfxReduced:  false,
 
       addGold: (amount) => set(s => ({ gold: s.gold + amount, totalGoldEarned: s.totalGoldEarned + amount })),
       spendGold: (amount) => {
@@ -246,15 +287,45 @@ export const useGameStore = create<GameState>()(
       incrementPity: () => set(s => ({ pityCount: s.pityCount + 1 })),
       resetPity: () => set({ pityCount: 0 }),
 
-      recordRiftResult: ({ kills, goldEarned }) =>
-        set(s => ({
-          totalRifts: s.totalRifts + 1,
-          totalKills: s.totalKills + kills,
-          totalGoldEarned: s.totalGoldEarned + goldEarned,
-        })),
+      recordRiftResult: ({ kills, goldEarned }) => {
+        const today = getDailyQuestDate()
+        const s = get()
+        const isNewDay = s.dailyQuestDate !== today
+        const baseProgress = isNewDay ? {} : s.dailyQuestProgress
+        const quests = rollDailyQuests(today)
+        const newProgress = { ...baseProgress }
+        for (const q of quests) {
+          if (q.type === 'rifts')       newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + 1, q.target)
+          if (q.type === 'kills')       newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + kills, q.target)
+          if (q.type === 'gold_earned') newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + goldEarned, q.target)
+        }
+        set(st => ({
+          totalRifts: st.totalRifts + 1,
+          totalKills: st.totalKills + kills,
+          totalGoldEarned: st.totalGoldEarned + goldEarned,
+          dailyQuestDate: today,
+          dailyQuestProgress: newProgress,
+          dailyQuestsClaimed: isNewDay ? [] : st.dailyQuestsClaimed,
+        }))
+      },
 
-      recordCapsulePull: () =>
-        set(s => ({ totalCapsulePulls: s.totalCapsulePulls + 1 })),
+      recordCapsulePull: () => {
+        const today = getDailyQuestDate()
+        const s = get()
+        const isNewDay = s.dailyQuestDate !== today
+        const baseProgress = isNewDay ? {} : s.dailyQuestProgress
+        const quests = rollDailyQuests(today)
+        const newProgress = { ...baseProgress }
+        for (const q of quests.filter(q => q.type === 'pulls')) {
+          newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + 1, q.target)
+        }
+        set(st => ({
+          totalCapsulePulls: st.totalCapsulePulls + 1,
+          dailyQuestDate: today,
+          dailyQuestProgress: newProgress,
+          dailyQuestsClaimed: isNewDay ? [] : st.dailyQuestsClaimed,
+        }))
+      },
 
       setLastSeen: () => set({ lastSeenAt: Date.now() }),
       initGemOffer: () => {
@@ -303,6 +374,74 @@ export const useGameStore = create<GameState>()(
         keys: s.keys + 1,
         nextFreeKeyAt: Date.now() + FREE_KEY_CD_MS,
       })),
+
+      tickDailyQuest: (type, amount) => {
+        const today = getDailyQuestDate()
+        const s = get()
+        // Roll new quests if date changed
+        let progress = s.dailyQuestProgress
+        let claimed = s.dailyQuestsClaimed
+        if (s.dailyQuestDate !== today) {
+          progress = {}
+          claimed = []
+        }
+        const quests = rollDailyQuests(today)
+        const matching = quests.filter(q => q.type === type)
+        if (matching.length === 0) return
+        const newProgress = { ...progress }
+        for (const q of matching) {
+          newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + amount, q.target)
+        }
+        set({ dailyQuestDate: today, dailyQuestProgress: newProgress, dailyQuestsClaimed: claimed })
+      },
+
+      claimDailyQuest: (questId) => {
+        const today = getDailyQuestDate()
+        const s = get()
+        const quests = rollDailyQuests(today)
+        const quest = quests.find(q => q.id === questId)
+        if (!quest) return { gold: 0, gems: 0 }
+        const prog = s.dailyQuestProgress[questId] ?? 0
+        if (prog < quest.target) return { gold: 0, gems: 0 }
+        if (s.dailyQuestsClaimed.includes(questId)) return { gold: 0, gems: 0 }
+        set(st => ({
+          gold: st.gold + quest.rewardGold,
+          gems: st.gems + quest.rewardGems,
+          totalGoldEarned: st.totalGoldEarned + quest.rewardGold,
+          dailyQuestsClaimed: [...st.dailyQuestsClaimed, questId],
+        }))
+        return { gold: quest.rewardGold, gems: quest.rewardGems }
+      },
+
+      checkQuestRollover: () => {
+        const today = getDailyQuestDate()
+        if (get().dailyQuestDate !== today) {
+          set({ dailyQuestDate: today, dailyQuestProgress: {}, dailyQuestsClaimed: [] })
+        }
+      },
+
+      unlockCosmetic: (id) =>
+        set(s => ({
+          ownedCosmeticIds: s.ownedCosmeticIds.includes(id)
+            ? s.ownedCosmeticIds
+            : [...s.ownedCosmeticIds, id],
+        })),
+
+      equipCosmetic: (id) => {
+        const def = getCosmeticById(id)
+        if (!def || !get().ownedCosmeticIds.includes(id)) return
+        set(s => ({ equippedCosmetics: { ...s.equippedCosmetics, [def.type]: id } }))
+      },
+
+      advanceTutorialStep: () =>
+        set(s => ({ tutorialStep: s.tutorialStep + 1 })),
+
+      completeTutorial: () =>
+        set({ tutorialStep: -1 }),
+
+      setSoundMuted:  (v) => set({ soundMuted: v }),
+      setSoundVolume: (v) => set({ soundVolume: Math.max(0, Math.min(1, v)) }),
+      setVfxReduced:  (v) => set({ vfxReduced: v }),
     }),
     {
       name: 'lootburst-game-state',
@@ -329,6 +468,15 @@ export const useGameStore = create<GameState>()(
         loginStreak: s.loginStreak,
         lastLoginDate: s.lastLoginDate,
         nextFreeKeyAt: s.nextFreeKeyAt,
+        dailyQuestDate: s.dailyQuestDate,
+        dailyQuestProgress: s.dailyQuestProgress,
+        dailyQuestsClaimed: s.dailyQuestsClaimed,
+        ownedCosmeticIds: s.ownedCosmeticIds,
+        equippedCosmetics: s.equippedCosmetics,
+        tutorialStep: s.tutorialStep,
+        soundMuted:   s.soundMuted,
+        soundVolume:  s.soundVolume,
+        vfxReduced:   s.vfxReduced,
       }),
     }
   )

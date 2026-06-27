@@ -1,27 +1,69 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import RarityFrame from '@/ui/components/RarityFrame'
 import PixelPanel from '@/ui/components/PixelPanel'
+import GearIcon from '@/ui/components/GearIcon'
 import gearData from '@/data/art/gear.visual.json'
+import heroesData from '@/data/art/heroes.visual.json'
 import type { Rarity } from '@/constants/palette'
 import { getGeneratedSprite } from '@/art/generated'
+import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine } from '@/game/gear/gearStats'
+import type { GearSlot } from '@/store/gameStore'
+import { useGameStore } from '@/store/gameStore'
+import { playSound } from '@/audio/soundEvents'
 import styles from './GearScreen.module.css'
 
-const SLOT_ICONS: Record<string, string> = {
-  weapon: '⚔', armor: '🛡', charm: '📿', boots: '👢', relic: '🔮', toy: '🎪',
+const SLOT_ICONS: Record<string, string> = { weapon: '⚔', trinket: '💫', relic: '🛡' }
+const SLOTS = ['weapon', 'trinket', 'relic'] as const
+
+function getGearVisual(id: string) {
+  return gearData.gear.find(g => g.id === id)
 }
 
-const SLOTS = ['weapon', 'armor', 'charm', 'boots', 'relic', 'toy'] as const
-type GearSlot = typeof SLOTS[number]
+function getHeroName(heroId: string): string {
+  return heroesData.heroes.find(h => h.id === heroId)?.displayName.split(' ')[0] ?? heroId
+}
 
 export default function GearScreen() {
   const [activeSlot, setActiveSlot] = useState<GearSlot | 'all'>('all')
-  const [selected, setSelected] = useState<string | null>(null)
+  const [selectedInstanceId, setSelectedInstanceId] = useState<string | null>(null)
+  const [pickingHero, setPickingHero] = useState(false)
 
-  const filtered = activeSlot === 'all'
-    ? gearData.gear
-    : gearData.gear.filter(g => g.slot === activeSlot)
+  const ownedGear    = useGameStore(s => s.ownedGear)
+  const squadHeroIds = useGameStore(s => s.squadHeroIds)
+  const equipGear    = useGameStore(s => s.equipGear)
+  const unequipGear  = useGameStore(s => s.unequipGear)
 
-  const selectedItem = gearData.gear.find(g => g.id === selected)
+  const filteredGear = useMemo(() =>
+    ownedGear.filter(g =>
+      activeSlot === 'all' || GEAR_STATS[g.id]?.slot === activeSlot
+    ),
+    [ownedGear, activeSlot]
+  )
+
+  const selectedGear   = selectedInstanceId ? ownedGear.find(g => g.instanceId === selectedInstanceId) : null
+  const selectedVisual = selectedGear ? getGearVisual(selectedGear.id) : null
+  const selectedStats  = selectedGear ? GEAR_STATS[selectedGear.id] : null
+  const statLine       = selectedGear ? getGearStatLine(selectedGear.id) : ''
+
+  function handleSelectGear(instanceId: string) {
+    setSelectedInstanceId(prev => prev === instanceId ? null : instanceId)
+    setPickingHero(false)
+  }
+
+  function handleEquipToHero(heroId: string) {
+    if (!selectedGear || !selectedStats) return
+    equipGear(selectedGear.instanceId, heroId, selectedStats.slot)
+    playSound('reward_gear_equip_clink')
+    setPickingHero(false)
+  }
+
+  function handleUnequip() {
+    if (!selectedGear) return
+    unequipGear(selectedGear.instanceId)
+    setPickingHero(false)
+  }
+
+  const activeSquad = squadHeroIds.filter(Boolean)
 
   return (
     <div className={styles.screen}>
@@ -29,13 +71,13 @@ export default function GearScreen() {
       <div className={styles.slotRow}>
         <button
           className={`${styles.slotBtn} ${activeSlot === 'all' ? styles.slotActive : ''}`}
-          onClick={() => setActiveSlot('all')}
+          onClick={() => { setActiveSlot('all'); setPickingHero(false) }}
         >ALL</button>
         {SLOTS.map(slot => (
           <button
             key={slot}
             className={`${styles.slotBtn} ${activeSlot === slot ? styles.slotActive : ''}`}
-            onClick={() => setActiveSlot(slot)}
+            onClick={() => { setActiveSlot(slot); setPickingHero(false) }}
           >
             {SLOT_ICONS[slot]}
           </button>
@@ -43,66 +85,115 @@ export default function GearScreen() {
       </div>
 
       {/* Selected item detail */}
-      {selectedItem && (
-        <PixelPanel rarity={selectedItem.rarity as Rarity} glow className={styles.detail}>
+      {selectedGear && selectedVisual && (
+        <PixelPanel rarity={selectedVisual.rarity as Rarity} glow className={styles.detail}>
           <div className={styles.detailRow}>
-            <RarityFrame rarity={selectedItem.rarity as Rarity} size={68} animate>
-              {getGeneratedSprite(selectedItem.id) ? (
+            <RarityFrame rarity={selectedVisual.rarity as Rarity} size={68} animate>
+              {getGeneratedSprite(selectedGear.id) ? (
                 <img
-                  src={getGeneratedSprite(selectedItem.id)!}
-                  alt={selectedItem.displayName}
+                  src={getGeneratedSprite(selectedGear.id)!}
+                  alt={selectedVisual.displayName}
                   style={{ width: 52, height: 52, imageRendering: 'pixelated' }}
                 />
               ) : (
                 <div style={{ fontSize: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                  {SLOT_ICONS[selectedItem.slot] ?? '❓'}
+                  {SLOT_ICONS[selectedStats?.slot ?? 'weapon'] ?? '❓'}
                 </div>
               )}
             </RarityFrame>
             <div className={styles.detailInfo}>
-              <span className={styles.itemName}>{selectedItem.displayName}</span>
-              <span className={styles.itemMeta} data-rarity={selectedItem.rarity}>
-                {selectedItem.rarity.toUpperCase()} · {selectedItem.slot}
+              <span className={styles.itemName}>{selectedVisual.displayName}</span>
+              <span className={styles.itemMeta} data-rarity={selectedVisual.rarity}>
+                {selectedVisual.rarity.toUpperCase()} · {GEAR_SLOT_LABEL[selectedStats?.slot ?? 'weapon']}
               </span>
-              <div className={styles.itemTags}>
-                {selectedItem.tags.map(t => (
-                  <span key={t} className={styles.itemTag}>{t}</span>
+              {statLine && <span className={styles.itemStats}>{statLine}</span>}
+              {selectedGear.equipped && selectedGear.equippedHeroId && (
+                <span className={styles.itemEquippedBy}>
+                  ✓ {getHeroName(selectedGear.equippedHeroId)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Equip / unequip actions */}
+          {activeSquad.length > 0 && (
+            <div className={styles.equipActions}>
+              {selectedGear.equipped ? (
+                <button className={styles.unequipBtn} onClick={handleUnequip}>
+                  UNEQUIP
+                </button>
+              ) : (
+                <button
+                  className={`${styles.equipBtn} ${pickingHero ? styles.equipBtnActive : ''}`}
+                  onClick={() => setPickingHero(v => !v)}
+                >
+                  {pickingHero ? 'CANCEL' : 'EQUIP →'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Hero picker */}
+          {pickingHero && !selectedGear.equipped && (
+            <div className={styles.heroPicker}>
+              <div className={styles.heroPickerLabel}>EQUIP TO HERO:</div>
+              <div className={styles.heroPickerRow}>
+                {activeSquad.map(heroId => (
+                  <button
+                    key={heroId}
+                    className={styles.heroPickBtn}
+                    onClick={() => handleEquipToHero(heroId)}
+                  >
+                    {getHeroName(heroId)}
+                  </button>
                 ))}
               </div>
             </div>
-          </div>
+          )}
         </PixelPanel>
       )}
 
-      {/* Gear grid */}
-      <div className={styles.grid}>
-        {filtered.map(item => {
-          const sprite = getGeneratedSprite(item.id)
-          return (
-            <button
-              key={item.id}
-              className={`${styles.gearCard} ${selected === item.id ? styles.selected : ''}`}
-              onClick={() => setSelected(item.id === selected ? null : item.id)}
-            >
-              <RarityFrame rarity={item.rarity as Rarity} size={52} animate={selected === item.id}>
-                {sprite ? (
-                  <img
-                    src={sprite}
-                    alt={item.displayName}
-                    style={{ width: 40, height: 40, imageRendering: 'pixelated', display: 'block' }}
-                  />
-                ) : (
-                  <div className={styles.gearIcon}>{SLOT_ICONS[item.slot] ?? '❓'}</div>
-                )}
-              </RarityFrame>
-              <span className={styles.gearName}>{item.displayName}</span>
-              <span className={styles.gearRarity} data-rarity={item.rarity}>
-                {item.rarity.toUpperCase()}
-              </span>
-            </button>
-          )
-        })}
-      </div>
+      {/* Gear grid or empty state */}
+      {filteredGear.length === 0 ? (
+        <div className={styles.emptyGear}>
+          <span className={styles.emptyGearIcon}>🎒</span>
+          <span className={styles.emptyGearText}>No gear yet</span>
+          <span className={styles.emptyGearHint}>Complete rifts to earn gear</span>
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {filteredGear.map(gear => {
+            const visual = getGearVisual(gear.id)
+            if (!visual) return null
+            const isSelected = selectedInstanceId === gear.instanceId
+            return (
+              <div
+                key={gear.instanceId}
+                className={[
+                  styles.gearCard,
+                  isSelected ? styles.selected : '',
+                  gear.equipped ? styles.gearEquipped : '',
+                ].filter(Boolean).join(' ')}
+                onClick={() => handleSelectGear(gear.instanceId)}
+              >
+                <GearIcon
+                  id={gear.id}
+                  displayName={visual.displayName}
+                  slot={GEAR_STATS[gear.id]?.slot ?? visual.slot}
+                  rarity={visual.rarity as Rarity}
+                  size={52}
+                  selected={isSelected}
+                  equipped={gear.equipped}
+                />
+                <span className={styles.gearName}>{visual.displayName}</span>
+                <span className={styles.gearRarity} data-rarity={visual.rarity}>
+                  {visual.rarity.toUpperCase()}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

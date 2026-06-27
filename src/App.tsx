@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { TabId } from '@/constants/ui'
 import AppShell from '@/ui/layout/AppShell'
 import BottomNav from '@/ui/layout/BottomNav'
@@ -11,18 +11,31 @@ import VisualGallery from '@/ui/screens/VisualGallery'
 import RiftRunScreen from '@/ui/screens/RiftRunScreen'
 import ShopScreen from '@/ui/screens/ShopScreen'
 import ParticleCanvas from '@/vfx/ParticleCanvas'
+import TutorialOverlay from '@/ui/components/TutorialOverlay'
+import SettingsModal from '@/ui/components/SettingsModal'
 import { rollPostRunOffer, type PostRunOffer } from '@/game/progression/dailyRewards'
+import { setMuted, setVolume } from '@/audio/soundEvents'
+import { setReducedMotionVfx } from '@/vfx/ParticleEngine'
+import { useGameStore } from '@/store/gameStore'
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('run')
   const [showGallery, setShowGallery] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const [inRift, setInRift] = useState(false)
   const [postRunOffer, setPostRunOffer] = useState<PostRunOffer | null>(null)
-  const [lastRunKills, setLastRunKills] = useState(0)
+
+  const soundMuted  = useGameStore(s => s.soundMuted)
+  const soundVolume = useGameStore(s => s.soundVolume)
+  const vfxReduced  = useGameStore(s => s.vfxReduced)
+
+  // Sync persisted settings → audio / vfx systems
+  useEffect(() => { setMuted(soundMuted)       }, [soundMuted])
+  useEffect(() => { setVolume(soundVolume)     }, [soundVolume])
+  useEffect(() => { setReducedMotionVfx(vfxReduced) }, [vfxReduced])
 
   function handleRiftExit(kills = 0) {
     setInRift(false)
-    setLastRunKills(kills)
     const offer = rollPostRunOffer(kills)
     if (offer) setPostRunOffer(offer)
   }
@@ -53,6 +66,33 @@ export default function App() {
       {renderMain()}
       {!inRift && !showGallery && (
         <BottomNav active={tab} onChange={setTab} onGallery={() => setShowGallery(v => !v)} />
+      )}
+      {!inRift && !showGallery && <TutorialOverlay currentTab={tab} />}
+      {showSettings && <SettingsModal onClose={() => setShowSettings(false)} />}
+
+      {/* Settings gear button — fixed top-right, hidden during rift */}
+      {!inRift && (
+        <button
+          onClick={() => setShowSettings(v => !v)}
+          style={{
+            position: 'fixed',
+            top: 10,
+            right: 12,
+            zIndex: 95,
+            background: 'none',
+            border: 'none',
+            fontSize: 20,
+            cursor: 'pointer',
+            padding: '6px',
+            lineHeight: 1,
+            opacity: 0.6,
+            minWidth: 36,
+            minHeight: 36,
+          }}
+          aria-label="Settings"
+        >
+          ⚙️
+        </button>
       )}
     </AppShell>
   )
