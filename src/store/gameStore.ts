@@ -12,10 +12,21 @@ import { FREE_COSMETIC_IDS, getCosmeticById } from '@/data/cosmeticsData'
 import type { CosmeticType } from '@/data/cosmeticsData'
 import { ACHIEVEMENTS } from '@/data/achievementsData'
 
+export interface RunRecord {
+  kills: number
+  goldEarned: number
+  elapsedMs: number
+  tierLevel: number
+  wasWipe: boolean
+  timestamp: number
+}
+
 export interface OwnedHero {
   id: string
   stars: number
   shards: number
+  level: number   // 1–10 hero mastery level
+  xp: number      // accumulated XP toward next level
 }
 
 export type GearSlot = 'weapon' | 'trinket' | 'relic'
@@ -82,16 +93,24 @@ interface GameState {
   ownedCosmeticIds: string[]
   equippedCosmetics: Record<CosmeticType, string>
 
+  // Equipped pet + mount (gameplay-affecting, separate from cosmetics)
+  equippedPetId:   string   // '' = none, default pet_coin_bat
+  equippedMountId: string   // '' = none
+
   // Tutorial: -1 = complete/skipped, 0+ = active step
   tutorialStep: number
 
   // Settings
   soundMuted:  boolean
   soundVolume: number    // 0–1
+  musicMuted:  boolean
   vfxReduced:  boolean   // overrides system prefers-reduced-motion
 
   // Achievements — persisted set of unlocked IDs
   unlockedAchievements: string[]
+
+  // Run history — ring buffer, last 10 runs
+  runHistory: RunRecord[]
 
   // Actions
   addGold: (amount: number) => void
@@ -111,7 +130,7 @@ interface GameState {
   unequipHeroSlot: (heroId: string, slot: GearSlot) => void
   incrementPity: () => void
   resetPity: () => void
-  recordRiftResult: (result: { kills: number; goldEarned: number }) => void
+  recordRiftResult: (result: { kills: number; goldEarned: number; elapsedMs?: number; tierLevel?: number; wasWipe?: boolean }) => void
   recordCapsulePull: () => void
   setLastSeen: () => void
   initGemOffer: () => void
@@ -128,9 +147,13 @@ interface GameState {
   completeTutorial: () => void
   setSoundMuted:  (v: boolean) => void
   setSoundVolume: (v: number)  => void
+  setMusicMuted:  (v: boolean) => void
   setVfxReduced:  (v: boolean) => void
-  checkAchievements: () => string[]   // returns newly unlocked achievement IDs
+  checkAchievements: () => string[]
   updateHighestPower: (power: number) => void
+  awardRunXp: (heroIds: string[], xpTotal: number) => string[]
+  equipPet:   (id: string) => void
+  equipMount: (id: string) => void
 }
 
 let gearInstanceCounter = 0
@@ -146,9 +169,9 @@ export const useGameStore = create<GameState>()(
       selectedRiftTier: 1,
       runBoosts: [],
       ownedHeroes: [
-        { id: 'hero_copper_knight', stars: 0, shards: 0 },
-        { id: 'hero_mushroom_medic', stars: 0, shards: 0 },
-        { id: 'hero_goblin_sparkshot', stars: 0, shards: 0 },
+        { id: 'hero_copper_knight',    stars: 0, shards: 0, level: 1, xp: 0 },
+        { id: 'hero_mushroom_medic',   stars: 0, shards: 0, level: 1, xp: 0 },
+        { id: 'hero_goblin_sparkshot', stars: 0, shards: 0, level: 1, xp: 0 },
       ],
       squadHeroIds: [
         'hero_copper_knight',
@@ -180,11 +203,15 @@ export const useGameStore = create<GameState>()(
       dailyQuestsClaimed: [],
       ownedCosmeticIds: FREE_COSMETIC_IDS,
       equippedCosmetics: { trail: 'trail_default', frame: 'frame_default', capsule: 'capsule_classic' } as Record<CosmeticType, string>,
+      equippedPetId:   'pet_coin_bat',
+      equippedMountId: '',
       tutorialStep: 0,
       soundMuted:  false,
       soundVolume: 0.7,
+      musicMuted:  false,
       vfxReduced:  false,
       unlockedAchievements: [],
+      runHistory: [],
 
       addGold: (amount) => set(s => ({ gold: s.gold + amount, totalGoldEarned: s.totalGoldEarned + amount })),
       spendGold: (amount) => {
@@ -220,7 +247,7 @@ export const useGameStore = create<GameState>()(
             ),
           }))
         } else {
-          set(s => ({ ownedHeroes: [...s.ownedHeroes, { id, stars: 0, shards: 0 }] }))
+          set(s => ({ ownedHeroes: [...s.ownedHeroes, { id, stars: 0, shards: 0, level: 1, xp: 0 }] }))
         }
       },
 
@@ -294,7 +321,7 @@ export const useGameStore = create<GameState>()(
       incrementPity: () => set(s => ({ pityCount: s.pityCount + 1 })),
       resetPity: () => set({ pityCount: 0 }),
 
-      recordRiftResult: ({ kills, goldEarned }) => {
+      recordRiftResult: ({ kills, goldEarned, elapsedMs = 0, tierLevel = 1, wasWipe = false }) => {
         const today = getDailyQuestDate()
         const s = get()
         const isNewDay = s.dailyQuestDate !== today
@@ -306,6 +333,7 @@ export const useGameStore = create<GameState>()(
           if (q.type === 'kills')       newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + kills, q.target)
           if (q.type === 'gold_earned') newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + goldEarned, q.target)
         }
+        const record: RunRecord = { kills, goldEarned, elapsedMs, tierLevel, wasWipe, timestamp: Date.now() }
         set(st => ({
           totalRifts: st.totalRifts + 1,
           totalKills: st.totalKills + kills,
@@ -313,6 +341,7 @@ export const useGameStore = create<GameState>()(
           dailyQuestDate: today,
           dailyQuestProgress: newProgress,
           dailyQuestsClaimed: isNewDay ? [] : st.dailyQuestsClaimed,
+          runHistory: [record, ...st.runHistory].slice(0, 10),
         }))
       },
 
@@ -448,10 +477,35 @@ export const useGameStore = create<GameState>()(
 
       setSoundMuted:  (v) => set({ soundMuted: v }),
       setSoundVolume: (v) => set({ soundVolume: Math.max(0, Math.min(1, v)) }),
+      setMusicMuted:  (v) => set({ musicMuted: v }),
       setVfxReduced:  (v) => set({ vfxReduced: v }),
 
       updateHighestPower: (power) =>
         set(s => ({ highestPower: Math.max(s.highestPower, power) })),
+
+      awardRunXp: (heroIds, xpTotal) => {
+        const XP_THRESHOLDS = [0, 100, 250, 500, 800, 1200, 1800, 2500, 3500, 5000]
+        const MAX_LEVEL = 10
+        const leveled: string[] = []
+        const xpPerHero = Math.round(xpTotal / Math.max(1, heroIds.length))
+        const heroes = get().ownedHeroes
+        const updated = heroes.map(h => {
+          if (!heroIds.includes(h.id)) return h
+          let { level, xp } = h
+          xp += xpPerHero
+          while (level < MAX_LEVEL && xp >= XP_THRESHOLDS[level]) {
+            xp -= XP_THRESHOLDS[level]
+            level++
+            leveled.push(h.id)
+          }
+          return { ...h, level, xp }
+        })
+        set({ ownedHeroes: updated })
+        return leveled
+      },
+
+      equipPet:   (id) => set({ equippedPetId: id }),
+      equipMount: (id) => set(s => ({ equippedMountId: s.equippedMountId === id ? '' : id })),
 
       checkAchievements: () => {
         const s = get()
@@ -507,8 +561,12 @@ export const useGameStore = create<GameState>()(
         tutorialStep:         s.tutorialStep,
         soundMuted:           s.soundMuted,
         soundVolume:          s.soundVolume,
+        musicMuted:           s.musicMuted,
         vfxReduced:           s.vfxReduced,
         unlockedAchievements: s.unlockedAchievements,
+        runHistory: s.runHistory,
+        equippedPetId:   s.equippedPetId,
+        equippedMountId: s.equippedMountId,
       }),
     }
   )

@@ -16,6 +16,7 @@ import SettingsModal from '@/ui/components/SettingsModal'
 import AchievementToast from '@/ui/components/AchievementToast'
 import { rollPostRunOffer, type PostRunOffer } from '@/game/progression/dailyRewards'
 import { setMuted, setVolume } from '@/audio/soundEvents'
+import { playTrack, stopMusic, setMusicMuted } from '@/audio/musicEngine'
 import { setReducedMotionVfx } from '@/vfx/ParticleEngine'
 import { useGameStore } from '@/store/gameStore'
 
@@ -29,6 +30,7 @@ export default function App() {
 
   const soundMuted        = useGameStore(s => s.soundMuted)
   const soundVolume       = useGameStore(s => s.soundVolume)
+  const musicMuted        = useGameStore(s => s.musicMuted)
   const vfxReduced        = useGameStore(s => s.vfxReduced)
   const checkAchievements = useGameStore(s => s.checkAchievements)
   const ownedHeroCount    = useGameStore(s => s.ownedHeroes.length)
@@ -40,7 +42,11 @@ export default function App() {
   // Sync persisted settings → audio / vfx systems
   useEffect(() => { setMuted(soundMuted)            }, [soundMuted])
   useEffect(() => { setVolume(soundVolume)          }, [soundVolume])
+  useEffect(() => { setMusicMuted(musicMuted)       }, [musicMuted])
   useEffect(() => { setReducedMotionVfx(vfxReduced) }, [vfxReduced])
+
+  // Start hub music (deferred — AudioContext requires user gesture in most browsers)
+  useEffect(() => { playTrack('hub') }, [])
 
   const triggerAchievementCheck = useCallback(() => {
     const newIds = checkAchievements()
@@ -55,6 +61,10 @@ export default function App() {
 
   function handleRiftExit(kills = 0, wasWipe = false) {
     setInRift(false)
+    playTrack(wasWipe ? 'wipe' : 'victory')
+    // Return to hub music after sting finishes
+    const stingMs = wasWipe ? 3500 : 4500
+    setTimeout(() => playTrack('hub'), stingMs)
     const offer = rollPostRunOffer(kills, { heroesDied: wasWipe, riftsBeat: totalRifts })
     if (offer) setPostRunOffer(offer)
     triggerAchievementCheck()
@@ -66,7 +76,7 @@ export default function App() {
     switch (tab) {
       case 'run':      return (
         <HubScreen
-          onEnterRift={() => setInRift(true)}
+          onEnterRift={() => { setInRift(true); playTrack('rift') }}
           onOpenShop={() => setTab('shop')}
           postRunOffer={postRunOffer}
           onDismissOffer={() => setPostRunOffer(null)}

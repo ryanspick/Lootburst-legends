@@ -1,5 +1,6 @@
 import { useGameStore } from '@/store/gameStore'
 import { playSound } from '@/audio/soundEvents'
+import { setMusicMuted } from '@/audio/musicEngine'
 import styles from './SettingsModal.module.css'
 
 interface Props {
@@ -9,10 +10,18 @@ interface Props {
 export default function SettingsModal({ onClose }: Props) {
   const soundMuted   = useGameStore(s => s.soundMuted)
   const soundVolume  = useGameStore(s => s.soundVolume)
+  const musicMuted   = useGameStore(s => s.musicMuted)
   const vfxReduced   = useGameStore(s => s.vfxReduced)
   const setSoundMuted  = useGameStore(s => s.setSoundMuted)
   const setSoundVolume = useGameStore(s => s.setSoundVolume)
+  const setMusicMutedStore = useGameStore(s => s.setMusicMuted)
   const setVfxReduced  = useGameStore(s => s.setVfxReduced)
+
+  function handleMusicMuteToggle() {
+    const next = !musicMuted
+    setMusicMutedStore(next)
+    setMusicMuted(next)
+  }
 
   function handleVolumeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const v = parseFloat(e.target.value)
@@ -44,7 +53,7 @@ export default function SettingsModal({ onClose }: Props) {
           <div className={styles.sectionLabel}>SOUND</div>
 
           <div className={styles.row}>
-            <span className={styles.rowLabel}>Mute</span>
+            <span className={styles.rowLabel}>Mute SFX</span>
             <button
               className={`${styles.toggle} ${soundMuted ? styles.toggleOn : ''}`}
               onClick={handleMuteToggle}
@@ -54,7 +63,7 @@ export default function SettingsModal({ onClose }: Props) {
           </div>
 
           <div className={`${styles.row} ${soundMuted ? styles.rowDisabled : ''}`}>
-            <span className={styles.rowLabel}>Volume</span>
+            <span className={styles.rowLabel}>SFX Volume</span>
             <div className={styles.sliderWrap}>
               <input
                 type="range"
@@ -68,6 +77,16 @@ export default function SettingsModal({ onClose }: Props) {
               />
               <span className={styles.sliderVal}>{Math.round(soundVolume * 100)}%</span>
             </div>
+          </div>
+
+          <div className={styles.row}>
+            <span className={styles.rowLabel}>Mute Music</span>
+            <button
+              className={`${styles.toggle} ${musicMuted ? styles.toggleOn : ''}`}
+              onClick={handleMusicMuteToggle}
+            >
+              <div className={styles.toggleThumb} />
+            </button>
           </div>
         </div>
 

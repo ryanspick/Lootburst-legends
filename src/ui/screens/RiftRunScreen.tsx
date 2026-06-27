@@ -32,6 +32,7 @@ import { getCosmeticById } from '@/data/cosmeticsData'
 import heroesData from '@/data/art/heroes.visual.json'
 import FloatingCurrency from '@/ui/components/FloatingCurrency'
 import type { FloatEmit } from '@/ui/components/FloatingCurrency'
+import { playTrack } from '@/audio/musicEngine'
 import { useGameStore } from '@/store/gameStore'
 import styles from './RiftRunScreen.module.css'
 
@@ -273,6 +274,7 @@ export default function RiftRunScreen({ onExit }: Props) {
           if (wasAlive === true && !isAlive && !showBossDeath) {
             setBossDeathSnap({ boss: { ...state.boss }, killCount: state.killCount, goldCollected: state.goldCollected })
             setShowBossDeath(true)
+            playTrack('rift')
           }
           prevBossAliveRef.current = isAlive
         } else {
@@ -320,8 +322,9 @@ export default function RiftRunScreen({ onExit }: Props) {
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
               setBossPhase(1)
-              setWavePresentation(null)   // clear any active wave card — BossEntrance handles the announcement
+              setWavePresentation(null)
               prevBossAliveRef.current = true
+              playTrack('boss')
               break
             }
             case 'final_boss': {
@@ -331,8 +334,9 @@ export default function RiftRunScreen({ onExit }: Props) {
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
               setBossPhase(1)
-              setWavePresentation(null)   // clear any active wave card — BossEntrance handles the announcement
+              setWavePresentation(null)
               prevBossAliveRef.current = true
+              playTrack('boss')
               break
             }
             case 'end_run':
