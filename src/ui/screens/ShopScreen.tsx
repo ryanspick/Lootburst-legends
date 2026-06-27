@@ -233,37 +233,44 @@ export default function ShopScreen({ onClose }: ShopProps) {
           })}
         </div>
 
-        {/* ── FULL SHOP — locked until starter purchased ── */}
-        {shopUnlocked ? (
-          <>
-            {justUnlocked && (
-              <div className={styles.unlockBanner}>
-                🔓 GEM VAULT UNLOCKED! Welcome to the full shop!
-              </div>
-            )}
-
-            {/* Gem packs */}
-            <div className={styles.sectionLabel}>GEM PACKS</div>
-            <div className={styles.gemGrid}>
-              {GEM_PACKS.map(pack => (
-                <button
-                  key={pack.id}
-                  className={styles.gemPack}
-                  data-popular={pack.tag ? 'true' : undefined}
-                  data-flash={flashId === pack.id ? 'true' : undefined}
-                  onClick={() => buyGemPack(pack)}
-                >
-                  {pack.tag && <div className={styles.packTag}>{pack.tag}</div>}
-                  <div className={styles.packGems}>💎</div>
-                  <div className={styles.packLabel}>{pack.label}</div>
-                  {pack.bonus && <div className={styles.packBonus}>{pack.bonus}</div>}
-                  <div className={styles.packPrice}>{pack.price}</div>
-                </button>
-              ))}
+        {/* ── FULL SHOP — always visible, greyed out until starter purchased ── */}
+        <>
+          {justUnlocked && (
+            <div className={styles.unlockBanner}>
+              🔓 GEM VAULT UNLOCKED! Welcome to the full shop!
             </div>
+          )}
 
-            {/* Bundles */}
-            <div className={styles.sectionLabel}>BUNDLES</div>
+          {!shopUnlocked && (
+            <div className={styles.vaultHint}>
+              🔒 Purchase a starter deal above to unlock gem packs &amp; bundles
+            </div>
+          )}
+
+          {/* Gem packs */}
+          <div className={styles.sectionLabel}>GEM PACKS</div>
+          <div className={`${styles.gemGrid} ${!shopUnlocked ? styles.vaultDimmed : ''}`}>
+            {GEM_PACKS.map(pack => (
+              <button
+                key={pack.id}
+                className={styles.gemPack}
+                data-popular={pack.tag ? 'true' : undefined}
+                data-flash={flashId === pack.id ? 'true' : undefined}
+                disabled={!shopUnlocked}
+                onClick={() => shopUnlocked && buyGemPack(pack)}
+              >
+                {pack.tag && <div className={styles.packTag}>{pack.tag}</div>}
+                <div className={styles.packGems}>💎</div>
+                <div className={styles.packLabel}>{pack.label}</div>
+                {pack.bonus && <div className={styles.packBonus}>{pack.bonus}</div>}
+                <div className={styles.packPrice}>{pack.price}</div>
+              </button>
+            ))}
+          </div>
+
+          {/* Bundles */}
+          <div className={styles.sectionLabel}>BUNDLES</div>
+          <div className={!shopUnlocked ? styles.vaultDimmed : undefined}>
             {BUNDLES.map(bundle => (
               <div
                 key={bundle.id}
@@ -283,49 +290,17 @@ export default function ShopScreen({ onClose }: ShopProps) {
                     </div>
                   </div>
                 </div>
-                <button className={styles.bundleBuyBtn} onClick={() => buyBundle(bundle)}>
+                <button
+                  className={styles.bundleBuyBtn}
+                  disabled={!shopUnlocked}
+                  onClick={() => shopUnlocked && buyBundle(bundle)}
+                >
                   {bundle.price}
                 </button>
               </div>
             ))}
-          </>
-        ) : (
-          /* Locked vault — content visibly disclosed but not accessible */
-          <div className={styles.lockedVault}>
-            <div className={styles.lockedOverlay}>
-              <div className={styles.lockIcon}>🔒</div>
-              <div className={styles.lockTitle}>GEM VAULT LOCKED</div>
-              <div className={styles.lockSub}>
-                Purchase any starter deal above to unlock gem packs, bundles, and more.
-              </div>
-            </div>
-            {/* Blurred preview of gem packs underneath */}
-            <div className={styles.lockedPreview} aria-hidden="true">
-              <div className={styles.sectionLabel}>GEM PACKS</div>
-              <div className={styles.gemGrid}>
-                {GEM_PACKS.map(pack => (
-                  <div key={pack.id} className={styles.gemPack}>
-                    <div className={styles.packGems}>💎</div>
-                    <div className={styles.packLabel}>{pack.label}</div>
-                    <div className={styles.packPrice}>{pack.price}</div>
-                  </div>
-                ))}
-              </div>
-              <div className={styles.sectionLabel} style={{ marginTop: 12 }}>BUNDLES</div>
-              {BUNDLES.map(b => (
-                <div key={b.id} className={styles.bundle}>
-                  <div className={styles.bundleLeft}>
-                    <div className={styles.bundleIcon}>{b.icon}</div>
-                    <div className={styles.bundleInfo}>
-                      <div className={styles.bundleName}>{b.name}</div>
-                    </div>
-                  </div>
-                  <div className={styles.bundleBuyBtn}>{b.price}</div>
-                </div>
-              ))}
-            </div>
           </div>
-        )}
+        </>
 
         <div className={styles.disclaimer}>
           All purchases are final. Gems are virtual currency with no cash value.

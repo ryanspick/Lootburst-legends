@@ -12,7 +12,7 @@ import {
   type SpawnPattern,
 } from '@/game/rift/riftRunState'
 import { renderRiftFrame, clearCombatEmitCache } from '@/game/rift/combatLoop'
-import { RIFT_DURATION_MS } from '@/game/rift/waveDirector'
+import { RIFT_DURATION_MS, WAVE_CLEAR_DELAY_MS } from '@/game/rift/waveDirector'
 import { getRiftTier } from '@/game/rift/riftTiers'
 import { computeHeroGearBonuses, computeRunGearBonuses } from '@/game/gear/gearStats'
 import { ZONES } from '@/game/rift/zoneBackgrounds'
@@ -29,6 +29,7 @@ import { triggerShake, setReducedMotion } from '@/animation/screenShake'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { emitCoinBurst, emitHeroTrail } from '@/vfx/emitters'
 import { getCosmeticById } from '@/data/cosmeticsData'
+import heroesData from '@/data/art/heroes.visual.json'
 import FloatingCurrency from '@/ui/components/FloatingCurrency'
 import type { FloatEmit } from '@/ui/components/FloatingCurrency'
 import { useGameStore } from '@/store/gameStore'
@@ -41,7 +42,7 @@ const FALLBACK_HERO_IDS = [
 ]
 
 interface Props {
-  onExit: (kills?: number) => void
+  onExit: (kills?: number, wasWipe?: boolean) => void
 }
 
 const CANVAS_W = 360
@@ -66,6 +67,7 @@ export default function RiftRunScreen({ onExit }: Props) {
   const recordRiftResult = useGameStore(s => s.recordRiftResult)
   const consumeBoosts = useGameStore(s => s.consumeBoosts)
   const ownedGear = useGameStore(s => s.ownedGear)
+  const awardRunXp = useGameStore(s => s.awardRunXp)
 
   const REVIVE_COST = 5
   const reducedMotion = useReducedMotion()
@@ -94,6 +96,14 @@ export default function RiftRunScreen({ onExit }: Props) {
   const floatIdRef = useRef(0)
   const emittedLootRef = useRef(new Set<number>())
   const goldHudRef = useRef<HTMLSpanElement>(null)
+  const lastGoldFlushRef = useRef(0)
+  const lastFlushedGoldRef = useRef(0)
+  // Wave queue — completion-based spawning
+  const waveQueueRef = useRef<{ wave: number; count: number; pattern: SpawnPattern }[]>([])
+  const wavePhaseRef = useRef<'idle' | 'active' | 'resting'>('idle')
+  const waveClearTimerRef = useRef(0)
+  const lastWaveShownRef = useRef(-1)
+  const [nextWaveIn, setNextWaveIn] = useState<number | null>(null)
 
   // Bootstrap state once
   useEffect(() => {
@@ -101,16 +111,20 @@ export default function RiftRunScreen({ onExit }: Props) {
       ? squadHeroIds.filter(Boolean)
       : FALLBACK_HERO_IDS
     const tierData = getRiftTier(selectedRiftTier)
-    const runDiff = Math.min(1 + totalRifts * 0.04, 1.8)
+    const runDiff = Math.min(1 + totalRifts * 0.025, 2.5)
     const difficultyMult = runDiff * tierData.enemyMult
     const startBoosts = consumeBoosts()
 
     // Compute gear bonuses from store (snapshot at run start)
-    const gearSnapshot = useGameStore.getState().ownedGear
+    const storeSnapshot = useGameStore.getState()
+    const gearSnapshot = storeSnapshot.ownedGear
     const heroGearBonuses = heroIds.map(heroId =>
       computeHeroGearBonuses(
         gearSnapshot.filter(g => g.equipped && g.equippedHeroId === heroId).map(g => g.id)
       )
+    )
+    const heroLevels = heroIds.map(heroId =>
+      storeSnapshot.ownedHeroes.find(h => h.id === heroId)?.level ?? 1
     )
     const runGearBonuses = computeRunGearBonuses(
       gearSnapshot.filter(g => g.equipped).map(g => g.id)
@@ -122,7 +136,10 @@ export default function RiftRunScreen({ onExit }: Props) {
       rewardMult: tierData.rewardMult,
       tierLevel: tierData.level,
       heroGearBonuses,
+      heroLevels,
       runGearBonuses,
+      equippedPetId:   storeSnapshot.equippedPetId,
+      equippedMountId: storeSnapshot.equippedMountId,
     })
     stateRef.current = state
     timelineRef.current = timeline
@@ -167,16 +184,31 @@ export default function RiftRunScreen({ onExit }: Props) {
     addGold(postRun.goldEarned)
     addGems(postRun.gemsEarned)
     postRun.lootItems.forEach(item => addGear(item.id))
-    recordRiftResult({ kills: killCount, goldEarned: postRun.goldEarned })
-  }, [addGold, addGems, addGear, recordRiftResult])
+    recordRiftResult({
+      kills: killCount,
+      goldEarned: postRun.goldEarned,
+      elapsedMs: postRun.elapsedMs,
+      tierLevel: postRun.tierLevel,
+      wasWipe: postRun.wasWipe,
+    })
+    // Award XP to active squad heroes — mutates postRun.heroesLeveled in place for RewardSummary
+    const s = useGameStore.getState()
+    const heroIds = s.squadHeroIds.filter(Boolean)
+    const leveledIds = awardRunXp(heroIds, Math.round(postRun.xpEarned))
+    if (leveledIds.length > 0) {
+      postRun.heroesLeveled = leveledIds.map(id =>
+        heroesData.heroes.find(h => h.id === id)?.displayName ?? id
+      )
+    }
+  }, [addGold, addGems, addGear, recordRiftResult, awardRunXp])
 
   const handleReviveDecline = useCallback(() => {
     setShowRevivePrompt(false)
     const s = stateRef.current!
+    claimPostRunRewards(s.postRun, s.killCount)
     setPostRun(s.postRun)
     setPhase('post_run')
     setShowLootBurst(true)
-    claimPostRunRewards(s.postRun, s.killCount)
   }, [claimPostRunRewards])
 
   const handleFloatDone = useCallback((id: string) => {
@@ -225,10 +257,10 @@ export default function RiftRunScreen({ onExit }: Props) {
           if (canRevive) {
             setShowRevivePrompt(true)
           } else {
+            claimPostRunRewards(state.postRun, state.killCount)
             setPostRun(state.postRun)
             setPhase('post_run')
             setShowLootBurst(true)
-            claimPostRunRewards(state.postRun, state.killCount)
           }
           rafRef.current = requestAnimationFrame(loop)
           return
@@ -264,8 +296,7 @@ export default function RiftRunScreen({ onExit }: Props) {
               const wave = (event.data?.wave as number) ?? 0
               const count = (event.data?.count as number) ?? 3
               const pattern = (event.data?.pattern as SpawnPattern) ?? 'ring'
-              spawnWave(state, wave, count, pattern)
-              setWavePresentation({ waveIndex: wave, enemyCount: count })
+              waveQueueRef.current.push({ wave, count, pattern })
               break
             }
             case 'upgrade_choice':
@@ -315,25 +346,94 @@ export default function RiftRunScreen({ onExit }: Props) {
           }
         }
 
-        // Emit floating currency once per collected loot drop (guard against per-frame duplicates)
+        // Wave queue: completion-based spawning
+        {
+          const bossAlive = !!state.boss?.alive
+          const aliveEnemies = state.enemies.filter(e => e.alive).length + state.pendingSpawns.length
+
+          // Detect wave cleared (non-boss enemies gone) — spawn next almost instantly
+          if (wavePhaseRef.current === 'active' && aliveEnemies === 0 && !bossAlive) {
+            wavePhaseRef.current = 'resting'
+            waveClearTimerRef.current = 300
+            setNextWaveIn(null)
+          }
+
+          // Tick rest countdown
+          if (wavePhaseRef.current === 'resting') {
+            waveClearTimerRef.current = Math.max(0, waveClearTimerRef.current - dt)
+            setNextWaveIn(waveClearTimerRef.current > 0 ? Math.ceil(waveClearTimerRef.current / 1000) : null)
+          }
+
+          // Spawn next wave when ready (idle first wave, or resting timer done)
+          const canSpawnNext = !bossAlive && waveQueueRef.current.length > 0 && (
+            wavePhaseRef.current === 'idle' ||
+            (wavePhaseRef.current === 'resting' && waveClearTimerRef.current <= 0)
+          )
+          if (canSpawnNext) {
+            const next = waveQueueRef.current.shift()!
+            spawnWave(state, next.wave, next.count, next.pattern)
+            wavePhaseRef.current = 'active'
+            waveClearTimerRef.current = 0
+            setNextWaveIn(null)
+            if (next.wave !== lastWaveShownRef.current) {
+              lastWaveShownRef.current = next.wave
+              setWavePresentation({ waveIndex: next.wave, enemyCount: next.count })
+            }
+          }
+
+          // Boss cleared → return to idle so post-boss waves can spawn
+          if (wavePhaseRef.current === 'active' && bossAlive === false &&
+              state.boss !== null && !state.boss.alive && aliveEnemies === 0) {
+            wavePhaseRef.current = 'resting'
+            waveClearTimerRef.current = WAVE_CLEAR_DELAY_MS
+          }
+        }
+
+        // Track new loot drops — gems fly immediately, gold is batched
         const freshCollected = state.lootDrops.filter(l => l.collected && !emittedLootRef.current.has(l.id))
         freshCollected.forEach(l => emittedLootRef.current.add(l.id))
         if (freshCollected.length > 0) {
-          const hudEl = goldHudRef.current
-          const hudRect = hudEl?.getBoundingClientRect()
           const canvasEl = canvasRef.current
           const canvasRect = canvasEl?.getBoundingClientRect()
-          if (hudRect && canvasRect) {
-            const newEmits: FloatEmit[] = freshCollected.map(l => ({
-              id: `fc_${floatIdRef.current++}`,
-              type: l.type === 'gem' ? 'gem' : 'gold',
-              startX: (l.x / CANVAS_W) * canvasRect.width + canvasRect.left,
-              startY: (l.y / CANVAS_H) * canvasRect.height + canvasRect.top,
-              endX: hudRect.left + hudRect.width / 2,
-              endY: hudRect.top + hudRect.height / 2,
-            }))
-            setFloatEmissions(prev => [...prev, ...newEmits])
+          const hudEl = goldHudRef.current
+          const hudRect = hudEl?.getBoundingClientRect()
+          if (canvasRect && hudRect) {
+            const gemDrops = freshCollected.filter(l => l.type === 'gem')
+            if (gemDrops.length > 0) {
+              const gemEmits: FloatEmit[] = gemDrops.map(l => ({
+                id: `fc_${floatIdRef.current++}`,
+                type: 'gem' as const,
+                startX: (l.x / CANVAS_W) * canvasRect.width + canvasRect.left,
+                startY: (l.y / CANVAS_H) * canvasRect.height + canvasRect.top,
+                endX: hudRect.left + hudRect.width / 2,
+                endY: hudRect.top + hudRect.height / 2,
+              }))
+              setFloatEmissions(prev => [...prev, ...gemEmits])
+            }
           }
+        }
+        // Flush batched gold every 2.5s — emit one combined animation showing total earned
+        if (state.elapsedMs - lastGoldFlushRef.current >= 2500) {
+          const goldDelta = state.goldCollected - lastFlushedGoldRef.current
+          if (goldDelta > 0) {
+            const hudEl = goldHudRef.current
+            const hudRect = hudEl?.getBoundingClientRect()
+            const canvasEl = canvasRef.current
+            const canvasRect = canvasEl?.getBoundingClientRect()
+            if (hudRect && canvasRect) {
+              setFloatEmissions(prev => [...prev, {
+                id: `fc_${floatIdRef.current++}`,
+                type: 'gold' as const,
+                startX: canvasRect.left + canvasRect.width / 2,
+                startY: canvasRect.top + canvasRect.height * 0.55,
+                endX: hudRect.left + hudRect.width / 2,
+                endY: hudRect.top + hudRect.height / 2,
+                amount: goldDelta,
+              }])
+              lastFlushedGoldRef.current = state.goldCollected
+            }
+          }
+          lastGoldFlushRef.current = state.elapsedMs
         }
 
         // Update HUD stats periodically (not every frame for perf)
@@ -465,6 +565,13 @@ export default function RiftRunScreen({ onExit }: Props) {
         />
       )}
 
+      {/* Between-wave countdown */}
+      {nextWaveIn != null && nextWaveIn > 0 && (
+        <div className={styles.waveCountdown}>
+          NEXT WAVE IN {nextWaveIn}
+        </div>
+      )}
+
       {/* Boss entrance sequence */}
       {bossEntrance && (
         <BossEntrance boss={bossEntrance} onDone={() => setBossEntrance(null)} />
@@ -510,7 +617,7 @@ export default function RiftRunScreen({ onExit }: Props) {
           killCount={stateRef.current?.killCount ?? 0}
           totalDamage={stateRef.current?.totalDamageDealt ?? 0}
           elapsedMs={stateRef.current?.elapsedMs ?? 0}
-          onContinue={() => onExit(stats.kills)}
+          onContinue={() => onExit(stats.kills, stateRef.current?.postRun?.wasWipe)}
         />
       )}
     </div>

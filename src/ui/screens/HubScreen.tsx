@@ -16,6 +16,7 @@ import { generateChestSprite, generateCapsuleSprite } from '@/art/generated'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot } from '@/store/gameStore'
 import { getUnlockedTiers, getRiftTier } from '@/game/rift/riftTiers'
+import { ZONES } from '@/game/rift/zoneBackgrounds'
 import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine, computeSquadPower } from '@/game/gear/gearStats'
 import {
   CHEST_COOLDOWN_MS, STREAK_GRACE_MS, getRewardForStreak, getNextReward,
@@ -38,6 +39,8 @@ function fmtMs(ms: number): string {
 
 const GEAR_SLOTS: GearSlot[] = ['weapon', 'trinket', 'relic']
 const RARITY_ORDER: Record<string, number> = { legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4 }
+
+const ZONE_COLORS = ['#ff44aa', '#ff8800', '#00ccff', '#8888ff', '#ffcc00']
 
 const BOOST_CATALOG = [
   { id: 'boost_revive_token', icon: '💫', name: 'Revive Token',  desc: 'Auto-revive once if squad falls', cost: 60  },
@@ -63,11 +66,13 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const [gearHeroIdx, setGearHeroIdx] = useState(0)
   const [offerTimeLeft, setOfferTimeLeft] = useState<number>(0)
   const offerTimerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [dismissedNotifs, setDismissedNotifs] = useState<Set<string>>(new Set())
   const [gearPickerSlot, setGearPickerSlot] = useState<GearSlot | null>(null)
   const reducedMotion = useReducedMotion()
   const chestImg = generateChestSprite('epic', 'closed')
   const capsuleImg = generateCapsuleSprite('rare')
-  const activePet = petsData.pets[0] // first pet as hub companion
+  const equippedPetId = useGameStore(s => s.equippedPetId)
+  const activePet = petsData.pets.find(p => p.id === equippedPetId) ?? petsData.pets[0]
 
   const gold = useGameStore(s => s.gold)
   const gems = useGameStore(s => s.gems)
@@ -97,6 +102,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const checkDailyLogin  = useGameStore(s => s.checkDailyLogin)
   const addGear             = useGameStore(s => s.addGear)
   const updateHighestPower  = useGameStore(s => s.updateHighestPower)
+  const ownedHeroes         = useGameStore(s => s.ownedHeroes)
 
   // Computed (driven by timeMs so countdowns update each rAF frame)
   const nowMs            = Date.now()
@@ -130,7 +136,9 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
     .filter(Boolean) as typeof heroesData.heroes
 
   const equippedGearIds = ownedGear.filter(g => g.equipped).map(g => g.id)
-  const squadPower = computeSquadPower(squadHeroIds.filter(Boolean), heroesData, equippedGearIds)
+  const activeHeroIds = squadHeroIds.filter(Boolean)
+  const heroLevels = activeHeroIds.map(id => ownedHeroes.find(h => h.id === id)?.level ?? 1)
+  const squadPower = computeSquadPower(activeHeroIds, heroesData, equippedGearIds, heroLevels)
 
   // Update highestPower when squad changes
   useEffect(() => {
@@ -150,15 +158,12 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   // Daily login check on mount
   useEffect(() => { checkDailyLogin() }, [])
 
-  // Post-run offer countdown
+  // Post-run offer countdown — display only, no auto-dismiss
   useEffect(() => {
     if (!postRunOffer) { setOfferTimeLeft(0); return }
     setOfferTimeLeft(postRunOffer.expiresInMs)
     offerTimerRef.current = setInterval(() => {
-      setOfferTimeLeft(prev => {
-        if (prev <= 1000) { clearInterval(offerTimerRef.current!); onDismissOffer?.(); return 0 }
-        return prev - 1000
-      })
+      setOfferTimeLeft(prev => Math.max(0, prev - 1000))
     }, 1000)
     return () => clearInterval(offerTimerRef.current!)
   }, [postRunOffer])
@@ -218,20 +223,18 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
 
   const pulseScale = pulse(timeMs)
   const riftBtnStyle = { transform: `scale(${pulseScale})` }
+  const activeZoneIdx = Math.max(0, Math.min(ZONES.length - 1, selectedRiftTier - 1))
+  const activeZone = ZONES[activeZoneIdx]
+  const zoneColor = ZONE_COLORS[activeZoneIdx]
 
   return (
     <div className={styles.hub}>
-      {/* Zone background — subtle candy cavern behind hub */}
-      <div className={styles.zoneBg}>
-        <ZoneBackground zoneIndex={0} width={360} height={220} />
-      </div>
-
       {/* Canvas sparkle overlay */}
       {!reducedMotion && (
         <SparkleLayer active density={4} className={styles.sparkleLayer} />
       )}
 
-      {/* CSS drift particles fallback (still shows when reduced motion off) */}
+      {/* CSS drift particles */}
       {!reducedMotion && (
         <div className={styles.bgParticles}>
           {[...Array(8)].map((_, i) => (
@@ -257,63 +260,128 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         <span className={styles.currency}>🔮 <strong>{shards}</strong></span>
       </div>
 
-      {/* Squad display */}
-      <div className={styles.squad}>
-        {[0, 1, 2].map(i => {
-          const hero = squadHeroes[i]
-          const bobY = reducedMotion ? 0 : heroIdleBob(timeMs, i)
-          return (
-            <div key={i} className={styles.heroSlot}
-              style={{ transform: `translateY(${bobY}px)` }}
-            >
-              {hero ? (
-                <>
-                  <div className={styles.heroBadge}
-                    style={{ borderColor: hero.palette?.[0] ?? '#ffd700' }}
-                  >
-                    <SpriteCharacter
-                      assetId={hero.id}
-                      rarity={hero.rarity as Rarity}
-                      size={44}
-                      animate={false}
-                    />
+      {/* ── Zone Hero Banner ───────────────────────────────────── */}
+      <div className={styles.zoneBanner}>
+        {/* Live zone canvas fills entire banner */}
+        <div className={styles.zoneBannerBg}>
+          <ZoneBackground zoneIndex={activeZoneIdx} width={400} height={200} />
+        </div>
+
+        {/* Rift portal — glowing disc in center-back */}
+        <div className={styles.riftPortal}
+          style={{ '--zone-color': zoneColor } as React.CSSProperties}
+        >
+          <div className={styles.riftPortalCore} />
+          <div className={styles.riftPortalRing1} />
+          <div className={styles.riftPortalRing2} />
+          <div className={styles.riftPortalRing3} />
+        </div>
+
+        {/* Zone name badge — top left */}
+        <div className={styles.bannerZoneName} style={{ color: zoneColor }}>
+          {activeZone.displayName.toUpperCase()}
+        </div>
+
+        {/* Pet — top right */}
+        <div className={styles.bannerPet}>
+          <PetCompanion pet={activePet} index={0} size={32} />
+        </div>
+
+        {/* Collectibles — top center */}
+        <div className={styles.bannerCollectibles}>
+          <div className={styles.bannerCollectible}
+            style={{ transform: reducedMotion ? undefined : `scale(${chestPulse(timeMs)})` }}
+          >
+            {chestImg
+              ? <img src={chestImg} alt="chest" style={{ width: 28, height: 28, imageRendering: 'pixelated' }} />
+              : '📦'}
+            <span className={styles.bannerCollectibleLabel}>Chest</span>
+          </div>
+          <div className={styles.bannerCollectible}
+            style={{ transform: reducedMotion ? undefined : `translateY(${iconBob(timeMs, 200) * 0.5}px)` }}
+          >
+            {capsuleImg
+              ? <img src={capsuleImg} alt="capsule" style={{ width: 28, height: 28, imageRendering: 'pixelated' }} />
+              : '🔮'}
+            <span className={styles.bannerCollectibleLabel}>Capsule</span>
+          </div>
+        </div>
+
+        {/* Bottom gradient scrim for readability */}
+        <div className={styles.bannerScrim} />
+
+        {/* Hero sprites — pinned to banner bottom */}
+        <div className={styles.heroesFront}>
+          {[0, 1, 2].map(i => {
+            const hero = squadHeroes[i]
+            const bobY = reducedMotion ? 0 : heroIdleBob(timeMs, i)
+            return (
+              <div key={i} className={styles.heroFrontSlot}
+                style={{ transform: `translateY(${bobY}px)` }}
+              >
+                {hero ? (
+                  <>
+                    <div className={styles.heroFrontBadge}
+                      style={{ borderColor: hero.palette?.[0] ?? '#ffd700', boxShadow: `0 0 12px ${hero.palette?.[0] ?? '#ffd700'}55` }}
+                    >
+                      <SpriteCharacter
+                        assetId={hero.id}
+                        rarity={hero.rarity as Rarity}
+                        size={52}
+                        animate={false}
+                      />
+                    </div>
+                    <span className={styles.heroFrontName}>{hero.displayName.split(' ')[0]}</span>
+                  </>
+                ) : (
+                  <div className={styles.heroFrontBadge} style={{ borderColor: '#333355', opacity: 0.35 }}>
+                    <span style={{ fontSize: 22, color: '#556' }}>+</span>
                   </div>
-                  <span className={styles.heroName}>{hero.displayName.split(' ')[0]}</span>
-                </>
-              ) : (
-                <div className={styles.heroBadge} style={{ borderColor: '#333355', opacity: 0.4 }}>
-                  <span style={{ fontSize: 20 }}>+</span>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Run stats strip */}
+      <div className={styles.statsStrip}>
+        <span className={styles.statPill}>☠️ <strong>{totalRifts}</strong> Rifts</span>
+        <span className={styles.statDivider}>·</span>
+        <span className={styles.statPill}>⭐ <strong>{squadPower.toLocaleString()}</strong> Power</span>
+        <span className={styles.statDivider}>·</span>
+        <span className={styles.statPill} style={{ color: activeTierData.color }}>{activeTierData.name}</span>
+      </div>
+
+      {/* ── Zone Tier Cards (replaces old tier picker) ────────── */}
+      <div className={styles.zoneTierRow}>
+        {ZONES.map((zone, i) => {
+          const tier = i + 1
+          const unlocked = unlockedTiers.some(t => t.level === tier)
+          const active = selectedRiftTier === tier
+          const tData = getRiftTier(tier)
+          return (
+            <button key={tier}
+              className={styles.zoneTierCard}
+              data-active={active ? 'true' : undefined}
+              disabled={!unlocked}
+              onClick={() => unlocked && setRiftTier(tier)}
+              title={unlocked ? `${tData.name} · ×${tData.rewardMult} rewards` : `${tData.unlockAfterRifts} rifts to unlock`}
+              style={active ? { '--card-color': ZONE_COLORS[i] } as React.CSSProperties : undefined}
+            >
+              <div className={styles.zoneTierCanvas}>
+                <ZoneBackground zoneIndex={i} width={64} height={48} />
+                {!unlocked && <div className={styles.zoneTierLockOverlay}>🔒</div>}
+                {active && <div className={styles.zoneTierActiveBar} style={{ background: ZONE_COLORS[i] }} />}
+              </div>
+              <span className={styles.zoneTierName}
+                style={active ? { color: ZONE_COLORS[i] } : undefined}
+              >
+                {tData.label}
+              </span>
+            </button>
           )
         })}
-      </div>
-
-      {/* Chest and capsule */}
-      <div className={styles.collectibles}>
-        <div className={styles.chest}
-          style={{ transform: reducedMotion ? undefined : `scale(${chestPulse(timeMs)})` }}
-        >
-          {chestImg
-            ? <img src={chestImg} alt="chest" style={{ width: 40, height: 40, imageRendering: 'pixelated' }} />
-            : '📦'}
-          <span className={styles.collectibleLabel}>Chest</span>
-        </div>
-        <div className={styles.capsule}
-          style={{ transform: reducedMotion ? undefined : `translateY(${iconBob(timeMs, 200)}px)` }}
-        >
-          {capsuleImg
-            ? <img src={capsuleImg} alt="capsule" style={{ width: 40, height: 40, imageRendering: 'pixelated' }} />
-            : '🔮'}
-          <span className={styles.collectibleLabel}>Capsule</span>
-        </div>
-      </div>
-
-      {/* Pet companion — hub idle buddy */}
-      <div className={styles.petRow}>
-        <PetCompanion pet={activePet} index={0} size={40} />
-        <span className={styles.petName}>{activePet.displayName}</span>
       </div>
 
       {/* Offline reward sequence */}
@@ -326,7 +394,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
 
       {/* ── Notification stack ──────────────────────────────────── */}
       <div className={styles.notifStack}>
-        {chestReady ? (
+        {/* CHEST READY — no dismiss, must claim */}
+        {chestReady && (
           <div className={`${styles.notifCard} ${styles.notifGold}`} onClick={handleClaimDailyChest}>
             <span className={styles.notifIcon}>🎁</span>
             <div className={styles.notifBody}>
@@ -338,7 +407,9 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             </div>
             <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimDailyChest() }}>CLAIM</button>
           </div>
-        ) : (
+        )}
+        {/* NEXT CHEST countdown — dismissible */}
+        {!chestReady && !dismissedNotifs.has('next_chest') && (
           <div className={`${styles.notifCard} ${styles.notifGray}`}>
             <span className={styles.notifIcon}>{streakDying ? '🔥' : '⏳'}</span>
             <div className={styles.notifBody}>
@@ -352,8 +423,10 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             <span className={`${styles.notifTimer} ${streakDying ? styles.notifTimerRed : ''}`}>
               {fmtMs(streakDying ? streakEndsMs : nextChestMs)}
             </span>
+            <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('next_chest')) }}>✕</button>
           </div>
         )}
+        {/* QUESTS READY — no dismiss, must claim in Progress tab */}
         {questsClaimable > 0 && (
           <div className={`${styles.notifCard} ${styles.notifGreen}`}>
             <span className={styles.notifIcon}>📋</span>
@@ -363,8 +436,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             </div>
           </div>
         )}
-
-        {freeKeyReady ? (
+        {/* FREE KEY READY — no dismiss, must claim */}
+        {freeKeyReady && (
           <div className={`${styles.notifCard} ${styles.notifGreen}`} onClick={handleClaimFreeKey}>
             <span className={styles.notifIcon}>🔑</span>
             <div className={styles.notifBody}>
@@ -373,7 +446,9 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             </div>
             <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimFreeKey() }}>CLAIM</button>
           </div>
-        ) : (
+        )}
+        {/* FREE KEY countdown — dismissible */}
+        {!freeKeyReady && !dismissedNotifs.has('free_key_cd') && (
           <div className={`${styles.notifCard} ${styles.notifGray}`}>
             <span className={styles.notifIcon}>🔑</span>
             <div className={styles.notifBody}>
@@ -381,6 +456,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
               <span className={styles.notifDetail}>8h free key • tap capsule tab to use</span>
             </div>
             <span className={styles.notifTimer}>{fmtMs(nextKeyMs)}</span>
+            <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('free_key_cd')) }}>✕</button>
           </div>
         )}
       </div>
@@ -548,36 +624,6 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
           </div>
         )
       })()}
-
-      {/* Rift tier selector */}
-      {!showShop && (
-        <div className={styles.tierPicker}>
-          <div className={styles.tierBtns}>
-            {[1, 2, 3, 4, 5].map(lvl => {
-              const unlocked = unlockedTiers.some(t => t.level === lvl)
-              const active = selectedRiftTier === lvl
-              const tData = getRiftTier(lvl)
-              return (
-                <button
-                  key={lvl}
-                  className={styles.tierBtn}
-                  data-active={active ? 'true' : undefined}
-                  data-tier={lvl}
-                  disabled={!unlocked}
-                  onClick={() => unlocked && setRiftTier(lvl)}
-                  title={unlocked ? `${tData.name} • ×${tData.rewardMult} rewards` : `Complete ${tData.unlockAfterRifts} Normal rifts to unlock`}
-                >
-                  {tData.label}
-                  {!unlocked && <span className={styles.tierLock}>🔒</span>}
-                </button>
-              )
-            })}
-          </div>
-          <div className={styles.tierInfo} style={{ color: activeTierData.color }}>
-            {activeTierData.name} <span className={styles.tierReward}>×{activeTierData.rewardMult} REWARDS</span>
-          </div>
-        </div>
-      )}
 
       {/* Enter Rift CTA */}
       <div className={styles.riftCta}>

@@ -35,6 +35,7 @@ export default function App() {
   const ownedGearCount    = useGameStore(s => s.ownedGear.length)
   const squadFull         = useGameStore(s => s.squadHeroIds.filter(Boolean).length >= 3)
   const highestPower      = useGameStore(s => s.highestPower)
+  const totalRifts        = useGameStore(s => s.totalRifts)
 
   // Sync persisted settings → audio / vfx systems
   useEffect(() => { setMuted(soundMuted)            }, [soundMuted])
@@ -52,9 +53,9 @@ export default function App() {
   // Re-check when collection / squad / power state changes
   useEffect(() => { triggerAchievementCheck() }, [ownedHeroCount, ownedGearCount, squadFull, highestPower])
 
-  function handleRiftExit(kills = 0) {
+  function handleRiftExit(kills = 0, wasWipe = false) {
     setInRift(false)
-    const offer = rollPostRunOffer(kills)
+    const offer = rollPostRunOffer(kills, { heroesDied: wasWipe, riftsBeat: totalRifts })
     if (offer) setPostRunOffer(offer)
     triggerAchievementCheck()
   }

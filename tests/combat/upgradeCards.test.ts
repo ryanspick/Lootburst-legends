@@ -29,39 +29,39 @@ function freshState(): RiftRunState {
 }
 
 describe('Upgrade cards — field mutations', () => {
-  it('blade_orbit increases aoeChance by 0.3, capped at 1.0', () => {
+  it('blade_orbit increases aoeChance by 0.35, capped at 1.0', () => {
     const s = freshState()
     applyUpgradeCard(s, 'blade_orbit')
-    expect(s.aoeChance).toBeCloseTo(0.3, 5)
+    expect(s.aoeChance).toBeCloseTo(0.35, 5)
     // Stack twice more — should cap at 1.0
     applyUpgradeCard(s, 'blade_orbit')
     applyUpgradeCard(s, 'blade_orbit')
     expect(s.aoeChance).toBeLessThanOrEqual(1.0)
   })
 
-  it('gold_fever multiplies goldMult by 1.5', () => {
+  it('gold_fever multiplies goldMult by 1.6×', () => {
     const s = freshState()
     const before = s.goldMult
     applyUpgradeCard(s, 'gold_fever')
-    expect(s.goldMult).toBeCloseTo(before * 1.5, 5)
+    expect(s.goldMult).toBeCloseTo(before * 1.6, 5)
   })
 
-  it('tiny_meteor increases atkMult by 1.25×', () => {
+  it('tiny_meteor increases atkMult by 1.35×', () => {
     const s = freshState()
     applyUpgradeCard(s, 'tiny_meteor')
-    expect(s.atkMult).toBeCloseTo(1.25, 5)
+    expect(s.atkMult).toBeCloseTo(1.35, 5)
   })
 
-  it('candy_shield increases defMult by 1.4×', () => {
+  it('candy_shield increases defMult by 1.45×', () => {
     const s = freshState()
     applyUpgradeCard(s, 'candy_shield')
-    expect(s.defMult).toBeCloseTo(1.4, 5)
+    expect(s.defMult).toBeCloseTo(1.45, 5)
   })
 
-  it('lifesteal_bite increases lifeSteal by 0.15, capped at 0.5', () => {
+  it('lifesteal_bite increases lifeSteal by 0.20, capped at 0.5', () => {
     const s = freshState()
     applyUpgradeCard(s, 'lifesteal_bite')
-    expect(s.lifeSteal).toBeCloseTo(0.15, 5)
+    expect(s.lifeSteal).toBeCloseTo(0.20, 5)
     // Stack to cap
     applyUpgradeCard(s, 'lifesteal_bite')
     applyUpgradeCard(s, 'lifesteal_bite')
@@ -69,57 +69,57 @@ describe('Upgrade cards — field mutations', () => {
     expect(s.lifeSteal).toBeLessThanOrEqual(0.5)
   })
 
-  it('crit_candy increases critChance by 0.2 and critMult by 0.5', () => {
+  it('crit_confetti increases critChance by 0.25 and critMult by 0.75', () => {
     const s = freshState()
     const prevChance = s.critChance
     const prevMult = s.critMult
-    applyUpgradeCard(s, 'crit_candy')
-    expect(s.critChance).toBeCloseTo(prevChance + 0.2, 5)
-    expect(s.critMult).toBeCloseTo(prevMult + 0.5, 5)
+    applyUpgradeCard(s, 'crit_confetti')
+    expect(s.critChance).toBeCloseTo(prevChance + 0.25, 5)
+    expect(s.critMult).toBeCloseTo(prevMult + 0.75, 5)
     // Stacking should not exceed critChance cap of 0.8
-    for (let i = 0; i < 5; i++) applyUpgradeCard(s, 'crit_candy')
+    for (let i = 0; i < 5; i++) applyUpgradeCard(s, 'crit_confetti')
     expect(s.critChance).toBeLessThanOrEqual(0.8)
   })
 
-  it('speed_mushroom increases spdMult by 1.3×', () => {
+  it('jawbreaker_rush increases spdMult by 1.4×', () => {
     const s = freshState()
-    applyUpgradeCard(s, 'speed_mushroom')
-    expect(s.spdMult).toBeCloseTo(1.3, 5)
+    applyUpgradeCard(s, 'jawbreaker_rush')
+    expect(s.spdMult).toBeCloseTo(1.4, 5)
     // Stack — should compound
-    applyUpgradeCard(s, 'speed_mushroom')
-    expect(s.spdMult).toBeCloseTo(1.3 * 1.3, 4)
+    applyUpgradeCard(s, 'jawbreaker_rush')
+    expect(s.spdMult).toBeCloseTo(1.4 * 1.4, 4)
   })
 
-  it('void_echo increases atkMult by 1.35×', () => {
+  it('void_echo increases atkMult by 1.4×', () => {
     const s = freshState()
     applyUpgradeCard(s, 'void_echo')
-    expect(s.atkMult).toBeCloseTo(1.35, 5)
+    expect(s.atkMult).toBeCloseTo(1.4, 5)
   })
 
-  it('golden_loot_magnet increases goldMult by 1.25×', () => {
+  it('loot_magnet increases goldMult by 1.3×', () => {
     const s = freshState()
-    applyUpgradeCard(s, 'golden_loot_magnet')
-    expect(s.goldMult).toBeCloseTo(1.25, 5)
+    const before = s.goldMult
+    applyUpgradeCard(s, 'loot_magnet')
+    expect(s.goldMult).toBeCloseTo(before * 1.3, 5)
   })
 
   it('prismatic_core boosts atk + def + spd + critChance', () => {
     const s = freshState()
     const { atkMult, defMult, spdMult, critChance } = s
     applyUpgradeCard(s, 'prismatic_core')
-    expect(s.atkMult).toBeCloseTo(atkMult * 1.15, 4)
-    expect(s.defMult).toBeCloseTo(defMult * 1.15, 4)
-    expect(s.spdMult).toBeCloseTo(spdMult * 1.15, 4)
-    expect(s.critChance).toBeCloseTo(critChance + 0.1, 4)
+    expect(s.atkMult).toBeCloseTo(atkMult * 1.20, 4)
+    expect(s.defMult).toBeCloseTo(defMult * 1.20, 4)
+    expect(s.spdMult).toBeCloseTo(spdMult * 1.20, 4)
+    expect(s.critChance).toBeCloseTo(critChance + 0.15, 4)
   })
 })
 
 describe('Upgrade cards — power balance bounds', () => {
-  it('no single card increases atkMult above 1.5× in one pick', () => {
-    const s = freshState()
+  it('no single card increases atkMult above 1.75× in one pick', () => {
     for (const card of UPGRADE_CARDS) {
       const fresh = freshState()
       applyUpgradeCard(fresh, card.id)
-      expect(fresh.atkMult).toBeLessThanOrEqual(1.5)
+      expect(fresh.atkMult).toBeLessThanOrEqual(1.75)
     }
   })
 
@@ -133,9 +133,9 @@ describe('Upgrade cards — power balance bounds', () => {
 
   it('stacking all damage cards stays within 8× atkMult ceiling', () => {
     const s = freshState()
-    const dmgCards = ['tiny_meteor', 'void_echo', 'prismatic_core', 'crit_candy']
+    const dmgCards = ['tiny_meteor', 'void_echo', 'prismatic_core', 'crit_confetti']
     for (const id of dmgCards) applyUpgradeCard(s, id)
-    // atkMult: 1 × 1.25 × 1.35 × 1.15 ≈ 1.94 — well within 8×
+    // atkMult: 1 × 1.35 × 1.4 × 1.20 ≈ 2.27 — well within 8×
     expect(s.atkMult).toBeLessThan(8)
   })
 
@@ -166,9 +166,9 @@ describe('Upgrade cards — power balance bounds', () => {
 
   it('gold income with gold_fever + loot_magnet stacked is ≤ 5× base', () => {
     const s = freshState()
-    applyUpgradeCard(s, 'gold_fever')        // 1.5×
-    applyUpgradeCard(s, 'golden_loot_magnet') // ×1.25
-    // Combined: 1.5 × 1.25 = 1.875 — well below 5×
+    applyUpgradeCard(s, 'gold_fever')  // 1.6×
+    applyUpgradeCard(s, 'loot_magnet') // ×1.3
+    // Combined: 1.6 × 1.3 = 2.08 — well below 5×
     expect(s.goldMult).toBeLessThan(5)
   })
 })

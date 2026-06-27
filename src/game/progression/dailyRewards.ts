@@ -53,20 +53,20 @@ const FREE_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
   {
     id: 'free_bonus_haul',   type: 'free', icon: '🎁',
     title: 'BONUS HAUL!',   subtitle: 'Looted from the rift shadows',
-    items: ['150 💰 Gold', '8 💎 Gems'],
-    gold: 150, gems: 8,
+    items: ['250 💰 Gold', '10 💎 Gems'],
+    gold: 250, gems: 10,
   },
   {
     id: 'free_lucky_drop',  type: 'free', icon: '🍀',
     title: 'LUCKY DROP!',   subtitle: 'The Rift smiles upon you',
-    items: ['Rare Gear Fragment', '5 💎 Gems'],
-    gearId: 'gear_lucky_frog_coin', gems: 5,
+    items: ['Rare Gear Fragment', '8 💎 Gems'],
+    gearId: 'gear_lucky_frog_coin', gems: 8,
   },
   {
     id: 'free_battle_bonus', type: 'free', icon: '⚡',
     title: 'BATTLE BONUS!', subtitle: 'Victory spoils from deep rift',
-    items: ['200 💰 Gold', '1 🔑 Key'],
-    gold: 200, keys: 1,
+    items: ['300 💰 Gold', '1 🔑 Key'],
+    gold: 300, keys: 1,
   },
 ]
 
@@ -74,8 +74,8 @@ const PAID_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
   {
     id: 'paid_run_boost',    type: 'paid', icon: '🔥',
     title: 'RUN BOOSTER!',  subtitle: 'ONE-TIME deal — gone in seconds',
-    items: ['500 💎 Gems', '3 🔑 Keys', '+25% Gold next 5 runs'],
-    price: '$0.99',  gems: 500,
+    items: ['600 💎 Gems', '3 🔑 Keys', '+30% Gold next 5 runs'],
+    price: '$0.99',  gems: 600,
   },
   {
     id: 'paid_victory_pack', type: 'paid', icon: '🏆',
@@ -91,13 +91,54 @@ const PAID_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
   },
 ]
 
-export function rollPostRunOffer(runKills: number): PostRunOffer | null {
-  // 45% chance overall; higher kill count = slightly better odds
-  const chance = Math.min(0.6, 0.35 + runKills * 0.002)
+// Shown once per session when a wipe occurs — high urgency, short timer
+const WIPE_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
+  {
+    id: 'paid_second_chance', type: 'paid', icon: '💀',
+    title: 'CLOSE CALL!',    subtitle: 'Your squad was wiped — power up for next run',
+    items: ['500 💎 Gems', 'Revive Token', '+20% ATK this run'],
+    price: '$0.99',  gems: 500,
+  },
+  {
+    id: 'paid_power_up_now', type: 'paid', icon: '⚡',
+    title: 'NEED MORE POWER?', subtitle: 'Struggled? These upgrades will help',
+    items: ['1,000 💎 Gems', 'Epic Gear', '2 🔑 Keys'],
+    price: '$1.99',  gems: 1000, gearId: 'gear_void_shard',
+  },
+]
+
+export interface PostRunOfferOptions {
+  heroesDied?: boolean
+  riftsBeat?: number
+}
+
+export function rollPostRunOffer(runKills: number, opts: PostRunOfferOptions = {}): PostRunOffer | null {
+  const { heroesDied = false, riftsBeat = 0 } = opts
+
+  // Wipe: 85% chance of showing a paid offer to convert frustration into purchase
+  if (heroesDied) {
+    if (Math.random() < 0.85) {
+      const base = WIPE_OFFERS[Math.floor(Math.random() * WIPE_OFFERS.length)]
+      return { ...base, expiresInMs: 45_000 }
+    }
+    return null
+  }
+
+  // First 8 rifts: tease free offers to build habit, then shift toward paid
+  if (riftsBeat < 3) {
+    if (Math.random() < 0.7) {
+      const base = FREE_OFFERS[Math.floor(Math.random() * FREE_OFFERS.length)]
+      return { ...base, expiresInMs: 45_000 }
+    }
+    return null
+  }
+
+  // General: chance scales with kills; mix biased toward paid to drive IAP
+  const chance = Math.min(0.65, 0.40 + runKills * 0.002)
   if (Math.random() > chance) return null
 
-  // 55% free / 45% paid
-  const pool = Math.random() < 0.55 ? FREE_OFFERS : PAID_OFFERS
+  // 35% free / 65% paid after early game
+  const pool = Math.random() < 0.35 ? FREE_OFFERS : PAID_OFFERS
   const base = pool[Math.floor(Math.random() * pool.length)]
-  return { ...base, expiresInMs: 30_000 }
+  return { ...base, expiresInMs: 45_000 }
 }
