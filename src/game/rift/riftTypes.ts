@@ -171,6 +171,10 @@ export interface RiftRunState {
 
   // Boss phase tracking (React reads this for BossHpBar)
   bossPhase: 1 | 2
+
+  // Trickle-spawn queue — populated by spawnWave, drained gradually in tickCombat
+  pendingSpawns: PendingSpawn[]
+  spawnTimerMs:  number
 }
 
 export interface TimelineEvent {
@@ -178,4 +182,11 @@ export interface TimelineEvent {
   type: TimelineEventType
   data?: Record<string, unknown>
   fired: boolean
+}
+
+export interface PendingSpawn {
+  enemyId:  string
+  x:        number
+  y:        number
+  diffMult: number
 }

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#0a0d1a"/>
+  <!-- Outer glow ring -->
+  <circle cx="256" cy="256" r="216" fill="none" stroke="#ffd700" stroke-width="6" opacity="0.35"/>
+  <circle cx="256" cy="256" r="196" fill="none" stroke="#ffd700" stroke-width="2" opacity="0.15"/>
+  <!-- Chest body -->
+  <rect x="116" y="212" width="280" height="196" rx="16" fill="#1a1a3a" stroke="#ffd700" stroke-width="7"/>
+  <!-- Chest lid -->
+  <rect x="116" y="160" width="280" height="68" rx="16" fill="#0e1128" stroke="#ffd700" stroke-width="7"/>
+  <!-- Hinge center strip -->
+  <rect x="116" y="218" width="280" height="10" fill="#ffd700" opacity="0.6"/>
+  <!-- Chest lock plate -->
+  <rect x="208" y="188" width="96" height="54" rx="10" fill="#ffd700"/>
+  <!-- Lock keyhole -->
+  <circle cx="256" cy="208" r="14" fill="#0a0d1a"/>
+  <rect x="250" y="208" width="12" height="18" fill="#0a0d1a"/>
+  <!-- Gold star burst (loot!) -->
+  <polygon points="256,68 265,104 304,104 272,126 284,162 256,140 228,162 240,126 208,104 247,104"
+    fill="#ffd700" stroke="#ffaa00" stroke-width="2"/>
+  <!-- Corner gems -->
+  <rect x="134" y="268" width="24" height="24" rx="4" fill="#44ccff" transform="rotate(45 146 280)"/>
+  <rect x="354" y="268" width="24" height="24" rx="4" fill="#cc44ff" transform="rotate(45 366 280)"/>
+  <rect x="134" y="340" width="18" height="18" rx="3" fill="#44ff88" transform="rotate(45 143 349)"/>
+  <rect x="360" y="340" width="18" height="18" rx="3" fill="#ff6644" transform="rotate(45 369 349)"/>
+  <!-- Shine lines on lid -->
+  <line x1="148" y1="180" x2="148" y2="218" stroke="#ffd700" stroke-width="4" opacity="0.4"/>
+  <line x1="168" y1="172" x2="168" y2="220" stroke="#ffd700" stroke-width="3" opacity="0.25"/>
+</svg>

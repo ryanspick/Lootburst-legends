@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Solid background — maskable icons need full bleed to 512x512 -->
+  <rect width="512" height="512" fill="#0a0d1a"/>
+  <!-- Safe zone content (80% of size = 410px, offset 51px each side) -->
+  <!-- Chest body -->
+  <rect x="136" y="232" width="240" height="168" rx="14" fill="#1a1a3a" stroke="#ffd700" stroke-width="6"/>
+  <!-- Chest lid -->
+  <rect x="136" y="180" width="240" height="60" rx="14" fill="#0e1128" stroke="#ffd700" stroke-width="6"/>
+  <!-- Hinge strip -->
+  <rect x="136" y="232" width="240" height="8" fill="#ffd700" opacity="0.5"/>
+  <!-- Lock plate -->
+  <rect x="220" y="202" width="72" height="42" rx="8" fill="#ffd700"/>
+  <!-- Keyhole -->
+  <circle cx="256" cy="218" r="10" fill="#0a0d1a"/>
+  <rect x="252" y="218" width="8" height="14" fill="#0a0d1a"/>
+  <!-- Star burst -->
+  <polygon points="256,88 263,118 296,118 270,136 280,166 256,148 232,166 242,136 216,118 249,118"
+    fill="#ffd700"/>
+  <!-- Sparkles -->
+  <circle cx="160" cy="140" r="5" fill="#ffd700" opacity="0.7"/>
+  <circle cx="352" cy="140" r="5" fill="#ffd700" opacity="0.7"/>
+  <circle cx="140" cy="320" r="4" fill="#44ccff" opacity="0.6"/>
+  <circle cx="372" cy="320" r="4" fill="#cc44ff" opacity="0.6"/>
+</svg>

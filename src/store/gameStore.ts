@@ -10,6 +10,7 @@ import {
 } from '@/game/progression/dailyQuests'
 import { FREE_COSMETIC_IDS, getCosmeticById } from '@/data/cosmeticsData'
 import type { CosmeticType } from '@/data/cosmeticsData'
+import { ACHIEVEMENTS } from '@/data/achievementsData'
 
 export interface OwnedHero {
   id: string
@@ -89,6 +90,9 @@ interface GameState {
   soundVolume: number    // 0–1
   vfxReduced:  boolean   // overrides system prefers-reduced-motion
 
+  // Achievements — persisted set of unlocked IDs
+  unlockedAchievements: string[]
+
   // Actions
   addGold: (amount: number) => void
   spendGold: (amount: number) => boolean
@@ -125,6 +129,7 @@ interface GameState {
   setSoundMuted:  (v: boolean) => void
   setSoundVolume: (v: number)  => void
   setVfxReduced:  (v: boolean) => void
+  checkAchievements: () => string[]   // returns newly unlocked achievement IDs
 }
 
 let gearInstanceCounter = 0
@@ -178,6 +183,7 @@ export const useGameStore = create<GameState>()(
       soundMuted:  false,
       soundVolume: 0.7,
       vfxReduced:  false,
+      unlockedAchievements: [],
 
       addGold: (amount) => set(s => ({ gold: s.gold + amount, totalGoldEarned: s.totalGoldEarned + amount })),
       spendGold: (amount) => {
@@ -442,6 +448,27 @@ export const useGameStore = create<GameState>()(
       setSoundMuted:  (v) => set({ soundMuted: v }),
       setSoundVolume: (v) => set({ soundVolume: Math.max(0, Math.min(1, v)) }),
       setVfxReduced:  (v) => set({ vfxReduced: v }),
+
+      checkAchievements: () => {
+        const s = get()
+        const stats = {
+          totalKills:       s.totalKills,
+          totalRifts:       s.totalRifts,
+          totalCapsulePulls:s.totalCapsulePulls,
+          totalGoldEarned:  s.totalGoldEarned,
+          highestPower:     s.highestPower,
+          ownedHeroCount:   s.ownedHeroes.length,
+          ownedGearCount:   s.ownedGear.length,
+          squadFull:        s.squadHeroIds.filter(Boolean).length >= 3,
+        }
+        const newlyUnlocked = ACHIEVEMENTS
+          .filter(a => !s.unlockedAchievements.includes(a.id) && a.check(stats))
+          .map(a => a.id)
+        if (newlyUnlocked.length > 0) {
+          set(st => ({ unlockedAchievements: [...st.unlockedAchievements, ...newlyUnlocked] }))
+        }
+        return newlyUnlocked
+      },
     }),
     {
       name: 'lootburst-game-state',
@@ -473,10 +500,11 @@ export const useGameStore = create<GameState>()(
         dailyQuestsClaimed: s.dailyQuestsClaimed,
         ownedCosmeticIds: s.ownedCosmeticIds,
         equippedCosmetics: s.equippedCosmetics,
-        tutorialStep: s.tutorialStep,
-        soundMuted:   s.soundMuted,
-        soundVolume:  s.soundVolume,
-        vfxReduced:   s.vfxReduced,
+        tutorialStep:         s.tutorialStep,
+        soundMuted:           s.soundMuted,
+        soundVolume:          s.soundVolume,
+        vfxReduced:           s.vfxReduced,
+        unlockedAchievements: s.unlockedAchievements,
       }),
     }
   )

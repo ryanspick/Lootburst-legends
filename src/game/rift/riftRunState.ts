@@ -1,4 +1,4 @@
-import type { RiftRunState, CombatEntity, Projectile, TimelineEvent } from './riftTypes'
+import type { RiftRunState, CombatEntity, Projectile, TimelineEvent, PendingSpawn } from './riftTypes'
 import type { Rarity } from '@/constants/palette'
 import type { HeroGearBonuses, RunGearBonuses } from '@/game/gear/gearStats'
 import heroesData from '@/data/art/heroes.visual.json'
@@ -15,6 +15,8 @@ import { rollUpgradeCards, UPGRADE_CARDS } from './upgradeCards'
 import { triggerHitstop } from '@/animation/hitstop'
 import { triggerShake } from '@/animation/screenShake'
 import { emitHitSpark, emitCritPop, emitCoinBurst, emitGoldBeam, emitExplosion } from '@/vfx/emitters'
+import { playSound } from '@/audio/soundEvents'
+import { haptic } from '@/audio/haptics'
 
 let _dmgId = 0
 let _lootId = 0
@@ -232,6 +234,8 @@ export function createInitialRiftState(
     riftTierLevel: options?.tierLevel ?? 1,
     rewardMult: options?.rewardMult ?? 1,
     bossPhase: 1,
+    pendingSpawns: [],
+    spawnTimerMs: 0,
   }
 
   for (const id of (options?.startBoosts ?? [])) {
@@ -253,21 +257,27 @@ export function createInitialRiftState(
 
 export type SpawnPattern = 'ring' | 'scatter' | 'burst_top' | 'burst_bottom' | 'burst_sides'
 
+// Trickle-spawn: 4 enemies per 50 ms = 80/sec; 100 enemies fully live in ~1.25s
+// Queue pauses if alive count exceeds MAX_ALIVE_ENEMIES (CPU budget).
+const SPAWN_BATCH_SIZE   = 4
+const SPAWN_INTERVAL_MS  = 50
+const MAX_ALIVE_ENEMIES  = 60
+
 export function spawnWave(state: RiftRunState, wave: number, count: number, pattern: SpawnPattern = 'ring'): void {
-  const pool = getEnemyPoolForWave(wave)
+  const pool    = getEnemyPoolForWave(wave)
+  const diff    = state.difficultyMult ?? 1
+  const pending: PendingSpawn[] = []
 
   for (let i = 0; i < count; i++) {
-    const id = pool[i % pool.length]
+    const enemyId = pool[i % pool.length]
     let ex: number, ey: number
 
     if (pattern === 'scatter') {
-      // Random positions near the screen edge (outer 20% of spawn ring)
       const angle = Math.random() * Math.PI * 2
-      const rFrac = 0.80 + Math.random() * 0.20  // 80-100% of spawn radius (near edge)
+      const rFrac = 0.80 + Math.random() * 0.20
       ex = Math.round(CENTER_X + Math.cos(angle) * ENEMY_SPAWN_RADIUS_X * rFrac)
       ey = Math.round(CENTER_Y + Math.sin(angle) * ENEMY_SPAWN_RADIUS_Y * rFrac)
     } else if (pattern === 'burst_top') {
-      // Tight cluster sweeping across the top edge
       const spread = (count > 1 ? (i / (count - 1) - 0.5) : 0) * ENEMY_SPAWN_RADIUS_X * 1.8
       ex = Math.round(Math.max(20, Math.min(340, CENTER_X + spread)))
       ey = Math.round(CENTER_Y - ENEMY_SPAWN_RADIUS_Y + Math.random() * 40)
@@ -276,20 +286,22 @@ export function spawnWave(state: RiftRunState, wave: number, count: number, patt
       ex = Math.round(Math.max(20, Math.min(340, CENTER_X + spread)))
       ey = Math.round(CENTER_Y + ENEMY_SPAWN_RADIUS_Y - Math.random() * 40)
     } else if (pattern === 'burst_sides') {
-      // Alternating left/right walls, staggered vertically
       const side = i % 2 === 0 ? -1 : 1
       ex = Math.round(CENTER_X + side * ENEMY_SPAWN_RADIUS_X + side * (Math.random() * 20))
       ey = Math.round(CENTER_Y + (Math.random() - 0.5) * ENEMY_SPAWN_RADIUS_Y * 1.4)
     } else {
-      // ring (default) — evenly spaced on ellipse with wave angle offset
+      // ring
       const angleOffset = WAVE_ANGLE_OFFSETS[wave % 6] ?? 0
       const angle = (count > 1 ? (i / count) * Math.PI * 2 : 0) + angleOffset
       ex = Math.round(CENTER_X + Math.cos(angle) * ENEMY_SPAWN_RADIUS_X)
       ey = Math.round(CENTER_Y + Math.sin(angle) * ENEMY_SPAWN_RADIUS_Y)
     }
 
-    state.enemies.push(makeEnemyEntity(id, ex, ey, i, state.difficultyMult ?? 1))
+    pending.push({ enemyId, x: ex, y: ey, diffMult: diff })
   }
+
+  // Append to queue (don't reset timer — let existing drip continue)
+  state.pendingSpawns.push(...pending)
 }
 
 export function spawnBoss(state: RiftRunState, bossId: string): void {
@@ -300,6 +312,23 @@ export function spawnBoss(state: RiftRunState, bossId: string): void {
 
 export function tickCombat(state: RiftRunState, dtMs: number): void {
   if (state.phase !== 'combat') return
+
+  // Drain pending spawn queue at a capped rate to avoid frame spikes.
+  // Also pause draining if alive count is at budget ceiling.
+  if (state.pendingSpawns.length > 0) {
+    state.spawnTimerMs += dtMs
+    if (state.spawnTimerMs >= SPAWN_INTERVAL_MS) {
+      state.spawnTimerMs = 0
+      const currentAlive = state.enemies.reduce((n, e) => n + (e.alive ? 1 : 0), 0)
+      if (currentAlive < MAX_ALIVE_ENEMIES) {
+        const canSpawn = Math.min(SPAWN_BATCH_SIZE, MAX_ALIVE_ENEMIES - currentAlive)
+        const batch = state.pendingSpawns.splice(0, canSpawn)
+        for (const { enemyId, x, y, diffMult } of batch) {
+          state.enemies.push(makeEnemyEntity(enemyId, x, y, 0, diffMult))
+        }
+      }
+    }
+  }
 
   const aliveHeroes = state.heroes.filter(h => h.alive)
   const aliveEnemies = state.enemies.filter(e => e.alive)
@@ -516,6 +545,9 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
     d.lifeMs -= dtMs
     return d.lifeMs > 0
   })
+
+  // Prune dead enemies whose death animation has finished — keeps array bounded
+  state.enemies = state.enemies.filter(e => e.alive || e.deathAnimMs > 0)
 }
 
 function applyProjectileHit(
@@ -561,6 +593,7 @@ function applyProjectileHit(
     if (p.abilityType === 'skill') {
       emitExplosion({ x: t.x, y: t.y }, 14, p.element)
       if (t === mainTarget) {
+        playSound('combat_spell_sparkle')
         triggerShake('smallHit')
         state.impactFlashMs = 60
         state.impactFlashColor = '#ffffff'
@@ -569,6 +602,8 @@ function applyProjectileHit(
       emitExplosion({ x: t.x, y: t.y }, 30, p.element)
       emitCritPop({ x: t.x, y: t.y })
       if (t === mainTarget) {
+        playSound('combat_fire_burst')
+        haptic('medium')
         emitGoldBeam({ x: t.x, y: t.y })
         triggerShake('heavySkill')
         triggerHitstop(150)
@@ -576,8 +611,12 @@ function applyProjectileHit(
         state.impactFlashColor = '#ffffaa'
       }
     } else if (p.isCrit) {
+      playSound('combat_crit_snap')
+      haptic('light')
       emitCritPop({ x: t.x, y: t.y })
       triggerHitstop(65)
+    } else {
+      playSound('combat_sword_tick')
     }
 
     // Boss phase 2 — enrage at 50% HP
@@ -587,6 +626,8 @@ function applyProjectileHit(
       t.flashMs = 800
       t.hitstunMs = 0
       state.bossPhase = 2
+      playSound('combat_boss_death_boom')
+      haptic('heavy')
       triggerShake('bossDeath')
       triggerHitstop(200)
       emitExplosion({ x: t.x, y: t.y }, 30, t.element)
@@ -638,6 +679,7 @@ function killEnemy(state: RiftRunState, enemy: CombatEntity): void {
   state.killCount++
   const goldAmt = Math.round((10 + Math.random() * 10) * state.goldMult)
   spawnLoot(state, enemy.x, enemy.y, 'coin', goldAmt)
+  playSound('combat_coin_ping')
   emitExplosion({ x: enemy.x, y: enemy.y }, 20, enemy.element)
 }
 
@@ -646,6 +688,8 @@ function killBoss(state: RiftRunState): void {
   state.boss.alive = false
   state.boss.deathAnimMs = 900
   state.killCount++
+  playSound('combat_boss_death_boom')
+  haptic('double')
   triggerShake('bossDeath')
   triggerHitstop(380)
   emitGoldBeam({ x: state.boss.x, y: state.boss.y })

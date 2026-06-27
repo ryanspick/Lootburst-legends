@@ -47,7 +47,9 @@ function pickHeroForRarity(rarity: Rarity): string {
 
 interface DupeNotif { heroName: string; shards: number }
 
-export default function CapsuleScreen() {
+interface Props { onPull?: () => void }
+
+export default function CapsuleScreen({ onPull }: Props = {}) {
   const [pulling, setPulling] = useState(false)
   const [lastResult, setLastResult] = useState<Rarity | null>(null)
   const [capsuleSprites, setCapsuleSprites] = useState<Partial<Record<Rarity, string>>>({})
@@ -95,6 +97,7 @@ export default function CapsuleScreen() {
     const isDupe = ownedHeroes.some(h => h.id === heroId)
     addHero(heroId)
     recordCapsulePull()
+    onPull?.()
     setLastResult(rarity)
 
     if (isDupe) {
@@ -125,6 +128,7 @@ export default function CapsuleScreen() {
       const heroId = pickHeroForRarity(rarity)
       addHero(heroId)
       recordCapsulePull()
+      if (i === 9) onPull?.()
       const hero = heroesData.heroes.find(h => h.id === heroId)
       items.push({
         id: `pull_${i}_${heroId}`,

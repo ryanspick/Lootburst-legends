@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <!-- Background -->
+  <rect width="192" height="192" rx="24" fill="#0a0d1a"/>
+  <!-- Outer glow ring -->
+  <circle cx="96" cy="96" r="80" fill="none" stroke="#ffd700" stroke-width="3" opacity="0.4"/>
+  <!-- Chest body -->
+  <rect x="44" y="80" width="104" height="72" rx="6" fill="#1a1a3a" stroke="#ffd700" stroke-width="3"/>
+  <!-- Chest lid -->
+  <rect x="44" y="62" width="104" height="26" rx="6" fill="#0e1128" stroke="#ffd700" stroke-width="3"/>
+  <!-- Chest lock plate -->
+  <rect x="80" y="72" width="32" height="18" rx="4" fill="#ffd700"/>
+  <!-- Lock keyhole -->
+  <circle cx="96" cy="79" r="5" fill="#0a0d1a"/>
+  <rect x="94" y="79" width="4" height="6" fill="#0a0d1a"/>
+  <!-- Gold shine lines on lid -->
+  <line x1="62" y1="70" x2="62" y2="82" stroke="#ffd700" stroke-width="2" opacity="0.5"/>
+  <line x1="70" y1="68" x2="70" y2="84" stroke="#ffd700" stroke-width="1.5" opacity="0.3"/>
+  <!-- Gems / sparkles bursting -->
+  <polygon points="96,38 99,48 110,48 101,55 104,65 96,58 88,65 91,55 82,48 93,48" fill="#ffd700"/>
+  <!-- Corner gems on chest -->
+  <rect x="52" y="100" width="8" height="8" rx="2" fill="#44ccff" transform="rotate(45 56 104)"/>
+  <rect x="132" y="100" width="8" height="8" rx="2" fill="#cc44ff" transform="rotate(45 136 104)"/>
+</svg>
