@@ -65,102 +65,262 @@
   border-bottom: 1px solid #1a1a30;
 }
 
-/* ── Welcome / New-player offer ── */
-.welcomeOffer {
-  border: 2px solid #ffd700;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #1a1400 0%, #0e0e00 100%);
-  padding: 14px 12px 12px;
+/* ═══════════════════════════════════════════════════════════
+   STARTER PACKS SECTION
+═══════════════════════════════════════════════════════════ */
+
+.starterSection {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  gap: 10px;
+}
+
+.starterLabel {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #ffd700;
+  text-align: center;
+  padding: 6px 0 4px;
+  text-shadow: 0 0 12px #ffd70088;
+}
+
+/* Base card */
+.starterCard {
+  border-radius: 10px;
+  background: linear-gradient(135deg, #14142e 0%, #0d0d20 100%);
+  border: 2px solid #3344aa;
+  padding: 0 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   position: relative;
   overflow: hidden;
-  animation: welcomePulse 2.5s ease-in-out infinite;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.starterCard[data-flash='true'] { animation: flashBurst 0.65s ease-out; }
+
+/* Highlight (best-value) card */
+.starterHighlight {
+  border-color: #ffd700;
+  background: linear-gradient(135deg, #1c1800 0%, #12100a 100%);
+  box-shadow: 0 0 20px #ffd70044, 0 4px 16px #00000066;
+  animation: goldPulse 2.8s ease-in-out infinite;
 }
 
-@keyframes welcomePulse {
-  0%, 100% { box-shadow: 0 0 12px #ffd70066; }
-  50%       { box-shadow: 0 0 28px #ffd700bb; }
+@keyframes goldPulse {
+  0%, 100% { box-shadow: 0 0 14px #ffd70044, 0 4px 16px #00000066; }
+  50%       { box-shadow: 0 0 32px #ffd700aa, 0 4px 20px #00000088; }
 }
 
-.welcomeOffer[data-flash='true'] {
-  animation: flashBurst 0.6s ease-out;
+/* Welcome offer card */
+.starterWelcome {
+  border-color: #ff4444;
+  background: linear-gradient(135deg, #1a0808 0%, #0d0505 100%);
+  box-shadow: 0 0 20px #ff444444;
+  animation: redPulse 2.2s ease-in-out infinite;
 }
 
-.welcomeTag {
-  font-size: 8px;
-  letter-spacing: 1.5px;
-  color: #ffd700;
-  background: #2a1e00;
-  border: 1px solid #ffd70066;
-  border-radius: 3px;
-  padding: 2px 8px;
+@keyframes redPulse {
+  0%, 100% { box-shadow: 0 0 12px #ff444433; }
+  50%       { box-shadow: 0 0 28px #ff4444aa; }
 }
 
-.welcomeBadge {
-  font-size: 22px;
-  color: #ff4444;
-  font-weight: bold;
-  letter-spacing: 2px;
-  text-shadow: 0 0 16px #ff4444aa;
+/* Tag ribbon at top of card */
+.starterTag {
+  background: linear-gradient(90deg, #ffd700 0%, #ff9900 100%);
+  color: #000;
+  font-size: 7px;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  text-align: center;
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 10px;
 }
 
-.welcomeName {
+.starterWelcome .starterTag {
+  background: linear-gradient(90deg, #ff4444 0%, #ff1111 100%);
+  color: #fff;
+}
+
+/* Row: icon | info | price */
+.starterRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 0 14px 10px;
+}
+
+.starterIcon {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px #ffd70066);
+}
+
+.starterInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.starterName {
   font-size: 10px;
   color: #ffffff;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 
-.welcomeItems {
-  font-size: 8px;
-  color: #cccccc;
-  text-align: center;
+.starterItems {
+  font-size: 7px;
+  color: #bbbbdd;
   line-height: 1.8;
 }
 
-.welcomePrices {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.welcomeTimer {
+  font-size: 7px;
+  color: #ff9944;
+  letter-spacing: 0.5px;
 }
 
-.welcomeOld {
-  font-size: 11px;
-  color: #666666;
+/* Price column (right side) */
+.starterPriceCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.strikePrice {
+  font-size: 8px;
+  color: #555555;
   text-decoration: line-through;
 }
 
-.welcomeNew {
-  font-size: 18px;
+.starterPrice {
+  font-size: 14px;
   color: #44ff88;
   text-shadow: 0 0 10px #44ff8877;
 }
+.starterHighlight .starterPrice { color: #ffd700; text-shadow: 0 0 10px #ffd70077; }
+.starterWelcome .starterPrice   { color: #44ff88; }
 
-.welcomeTimer {
-  font-size: 8px;
-  color: #ff9944;
-  letter-spacing: 1px;
-}
-
-.welcomeBuyBtn {
-  margin-top: 4px;
-  background: linear-gradient(180deg, #ffd700 0%, #ff9900 100%);
-  color: #000;
-  border: none;
-  border-radius: 5px;
-  padding: 10px 24px;
+/* Buy button */
+.starterBuyBtn {
+  margin: 0 14px;
+  width: calc(100% - 28px);
+  background: linear-gradient(180deg, #334499 0%, #223377 100%);
+  color: #ffffff;
+  border: 1.5px solid #5566cc;
+  border-radius: 6px;
+  padding: 12px 0;
   font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-size: 8px;
+  letter-spacing: 1.5px;
   cursor: pointer;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 0 #aa6600, 0 6px 16px #ffd70055;
+  box-shadow: 0 4px 0 #112255, 0 6px 16px #00000055;
   transition: transform 0.1s, box-shadow 0.1s;
+  text-align: center;
 }
-.welcomeBuyBtn:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 #aa6600;
+.starterBuyBtn:active { transform: translateY(3px); box-shadow: 0 1px 0 #112255; }
+.starterBuyBtn:disabled {
+  background: #1a1a30;
+  color: #44ff88;
+  border-color: #44ff8844;
+  cursor: default;
+  box-shadow: none;
+}
+
+.starterBuyHighlight {
+  background: linear-gradient(180deg, #cc8800 0%, #aa6600 100%);
+  border-color: #ffd70088;
+  box-shadow: 0 4px 0 #663300, 0 6px 16px #ffd70033;
+}
+.starterBuyHighlight:active { box-shadow: 0 1px 0 #663300; }
+
+/* ═══════════════════════════════════════════════════════════
+   LOCKED VAULT (full shop, pre-unlock)
+═══════════════════════════════════════════════════════════ */
+
+.lockedVault {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px dashed #2a2a5a;
+}
+
+/* Blurred content underneath */
+.lockedPreview {
+  padding: 10px 10px 14px;
+  filter: blur(4px) brightness(0.4);
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Overlay sits on top */
+.lockedOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(8, 8, 20, 0.65);
+  padding: 16px;
+  z-index: 2;
+}
+
+.lockIcon {
+  font-size: 32px;
+  filter: drop-shadow(0 0 10px #ffd70066);
+  animation: lockFloat 2.5s ease-in-out infinite;
+}
+
+@keyframes lockFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
+}
+
+.lockTitle {
+  font-size: 11px;
+  color: #ffd700;
+  letter-spacing: 2px;
+  text-shadow: 0 0 14px #ffd70077;
+  text-align: center;
+}
+
+.lockSub {
+  font-size: 7px;
+  color: #9999bb;
+  text-align: center;
+  line-height: 2;
+  max-width: 220px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   UNLOCK BANNER (shown briefly after first purchase)
+═══════════════════════════════════════════════════════════ */
+
+.unlockBanner {
+  background: linear-gradient(90deg, #003322 0%, #001a11 100%);
+  border: 2px solid #44ff88;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  font-size: 9px;
+  color: #44ff88;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px #44ff8888;
+  animation: unlockReveal 0.5s ease-out;
+  box-shadow: 0 0 24px #44ff8844;
+}
+
+@keyframes unlockReveal {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ── Gem packs grid ── */

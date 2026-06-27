@@ -1,4 +1,4 @@
-export const PS = 4 // canvas pixels per logical pixel
+export const PS = 5 // canvas pixels per logical pixel
 
 export interface PC {
   ctx: CanvasRenderingContext2D
@@ -73,7 +73,8 @@ export function tmpl(pc: PC, rows: string[], pal: Record<string, string | [strin
 }
 
 export function toDataURL(canvas: HTMLCanvasElement): string {
-  return canvas.toDataURL('image/png')
+  const webp = canvas.toDataURL('image/webp', 0.95)
+  return webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/png')
 }
 
 // Lighten / darken a hex color

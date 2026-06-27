@@ -272,30 +272,125 @@ export function emitUpgradeCardSparkle(cardRect: { x: number; y: number; w: numb
   }
 }
 
-export function emitEnemyDeath(pos: Pos, element: string, isBoss = false) {
-  const color = ELEMENT_COLOURS[element] ?? '#ff8844'
-  const count = isBoss ? 35 : 12
-  for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2 + randPM(0.5)
-    const speed = rand(50, isBoss ? 220 : 150)
+// Candy-color palettes per element
+const DEATH_CANDY: Record<string, string[]> = {
+  fire:    ['#ff6644', '#ffaa22', '#ff3300', '#ffdd44'],
+  ice:     ['#88eeff', '#aaffff', '#66aaff', '#ffffff'],
+  poison:  ['#88ff44', '#44ff88', '#aaff22', '#ccff66'],
+  shadow:  ['#cc44ff', '#ff44ff', '#8844cc', '#ff88ff'],
+  machine: ['#44ffcc', '#22aaff', '#00ffee', '#88ddff'],
+  nature:  ['#44ff22', '#88ee00', '#22dd44', '#bbff44'],
+  gold:    ['#ffd700', '#ffaa00', '#ffee44', '#ffcc00'],
+  storm:   ['#ffee00', '#aaddff', '#ffffff', '#ffff88'],
+}
+const DEATH_CANDY_DEFAULT = ['#ff88cc', '#88aaff', '#ffcc44', '#44ffcc']
+
+export function emitEnemyDeath(pos: Pos, element: string, isBoss = false, isElite = false) {
+  const elColor = ELEMENT_COLOURS[element] ?? '#ff8844'
+  const candy = DEATH_CANDY[element] ?? DEATH_CANDY_DEFAULT
+  // Combined palette: element candy + bright accents
+  const pal = [...candy, '#ffffff', '#ff66cc', '#66ffee']
+
+  const burstCount  = isBoss ? 55 : isElite ? 32 : 20
+  const maxSpeed    = isBoss ? 340 : isElite ? 240 : 175
+  const maxLife     = isBoss ? 950 : isElite ? 700 : 540
+  const maxScale    = isBoss ? 3.2 : isElite ? 2.6 : 2.0
+  const shapes      = ['star', 'diamond', 'square', 'circle', 'pixel'] as const
+
+  // Phase 1 — radial candy confetti burst
+  for (let i = 0; i < burstCount; i++) {
+    const angle = (i / burstCount) * Math.PI * 2 + randPM(0.45)
+    const speed = rand(55, maxSpeed)
     spawnParticle({
       x: pos.x, y: pos.y,
-      vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - rand(10, 40),
-      gravity: 220,
-      lifetimeMs: rand(250, isBoss ? 800 : 500),
-      startScale: isBoss ? 2.5 : 1.5, endScale: 0,
-      color: i % 4 === 0 ? '#ffffff' : color,
-      shape: i % 3 === 0 ? 'square' : 'pixel',
-      zIndex: 40, blendMode: 'add',
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - rand(15, 55),
+      gravity: 380,
+      lifetimeMs: rand(280, maxLife),
+      startScale: rand(1.4, maxScale), endScale: 0,
+      color: pal[i % pal.length],
+      shape: shapes[i % shapes.length],
+      zIndex: 45, blendMode: 'add',
     })
   }
+
+  // Phase 2 — white core flash pop
   spawnParticle({
     x: pos.x, y: pos.y, vx: 0, vy: 0,
-    lifetimeMs: isBoss ? 200 : 100,
-    startScale: isBoss ? 5 : 2.5, endScale: 0,
+    lifetimeMs: isBoss ? 260 : 140,
+    startScale: isBoss ? 9 : isElite ? 6 : 4.2, endScale: 0,
+    startAlpha: 1, endAlpha: 0,
     color: '#ffffff', shape: 'circle',
-    zIndex: 41, blendMode: 'add',
+    zIndex: 50, blendMode: 'add',
   })
+
+  // Phase 3 — element color ring expanding outward
+  const ringN = isBoss ? 18 : 10
+  const ringR = isBoss ? 50 : isElite ? 34 : 22
+  for (let i = 0; i < ringN; i++) {
+    const angle = (i / ringN) * Math.PI * 2
+    spawnParticle({
+      x: pos.x + Math.cos(angle) * ringR,
+      y: pos.y + Math.sin(angle) * ringR,
+      vx: Math.cos(angle) * rand(35, 80),
+      vy: Math.sin(angle) * rand(35, 80) - 15,
+      lifetimeMs: rand(200, 480),
+      startScale: isBoss ? 2.2 : 1.6, endScale: 0,
+      startAlpha: 0.9, endAlpha: 0,
+      color: elColor, shape: 'circle',
+      zIndex: 44, blendMode: 'add',
+    })
+  }
+
+  // Phase 4 — gold coin shower (dopamine reward feel)
+  const coinCount = isBoss ? 22 : isElite ? 12 : 6
+  for (let i = 0; i < coinCount; i++) {
+    spawnParticle({
+      x: pos.x + randPM(14), y: pos.y + randPM(8),
+      vx: randPM(90), vy: rand(-240, -80),
+      gravity: 480,
+      lifetimeMs: rand(480, 950),
+      startScale: 1.4, endScale: 0.3,
+      color: i % 3 === 0 ? '#ffee44' : '#ffd700',
+      shape: 'diamond',
+      zIndex: 47, blendMode: 'add',
+    })
+  }
+
+  // Phase 5 — candy mini-stars (short-lived sparkles)
+  const starCount = isBoss ? 24 : isElite ? 14 : 8
+  for (let i = 0; i < starCount; i++) {
+    const angle = rand(0, Math.PI * 2)
+    const r = rand(8, isBoss ? 60 : 35)
+    spawnParticle({
+      x: pos.x + Math.cos(angle) * r,
+      y: pos.y + Math.sin(angle) * r,
+      vx: randPM(40), vy: rand(-80, -20),
+      lifetimeMs: rand(150, 380),
+      startScale: rand(1, 2.2), endScale: 0,
+      color: candy[i % candy.length],
+      shape: 'star',
+      zIndex: 46, blendMode: 'add',
+    })
+  }
+
+  // Boss-only: extra rainbow star ring + screen-wide rain
+  if (isBoss) {
+    const cols = ['#ff4444','#ffdd00','#44ff88','#44aaff','#ff44ff','#ffaa00','#aaffff']
+    for (let i = 0; i < 28; i++) {
+      const angle = (i / 28) * Math.PI * 2
+      spawnParticle({
+        x: pos.x, y: pos.y,
+        vx: Math.cos(angle) * rand(70, 190),
+        vy: Math.sin(angle) * rand(70, 190) - 50,
+        lifetimeMs: rand(700, 1500),
+        startScale: 3.2, endScale: 0,
+        colors: cols,
+        shape: 'star',
+        zIndex: 48, blendMode: 'add',
+      })
+    }
+  }
 }
 
 export function emitGearDropGlow(pos: Pos, rarity: Rarity) {

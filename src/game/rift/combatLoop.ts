@@ -16,12 +16,12 @@ export function clearCombatEmitCache() {
   _lootEmitted.clear()
 }
 
-const HERO_SPRITE_W = 24
-const HERO_SPRITE_H = 24
-const ENEMY_SPRITE_W = 30
-const ENEMY_SPRITE_H = 30
-const BOSS_W = 50
-const BOSS_H = 50
+const HERO_SPRITE_W = 36
+const HERO_SPRITE_H = 36
+const ENEMY_SPRITE_W = 44
+const ENEMY_SPRITE_H = 44
+const BOSS_W = 72
+const BOSS_H = 72
 
 // Orb display sizes (logical px) — matches sprite canvas sizes
 const ORB_SIZE: Record<Projectile['abilityType'], number> = {
@@ -174,60 +174,103 @@ function drawEntity(
   const cy = entity.y
 
   if (!entity.alive) {
-    if (entity.deathAnimMs > 0) {
-      // Emit death burst on first frame of death
-      if (!_deadEmitted.has(entity.id)) {
-        _deadEmitted.add(entity.id)
-        emitEnemyDeath({ x: cx, y: cy }, entity.element, entity.role === 'boss')
-      }
-      const maxAnim = entity.role === 'boss' ? 900 : 450
-      const t = 1 - entity.deathAnimMs / maxAnim
-      ctx.save()
-      ctx.globalAlpha = Math.max(0, 1 - t * 1.5)
-      ctx.translate(cx, cy + t * 50)
-      ctx.scale(1 - t * 0.6, 1 + t * 0.4)
-    } else {
-      return
-    }
-  } else {
-    const rm = getReducedMotion()
-    const bobY = rm ? 0
-      : entity.role === 'hero'
-        ? Math.sin(timeMs / 600 + entity.x * 0.02) * 2.5
-        : Math.sin(timeMs / 720 + entity.x * 0.03) * 1.8
+    if (entity.deathAnimMs <= 0) return
 
-    // Brief scale pump when hit or firing
-    const pumpRaw = entity.flashMs > 0
-      ? entity.flashMs / (entity.role === 'hero' ? 130 : 200)
-      : 0
-    const pumpScale = 1 + pumpRaw * 0.07
+    // First-frame death burst
+    if (!_deadEmitted.has(entity.id)) {
+      _deadEmitted.add(entity.id)
+      emitEnemyDeath(
+        { x: cx, y: cy },
+        entity.element,
+        entity.role === 'boss',
+        entity.rarity === 'rare',
+      )
+    }
+
+    const maxAnim = entity.role === 'boss' ? 1050 : 580
+    const t = Math.min(1, 1 - entity.deathAnimMs / maxAnim)
+    const dir = (entity.id.charCodeAt(0) & 1) ? 1 : -1
+    const img = entity.spriteDataUrl ? getImg(entity.spriteDataUrl) : null
 
     ctx.save()
-    ctx.translate(cx, cy + bobY)
-    ctx.scale(pumpScale, pumpScale)
 
-    if (entity.flashMs > 0) {
-      ctx.filter = 'brightness(4) saturate(0)'
+    if (t < 0.15) {
+      // Phase 1 — POP: scale up, white flash
+      const pT = easeOutCubic(t / 0.15)
+      ctx.globalAlpha = 1
+      ctx.translate(cx, cy - pT * 5)
+      ctx.scale(1 + pT * 0.6, 1 + pT * 0.6)
+      ctx.filter = `brightness(${(8 - pT * 5.5).toFixed(1)})`
+    } else if (t < 0.52) {
+      // Phase 2 — SHATTER: spin, hue-rotate, partial shrink
+      const sT = easeOutCubic((t - 0.15) / 0.37)
+      ctx.globalAlpha = Math.max(0.25, 1 - sT * 0.5)
+      ctx.translate(cx, cy + sT * 10)
+      ctx.scale(1.6 - sT * 0.75, 1.6 - sT * 0.75)
+      ctx.rotate(dir * sT * 0.7)
+      ctx.filter = `hue-rotate(${Math.round(sT * 270)}deg) brightness(${(2.3 - sT * 1.2).toFixed(1)})`
+    } else {
+      // Phase 3 — VANISH: spin out, drift down, fade
+      const fT = (t - 0.52) / 0.48
+      ctx.globalAlpha = Math.max(0, 0.55 - fT * 0.75)
+      ctx.translate(cx, cy + 10 + fT * 32)
+      const sc = Math.max(0.04, 0.85 - fT * 0.82)
+      ctx.scale(sc, sc)
+      ctx.rotate(dir * (0.7 + fT * 1.6))
     }
 
-    // Low-HP danger glow for heroes
-    const hpPct = entity.hp / entity.maxHp
-    if (entity.role === 'hero' && hpPct < 0.35 && !getReducedMotion()) {
-      const danger = 0.4 + Math.abs(Math.sin(timeMs / 350)) * 0.6
-      ctx.shadowColor = '#ff2244'
-      ctx.shadowBlur = 14 * danger
-    } else if (entity.rarity !== 'common') {
-      const rc = RARITY_COLOURS[entity.rarity]
-      ctx.shadowColor = rc.glow
-      ctx.shadowBlur = entity.rarity === 'mythic' ? 24
-        : entity.rarity === 'legendary' ? 18
-        : 10
+    if (img) {
+      ctx.imageSmoothingEnabled = true
+      ;(ctx as CanvasRenderingContext2D & { imageSmoothingQuality?: string }).imageSmoothingQuality = 'high'
+      ctx.drawImage(img, -w / 2, -h / 2, w, h)
+    } else {
+      ctx.fillStyle = '#ff4488'
+      ctx.fillRect(-w / 2, -h / 2, w, h)
     }
+
+    ctx.restore()
+    ctx.filter = 'none'
+    ctx.shadowBlur = 0
+    return
+  }
+
+  // ── Alive entity ─────────────────────────────────────────────────────────────
+  const rm = getReducedMotion()
+  const bobY = rm ? 0
+    : entity.role === 'hero'
+      ? Math.sin(timeMs / 600 + entity.x * 0.02) * 2.5
+      : Math.sin(timeMs / 720 + entity.x * 0.03) * 1.8
+
+  const pumpRaw = entity.flashMs > 0
+    ? entity.flashMs / (entity.role === 'hero' ? 130 : 200)
+    : 0
+  const pumpScale = 1 + pumpRaw * 0.07
+
+  ctx.save()
+  ctx.translate(cx, cy + bobY)
+  ctx.scale(pumpScale, pumpScale)
+
+  if (entity.flashMs > 0) {
+    ctx.filter = 'brightness(4) saturate(0)'
+  }
+
+  const hpPct = entity.hp / entity.maxHp
+  if (entity.role === 'hero' && hpPct < 0.35 && !getReducedMotion()) {
+    const danger = 0.4 + Math.abs(Math.sin(timeMs / 350)) * 0.6
+    ctx.shadowColor = '#ff2244'
+    ctx.shadowBlur = 14 * danger
+  } else if (entity.rarity !== 'common') {
+    const rc = RARITY_COLOURS[entity.rarity]
+    ctx.shadowColor = rc.glow
+    ctx.shadowBlur = entity.rarity === 'mythic' ? 24
+      : entity.rarity === 'legendary' ? 18
+      : 10
   }
 
   const img = entity.spriteDataUrl ? getImg(entity.spriteDataUrl) : null
   if (img) {
-    ctx.imageSmoothingEnabled = false
+    ctx.imageSmoothingEnabled = true
+    ;(ctx as CanvasRenderingContext2D & { imageSmoothingQuality?: string }).imageSmoothingQuality = 'high'
     ctx.drawImage(img, -w / 2, -h / 2, w, h)
   } else {
     const rc = RARITY_COLOURS[entity.rarity]
@@ -242,9 +285,7 @@ function drawEntity(
   ctx.filter = 'none'
   ctx.shadowBlur = 0
 
-  if (entity.alive) {
-    drawHpBar(ctx, entity, cx - w / 2, cy + h / 2 + 2, w, 3)
-  }
+  drawHpBar(ctx, entity, cx - w / 2, cy + h / 2 + 2, w, 3)
 }
 
 // ─── Charge ring (ready indicator) ────────────────────────────────────────────

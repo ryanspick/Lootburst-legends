@@ -58,6 +58,9 @@ interface GameState {
   // New-player shop offer (20-hour window from first open)
   gemOfferExpiresAt: number  // 0 = not yet initialised
 
+  // Starter pack gate — tracks which starter packs have been purchased
+  starterPacksBought: string[]
+
   // Daily chest + login streak
   lastDailyChestAt: number   // 0 = never claimed
   loginStreak: number        // 0 = never tracked
@@ -86,6 +89,7 @@ interface GameState {
   recordCapsulePull: () => void
   setLastSeen: () => void
   initGemOffer: () => void
+  buyStarterPack: (id: string, gems: number, gold: number, keys: number, gearIds: string[]) => void
   checkDailyLogin: () => void
   claimDailyChest: () => DayReward
   claimFreeKey: () => void
@@ -128,6 +132,7 @@ export const useGameStore = create<GameState>()(
       highestPower: 6400,
       lastSeenAt: Date.now() - 2 * 3_600_000,
       gemOfferExpiresAt: 0,
+      starterPacksBought: [],
       lastDailyChestAt: 0,
       loginStreak: 0,
       lastLoginDate: '',
@@ -256,6 +261,18 @@ export const useGameStore = create<GameState>()(
         if (get().gemOfferExpiresAt === 0)
           set({ gemOfferExpiresAt: Date.now() + 20 * 3_600_000 })
       },
+      buyStarterPack: (id, gems, gold, keys, gearIds) => {
+        if (get().starterPacksBought.includes(id)) return
+        const { addGear } = get()
+        set(s => ({
+          gems: s.gems + gems,
+          gold: s.gold + gold,
+          keys: s.keys + keys,
+          totalGoldEarned: s.totalGoldEarned + gold,
+          starterPacksBought: [...s.starterPacksBought, id],
+        }))
+        for (const gid of gearIds) addGear(gid)
+      },
       checkDailyLogin: () => {
         const today = new Date().toISOString().split('T')[0]
         const { lastLoginDate, loginStreak } = get()
@@ -307,6 +324,7 @@ export const useGameStore = create<GameState>()(
         highestPower: s.highestPower,
         lastSeenAt: s.lastSeenAt,
         gemOfferExpiresAt: s.gemOfferExpiresAt,
+        starterPacksBought: s.starterPacksBought,
         lastDailyChestAt: s.lastDailyChestAt,
         loginStreak: s.loginStreak,
         lastLoginDate: s.lastLoginDate,
