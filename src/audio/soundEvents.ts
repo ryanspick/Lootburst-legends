@@ -38,8 +38,12 @@ const PROFILES: Record<string, SoundProfile> = {
   reward_star_up_slam:      { freq: 440, endFreq: 880,  type: 'square',    durationMs: 250, gain: 0.40, attackMs: 10 },
   reward_gear_equip_clink:  { freq: 880,                type: 'triangle',  durationMs: 160, gain: 0.30 },
   reward_level_up_flourish: { freq: 523, endFreq: 784,  type: 'sine',      durationMs: 400, gain: 0.40, attackMs: 20 },
+  reward_shard_gain:        { freq: 660, endFreq: 990,  type: 'triangle',  durationMs: 180, gain: 0.28 },
+  reward_chest_open:        { freq: 330, endFreq: 660,  type: 'sawtooth',  durationMs: 250, gain: 0.35, attackMs: 10 },
+  reward_star_up:           { freq: 440, endFreq: 880,  type: 'square',    durationMs: 250, gain: 0.40, attackMs: 10 },
   // UI
   ui_hover_tick:            { freq: 880,                type: 'sine',      durationMs: 40,  gain: 0.12 },
+  ui_chest_open:            { freq: 220, endFreq: 550,  type: 'sawtooth',  durationMs: 300, gain: 0.35, attackMs: 15 },
   ui_button_pop:            { freq: 440, endFreq: 220,  type: 'square',    durationMs: 60,  gain: 0.22 },
   ui_tab_slide:             { freq: 330, endFreq: 440,  type: 'sine',      durationMs: 80,  gain: 0.18 },
   ui_upgrade_card_flip:     { freq: 660, endFreq: 440,  type: 'triangle',  durationMs: 100, gain: 0.25 },
