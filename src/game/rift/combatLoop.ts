@@ -16,12 +16,12 @@ export function clearCombatEmitCache() {
   _lootEmitted.clear()
 }
 
-const HERO_SPRITE_W = 52
-const HERO_SPRITE_H = 52
-const ENEMY_SPRITE_W = 60
-const ENEMY_SPRITE_H = 60
-const BOSS_W = 96
-const BOSS_H = 96
+const HERO_SPRITE_W = 34
+const HERO_SPRITE_H = 34
+const ENEMY_SPRITE_W = 36
+const ENEMY_SPRITE_H = 36
+const BOSS_W = 58
+const BOSS_H = 58
 
 // Orb display sizes (logical px) — matches sprite canvas sizes
 const ORB_SIZE: Record<Projectile['abilityType'], number> = {
