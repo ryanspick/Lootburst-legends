@@ -1,4 +1,4 @@
-export const PS = 5 // canvas pixels per logical pixel
+export const PS = 6 // canvas pixels per logical pixel
 
 export interface PC {
   ctx: CanvasRenderingContext2D
@@ -70,6 +70,64 @@ export function tmpl(pc: PC, rows: string[], pal: Record<string, string | [strin
       }
     }
   }
+}
+
+// Post-processing: gradient shading pass applied OVER existing sprite pixels.
+// Uses source-atop so gradients only paint on already-opaque pixels.
+// 3-layer model: ambient occlusion (edge dark) + specular (upper-left) + element rim (lower-right)
+export function addSpriteShading(pc: PC, elemColor = '#8888cc') {
+  const cw = pc.w * PS
+  const ch = pc.h * PS
+
+  // Parse element color for RGB rim light
+  const hex = elemColor.replace('#', '')
+  const er = parseInt(hex.slice(0, 2), 16) || 136
+  const eg = parseInt(hex.slice(2, 4), 16) || 136
+  const eb = parseInt(hex.slice(4, 6), 16) || 204
+
+  // 1. Ambient occlusion — darken edges, brighten inner-center slightly
+  const aoGrad = pc.ctx.createRadialGradient(
+    cw * 0.50, ch * 0.44, cw * 0.10,
+    cw * 0.50, ch * 0.50, cw * 0.75
+  )
+  aoGrad.addColorStop(0,    'rgba(255,255,255,0.04)')
+  aoGrad.addColorStop(0.50, 'rgba(0,0,0,0)')
+  aoGrad.addColorStop(0.75, 'rgba(0,0,0,0.15)')
+  aoGrad.addColorStop(1,    'rgba(0,0,0,0.52)')
+  pc.ctx.save()
+  pc.ctx.globalCompositeOperation = 'source-atop'
+  pc.ctx.fillStyle = aoGrad
+  pc.ctx.fillRect(0, 0, cw, ch)
+  pc.ctx.restore()
+
+  // 2. Specular highlight — lit from upper-left (creates 3-D depth)
+  const specGrad = pc.ctx.createRadialGradient(
+    cw * 0.22, ch * 0.16, 0,
+    cw * 0.30, ch * 0.28, cw * 0.58
+  )
+  specGrad.addColorStop(0,    'rgba(255,255,255,0.60)')
+  specGrad.addColorStop(0.28, 'rgba(255,255,255,0.28)')
+  specGrad.addColorStop(0.70, 'rgba(255,255,255,0.06)')
+  specGrad.addColorStop(1,    'rgba(255,255,255,0)')
+  pc.ctx.save()
+  pc.ctx.globalCompositeOperation = 'source-atop'
+  pc.ctx.fillStyle = specGrad
+  pc.ctx.fillRect(0, 0, cw, ch)
+  pc.ctx.restore()
+
+  // 3. Element rim light — lower-right warmth from element color
+  const rimGrad = pc.ctx.createRadialGradient(
+    cw * 0.86, ch * 0.86, 0,
+    cw * 0.68, ch * 0.70, cw * 0.68
+  )
+  rimGrad.addColorStop(0,    `rgba(${er},${eg},${eb},0.40)`)
+  rimGrad.addColorStop(0.50, `rgba(${er},${eg},${eb},0.14)`)
+  rimGrad.addColorStop(1,    `rgba(${er},${eg},${eb},0)`)
+  pc.ctx.save()
+  pc.ctx.globalCompositeOperation = 'source-atop'
+  pc.ctx.fillStyle = rimGrad
+  pc.ctx.fillRect(0, 0, cw, ch)
+  pc.ctx.restore()
 }
 
 export function toDataURL(canvas: HTMLCanvasElement): string {
