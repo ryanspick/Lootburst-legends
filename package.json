@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint . --ext ts,tsx",
     "preview": "vite preview",
+    "server:dev": "cd server && npm run dev",
+    "server:install": "cd server && npm install",
     "art:placeholders": "tsx scripts/generate-placeholder-pixel-art.ts",
     "validate:visuals": "tsx scripts/validate-visuals.ts",
     "export:asset-prompts": "tsx scripts/export-asset-prompts.ts",

@@ -20,6 +20,7 @@ import { playTrack, stopMusic, setMusicMuted } from '@/audio/musicEngine'
 import { requestNotificationPermission, restoreNotificationSchedule } from '@/notifications/pushNotifications'
 import { setReducedMotionVfx } from '@/vfx/ParticleEngine'
 import { useGameStore } from '@/store/gameStore'
+import { handleIAPRedirect } from '@/services/iapService'
 
 export default function App() {
   const [tab, setTab] = useState<TabId>('run')
@@ -28,6 +29,7 @@ export default function App() {
   const [inRift, setInRift] = useState(false)
   const [postRunOffer, setPostRunOffer] = useState<PostRunOffer | null>(null)
   const [pendingAchievements, setPendingAchievements] = useState<string[]>([])
+  const [iapToast, setIapToast] = useState<string | null>(null)
 
   const soundMuted        = useGameStore(s => s.soundMuted)
   const soundVolume       = useGameStore(s => s.soundVolume)
@@ -39,6 +41,8 @@ export default function App() {
   const squadFull         = useGameStore(s => s.squadHeroIds.filter(Boolean).length >= 3)
   const highestPower      = useGameStore(s => s.highestPower)
   const totalRifts        = useGameStore(s => s.totalRifts)
+  const addGems           = useGameStore(s => s.addGems)
+  const addGold           = useGameStore(s => s.addGold)
 
   // Sync persisted settings → audio / vfx systems
   useEffect(() => { setMuted(soundMuted)            }, [soundMuted])
@@ -69,6 +73,20 @@ export default function App() {
 
   // Re-check when collection / squad / power state changes
   useEffect(() => { triggerAchievementCheck() }, [ownedHeroCount, ownedGearCount, squadFull, highestPower])
+
+  // Handle Stripe redirect-back after IAP checkout
+  useEffect(() => {
+    handleIAPRedirect().then(result => {
+      if (!result?.ok) return
+      if (result.gems) addGems(result.gems)
+      if (result.gold) addGold(result.gold)
+      const parts: string[] = []
+      if (result.gems) parts.push(`+${result.gems} 💎`)
+      if (result.gold) parts.push(`+${result.gold} 💰`)
+      setIapToast(`Purchase complete! ${parts.join(' · ')}`)
+      setTimeout(() => setIapToast(null), 5000)
+    })
+  }, [])
 
   function handleRiftExit(kills = 0, wasWipe = false) {
     setInRift(false)
@@ -114,6 +132,19 @@ export default function App() {
         newIds={pendingAchievements}
         onConsumed={() => setPendingAchievements([])}
       />
+
+      {/* IAP purchase success toast */}
+      {iapToast && (
+        <div style={{
+          position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',
+          background: '#001a0a', border: '1px solid #44ff8888', borderRadius: 12,
+          padding: '10px 20px', color: '#44ff88', fontFamily: 'monospace',
+          fontSize: 13, fontWeight: 700, zIndex: 200, whiteSpace: 'nowrap',
+          boxShadow: '0 0 20px #44ff8833',
+        }}>
+          {iapToast}
+        </div>
+      )}
 
       {/* Settings gear button — fixed top-right, hidden during rift */}
       {!inRift && (

@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import { emitCoinBurst, emitGemScatter } from '@/vfx/emitters'
+import { initiatePurchase } from '@/services/iapService'
 import styles from './ShopScreen.module.css'
+
+const IAP_ENABLED = !!import.meta.env.VITE_IAP_API
 
 interface ShopProps { onClose?: () => void }
 
@@ -95,6 +98,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
   const [now, setNow] = useState(Date.now())
   const [flashId, setFlashId] = useState<string | null>(null)
   const [justUnlocked, setJustUnlocked] = useState(false)
+  const [purchasingId, setPurchasingId] = useState<string | null>(null)
   const prevUnlocked = useRef(starterPacksBought.length > 0)
 
   useEffect(() => {
@@ -137,13 +141,27 @@ export default function ShopScreen({ onClose }: ShopProps) {
     }
   }
 
-  function buyGemPack(pack: typeof GEM_PACKS[number]) {
+  async function buyGemPack(pack: typeof GEM_PACKS[number]) {
+    if (IAP_ENABLED) {
+      setPurchasingId(pack.id)
+      try { await initiatePurchase(pack.id) }
+      catch { setPurchasingId(null) }
+      return
+    }
+    // Dev mode — grant directly
     addGems(pack.gems)
     flash(pack.id)
     emitGemScatter({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, pack.gems)
   }
 
-  function buyBundle(bundle: typeof BUNDLES[number]) {
+  async function buyBundle(bundle: typeof BUNDLES[number]) {
+    if (IAP_ENABLED) {
+      setPurchasingId(bundle.id)
+      try { await initiatePurchase(bundle.id) }
+      catch { setPurchasingId(null) }
+      return
+    }
+    // Dev mode — grant directly
     addGems(bundle.gems)
     addGold(bundle.gold)
     for (const gid of bundle.gearIds) addGear(gid)
@@ -256,14 +274,16 @@ export default function ShopScreen({ onClose }: ShopProps) {
                 className={styles.gemPack}
                 data-popular={pack.tag ? 'true' : undefined}
                 data-flash={flashId === pack.id ? 'true' : undefined}
-                disabled={!shopUnlocked}
+                disabled={!shopUnlocked || purchasingId === pack.id}
                 onClick={() => shopUnlocked && buyGemPack(pack)}
               >
                 {pack.tag && <div className={styles.packTag}>{pack.tag}</div>}
                 <div className={styles.packGems}>💎</div>
                 <div className={styles.packLabel}>{pack.label}</div>
                 {pack.bonus && <div className={styles.packBonus}>{pack.bonus}</div>}
-                <div className={styles.packPrice}>{pack.price}</div>
+                <div className={styles.packPrice}>
+                  {purchasingId === pack.id ? '⏳ ...' : pack.price}
+                </div>
               </button>
             ))}
           </div>
@@ -292,10 +312,10 @@ export default function ShopScreen({ onClose }: ShopProps) {
                 </div>
                 <button
                   className={styles.bundleBuyBtn}
-                  disabled={!shopUnlocked}
+                  disabled={!shopUnlocked || purchasingId === bundle.id}
                   onClick={() => shopUnlocked && buyBundle(bundle)}
                 >
-                  {bundle.price}
+                  {purchasingId === bundle.id ? '⏳' : bundle.price}
                 </button>
               </div>
             ))}
@@ -305,7 +325,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
         <div className={styles.disclaimer}>
           All purchases are final. Gems are virtual currency with no cash value.
           Prices in USD; local tax may apply. Additional purchasable content exists beyond starter packs.
-          Real IAP integration coming soon.
+          {IAP_ENABLED ? ' Payments processed securely via Stripe.' : ' (dev mode — purchases are simulated)'}
         </div>
       </div>
     </div>
