@@ -226,6 +226,24 @@
 .heroPickBtn:hover  { border-color: #4488ff; background: #1a2a4a; }
 .heroPickBtn:active { transform: scale(0.95); }
 
+/* Dismantle button */
+.dismantleBtn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 6px 12px;
+  background: rgba(80, 20, 80, 0.4);
+  border: 1px solid #663366;
+  border-radius: 6px;
+  color: #cc88cc;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.dismantleBtn:hover  { background: rgba(120, 30, 120, 0.5); border-color: #aa44aa; color: #ee99ee; }
+.dismantleBtn:active { transform: scale(0.97); }
+
 /* Empty state */
 .emptyGear {
   flex: 1;

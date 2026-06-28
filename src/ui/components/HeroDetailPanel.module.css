@@ -41,11 +41,30 @@
   gap: 5px;
 }
 
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .name {
   font-family: monospace;
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 1px;
+}
+
+.levelBadge {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #44ccff;
+  background: #001a2a;
+  border: 1px solid #44ccff44;
+  border-radius: 20px;
+  padding: 1px 7px;
+  white-space: nowrap;
 }
 
 .meta {
@@ -70,6 +89,43 @@
   color: #8899aa;
   padding: 2px 0;
   text-transform: capitalize;
+}
+
+.xpBar {
+  position: relative;
+  height: 6px;
+  background: #0a0a1a;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid #44ccff22;
+}
+
+.xpFill {
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  background: linear-gradient(90deg, #1166aa, #44ccff);
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.xpLabel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: monospace;
+  font-size: 7px;
+  letter-spacing: 0.5px;
+  color: #aaddff;
+}
+
+.xpMaxed {
+  font-family: monospace;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #ffd700;
+  text-align: center;
 }
 
 .shards {

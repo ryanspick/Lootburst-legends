@@ -20,10 +20,10 @@ export default function WavePresentation({ waveIndex, enemyCount, isBossWave, zo
 
   const label = isBossWave
     ? '⚠ BOSS'
-    : `WAVE ${waveIndex + 1}`
+    : `WAVE ${waveIndex}`
   const subLabel = isBossWave
     ? 'PREPARE YOURSELVES'
-    : `${WAVE_LABELS[waveIndex % WAVE_LABELS.length]} — ${enemyCount} ENEMIES`
+    : `${WAVE_LABELS[(waveIndex - 1) % WAVE_LABELS.length]} — ${enemyCount} ENEMIES`
 
   useEffect(() => {
     const hideTimer = setTimeout(() => setVisible(false), 1600)

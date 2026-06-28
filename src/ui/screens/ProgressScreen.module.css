@@ -61,6 +61,35 @@
   border: 1px solid var(--panel-border);
   border-radius: 6px;
   padding: 6px 3px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  position: relative;
+}
+
+.petCard:hover { border-color: #4488ff55; }
+
+.petEquipped {
+  border-color: #44ccff !important;
+  box-shadow: 0 0 8px #44ccff33;
+}
+
+.petEffect {
+  font-size: 7px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.2;
+  text-transform: capitalize;
+}
+
+.petEquippedBadge {
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #44ccff;
+  background: #001a2a;
+  border: 1px solid #44ccff44;
+  border-radius: 3px;
+  padding: 1px 4px;
 }
 
 .petName { font-size: 8px; color: var(--text-secondary); text-align: center; line-height: 1.2; }
@@ -96,6 +125,37 @@
 .statRow:last-child { border-bottom: none; }
 .statLabel { color: var(--text-secondary); }
 .statValue { color: var(--gold); }
+
+/* Run History */
+.runHistoryList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.runRow {
+  display: grid;
+  grid-template-columns: 14px 1fr auto auto;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 11px;
+  border: 1px solid #2233aa22;
+  background: var(--panel-bg);
+}
+
+.runWin  { border-left: 3px solid #44ccff66; }
+.runWipe { border-left: 3px solid #ff444466; opacity: 0.75; }
+
+.runIcon  { font-size: 10px; }
+.runWin  .runIcon { color: #44ccff; }
+.runWipe .runIcon { color: #ff4444; }
+
+.runDetail { color: var(--text-secondary); white-space: nowrap; }
+.runGold   { color: var(--gold); font-weight: 600; white-space: nowrap; }
+.runDate   { color: var(--text-muted); font-size: 9px; white-space: nowrap; }
 
 /* Mounts */
 .mountGrid {
@@ -135,6 +195,30 @@
 
 .mountDetailLabel { color: var(--text-muted); }
 .mountDetailValue { color: var(--text-secondary); text-transform: capitalize; }
+
+.mountEquipBtn {
+  margin-top: 4px;
+  width: 100%;
+  background: #0a1a2a;
+  border: 1px solid #2244aa;
+  border-radius: 6px;
+  color: #aabbdd;
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.mountEquipBtn:hover { border-color: #4488ff; color: #88aaff; }
+
+.mountEquipActive {
+  border-color: #44ccff !important;
+  color: #44ccff !important;
+  background: #001a2a !important;
+}
 
 /* Daily Quests */
 .questList {

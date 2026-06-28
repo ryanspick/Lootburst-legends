@@ -81,7 +81,7 @@ export default function RiftRunScreen({ onExit }: Props) {
   const [countdown, setCountdown] = useState(3)
   const [upgradeChoice, setUpgradeChoice] = useState<RiftRunState['upgradeChoice']>(null)
   const [postRun, setPostRun] = useState<RiftRunState['postRun']>(null)
-  const [stats, setStats] = useState({ kills: 0, gold: 0, elapsedMs: 0 })
+  const [stats, setStats] = useState({ kills: 0, gold: 0, elapsedMs: 0, enemiesLeft: 0 })
   const [bossWarning, setBossWarning] = useState(false)
   const [bossEntrance, setBossEntrance] = useState<RiftRunState['boss']>(null)
   const [bossSnap, setBossSnap] = useState<RiftRunState['boss']>(null)
@@ -91,6 +91,7 @@ export default function RiftRunScreen({ onExit }: Props) {
   const [bossDeathSnap, setBossDeathSnap] = useState<{ boss: RiftRunState['boss']; killCount: number; goldCollected: number } | null>(null)
   const [showBossDeath, setShowBossDeath] = useState(false)
   const [wavePresentation, setWavePresentation] = useState<{ waveIndex: number; enemyCount: number; isBoss?: boolean } | null>(null)
+  const [currentWaveNum, setCurrentWaveNum] = useState(0)
   const prevBossAliveRef = useRef<boolean | null>(null)
   const zoneIdxRef = useRef(Math.floor(Math.random() * ZONES.length))
   const [showZoneName, setShowZoneName] = useState(false)
@@ -367,10 +368,13 @@ export default function RiftRunScreen({ onExit }: Props) {
         // Wave queue: completion-based spawning
         {
           const bossAlive = !!state.boss?.alive
-          const aliveEnemies = state.enemies.filter(e => e.alive).length + state.pendingSpawns.length
+          // Count only visible (spawned) enemies — pendingSpawns are discarded on clear so the
+          // wave ends the moment heroes kill everything on screen, not after all queued enemies drain.
+          const aliveEnemies = state.enemies.filter(e => e.alive).length
 
-          // Detect wave cleared (non-boss enemies gone) — spawn next almost instantly
+          // Detect wave cleared — discard any pending enemies and start rest timer
           if (wavePhaseRef.current === 'active' && aliveEnemies === 0 && !bossAlive) {
+            state.pendingSpawns = []
             wavePhaseRef.current = 'resting'
             waveClearTimerRef.current = 300
             setNextWaveIn(null)
@@ -396,6 +400,7 @@ export default function RiftRunScreen({ onExit }: Props) {
             if (next.wave !== lastWaveShownRef.current) {
               lastWaveShownRef.current = next.wave
               setWavePresentation({ waveIndex: next.wave, enemyCount: next.count })
+              setCurrentWaveNum(next.wave)
             }
           }
 
@@ -456,7 +461,10 @@ export default function RiftRunScreen({ onExit }: Props) {
 
         // Update HUD stats periodically (not every frame for perf)
         if (Math.round(timeMsRef.current / 200) !== Math.round((timeMsRef.current - dt) / 200)) {
-          setStats({ kills: state.killCount, gold: state.goldCollected, elapsedMs: state.elapsedMs })
+          const enemiesLeft = !state.boss?.alive
+            ? state.enemies.filter(e => e.alive).length
+            : 0
+          setStats({ kills: state.killCount, gold: state.goldCollected, elapsedMs: state.elapsedMs, enemiesLeft })
           // Boss HP snap for React HUD
           if (state.boss) {
             setBossSnap({ ...state.boss })
@@ -503,6 +511,11 @@ export default function RiftRunScreen({ onExit }: Props) {
         <div className={styles.hudLeft}>
           <span className={styles.hudStat}>⚔️ {stats.kills}</span>
           <span ref={goldHudRef} className={styles.hudStat}>💰 {stats.gold}</span>
+          {currentWaveNum > 0 && !bossSnap?.alive && (
+            <span className={styles.hudStat} style={{ color: '#88ccff', fontSize: 9 }}>
+              W{currentWaveNum}/5 · {stats.enemiesLeft}▼
+            </span>
+          )}
         </div>
         <div className={styles.hudCenter}>
           <div className={styles.hudTimer} data-urgent={timeLeft <= 15 ? 'true' : undefined}>

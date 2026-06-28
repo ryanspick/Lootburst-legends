@@ -15,6 +15,7 @@ export {
   generatePetSprite,
   generateCapsuleSprite,
   generateChestSprite,
+  generateMountSprite,
 } from './generateSprite'
 export {
   getGeneratedSprite,

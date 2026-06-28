@@ -6,10 +6,14 @@ import StarMeter from './StarMeter'
 import PixelButton from './PixelButton'
 import styles from './HeroDetailPanel.module.css'
 
+const XP_THRESHOLDS = [0, 100, 250, 500, 800, 1200, 1800, 2500, 3500, 5000]
+const MAX_LEVEL = 10
+
 interface OwnedData {
   stars: number
   shards: number
   level?: number
+  xp?: number
 }
 
 interface Props {
@@ -22,6 +26,7 @@ interface Props {
   stars: number
   maxStars: number
   owned?: OwnedData
+  globalShards?: number
   inSquad?: boolean
   onAddToSquad?: () => void
   onUpgrade?: () => void
@@ -36,15 +41,14 @@ const SHARDS_PER_STAR = 20
 
 export default function HeroDetailPanel({
   id, displayName, rarity, element, role, tags = [],
-  stars, maxStars, owned, inSquad,
+  stars, maxStars, owned, globalShards = 0, inSquad,
   onAddToSquad, onUpgrade,
 }: Props) {
   const ec = ELEMENT_COLOURS[element] ?? '#8888cc'
   const rc = RARITY_COLOURS[rarity]
   const upgradeCost = owned ? (owned.stars + 1) * SHARDS_PER_STAR : 0
-  const canUpgrade = owned
-    ? owned.shards >= upgradeCost && owned.stars < maxStars
-    : false
+  const totalShards = (owned?.shards ?? 0) + globalShards
+  const canUpgrade = owned != null && owned.stars < maxStars && totalShards >= upgradeCost
 
   return (
     <div className={styles.panel} data-rarity={rarity} style={{ '--ec': ec, '--rc': rc.primary } as React.CSSProperties}>
@@ -61,7 +65,12 @@ export default function HeroDetailPanel({
 
         {/* Info */}
         <div className={styles.info}>
-          <div className={styles.name} style={{ color: rc.primary }}>{displayName}</div>
+          <div className={styles.nameRow}>
+            <span className={styles.name} style={{ color: rc.primary }}>{displayName}</span>
+            {owned?.level != null && (
+              <span className={styles.levelBadge}>Lv.{owned.level}</span>
+            )}
+          </div>
           <div className={styles.meta}>
             <span className={styles.element} style={{ color: ec, borderColor: ec }}>
               {element.toUpperCase()}
@@ -71,9 +80,23 @@ export default function HeroDetailPanel({
             </span>
           </div>
           <StarMeter stars={stars} maxStars={maxStars} size="md" animate />
+          {owned?.level != null && owned.level < MAX_LEVEL && (
+            <div className={styles.xpBar}>
+              <div
+                className={styles.xpFill}
+                style={{ width: `${Math.min(100, ((owned.xp ?? 0) / XP_THRESHOLDS[owned.level]) * 100)}%` }}
+              />
+              <span className={styles.xpLabel}>
+                {owned.xp ?? 0} / {XP_THRESHOLDS[owned.level]} XP
+              </span>
+            </div>
+          )}
+          {owned?.level === MAX_LEVEL && (
+            <div className={styles.xpMaxed}>MAX LEVEL</div>
+          )}
           {owned && (
             <div className={styles.shards}>
-              🔮 {owned.shards} / {upgradeCost} shards
+              🔮 {owned.shards}{globalShards > 0 ? `+${globalShards}` : ''} / {upgradeCost} shards
             </div>
           )}
         </div>
@@ -109,7 +132,7 @@ export default function HeroDetailPanel({
             onClick={onUpgrade}
             disabled={!canUpgrade}
           >
-            ⬆ Star Up {canUpgrade ? `(${owned!.shards}/${upgradeCost} 🔮)` : ''}
+            ⬆ Star Up {canUpgrade ? `(${totalShards}/${upgradeCost} 🔮)` : ''}
           </PixelButton>
         </div>
       )}

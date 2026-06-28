@@ -10,9 +10,14 @@ import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine } from '@/game/gear/gearSt
 import type { GearSlot } from '@/store/gameStore'
 import { useGameStore } from '@/store/gameStore'
 import { playSound } from '@/audio/soundEvents'
+import { emitGemScatter } from '@/vfx/emitters'
 import styles from './GearScreen.module.css'
 
 const SLOT_ICONS: Record<string, string> = { weapon: '⚔', trinket: '💫', relic: '🛡' }
+
+const DISMANTLE_SHARDS: Record<Rarity, number> = {
+  common: 1, uncommon: 3, rare: 8, epic: 20, legendary: 50, mythic: 150,
+}
 const SLOTS = ['weapon', 'trinket', 'relic'] as const
 
 function getGearVisual(id: string) {
@@ -32,6 +37,8 @@ export default function GearScreen() {
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
   const equipGear    = useGameStore(s => s.equipGear)
   const unequipGear  = useGameStore(s => s.unequipGear)
+  const removeGear   = useGameStore(s => s.removeGear)
+  const addShards    = useGameStore(s => s.addShards)
 
   const filteredGear = useMemo(() =>
     ownedGear.filter(g =>
@@ -60,6 +67,18 @@ export default function GearScreen() {
   function handleUnequip() {
     if (!selectedGear) return
     unequipGear(selectedGear.instanceId)
+    setPickingHero(false)
+  }
+
+  function handleDismantle() {
+    if (!selectedGear || !selectedVisual) return
+    if (selectedGear.equipped) return  // must unequip first
+    const shards = DISMANTLE_SHARDS[selectedVisual.rarity as Rarity] ?? 1
+    removeGear(selectedGear.instanceId)
+    addShards(shards)
+    playSound('reward_shard_gain')
+    emitGemScatter({ x: window.innerWidth / 2, y: window.innerHeight * 0.5 }, shards)
+    setSelectedInstanceId(null)
     setPickingHero(false)
   }
 
@@ -149,6 +168,17 @@ export default function GearScreen() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Dismantle — only for unequipped gear */}
+          {!selectedGear.equipped && !pickingHero && selectedVisual && (
+            <button
+              className={styles.dismantleBtn}
+              onClick={handleDismantle}
+              title="Break down into shards"
+            >
+              🔮 DISMANTLE +{DISMANTLE_SHARDS[selectedVisual.rarity as Rarity] ?? 1} shards
+            </button>
           )}
         </PixelPanel>
       )}

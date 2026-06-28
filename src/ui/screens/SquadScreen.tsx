@@ -27,6 +27,7 @@ export default function SquadScreen() {
 
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
   const ownedHeroes = useGameStore(s => s.ownedHeroes)
+  const globalShards = useGameStore(s => s.shards)
   const setSquadSlot = useGameStore(s => s.setSquadSlot)
   const upgradeHeroStar = useGameStore(s => s.upgradeHeroStar)
   const equippedFrame = useGameStore(s => s.equippedCosmetics?.frame ?? 'frame_default')
@@ -62,7 +63,7 @@ export default function SquadScreen() {
     const heroDef = heroes.find(h => h.id === heroId)
     if (!owned || !heroDef) return
     const cost = (owned.stars + 1) * 20
-    if (owned.shards < cost) return
+    if (owned.shards + globalShards < cost) return
     if (owned.stars >= heroDef.maxStars) return
     upgradeHeroStar(heroId)
     setStarUpHero({ name: heroDef.displayName, newStars: owned.stars + 1, maxStars: heroDef.maxStars })
@@ -111,7 +112,8 @@ export default function SquadScreen() {
             role={selectedHero.role}
             stars={selectedOwned?.stars ?? 0}
             maxStars={selectedHero.maxStars}
-            owned={selectedOwned ? { stars: selectedOwned.stars, shards: selectedOwned.shards } : undefined}
+            owned={selectedOwned ? { stars: selectedOwned.stars, shards: selectedOwned.shards, level: selectedOwned.level, xp: selectedOwned.xp } : undefined}
+            globalShards={globalShards}
             inSquad={squad.includes(selectedHero.id)}
             onAddToSquad={selectedOwned ? () => assignToSquad(selectedHero.id) : undefined}
             onUpgrade={selectedOwned ? () => handleUpgrade(selectedHero.id) : undefined}
@@ -145,6 +147,7 @@ export default function SquadScreen() {
               role={hero.role}
               stars={owned?.stars ?? 0}
               maxStars={hero.maxStars}
+              level={owned?.level}
               inSquad={squad.includes(hero.id)}
               selected={selected === hero.id}
               locked={isLocked}

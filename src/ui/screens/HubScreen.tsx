@@ -670,7 +670,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             size="lg"
             onClick={handleEnterRift}
           >
-            ⚔️ ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>90s Run</span>
+            ⚔️ ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>120s Run</span>
           </PixelButton>
         </div>
         <span className={styles.riftSubtext}>Squad Power: {squadPower.toLocaleString()}</span>

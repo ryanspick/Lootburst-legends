@@ -9,6 +9,7 @@ export interface FloatEmit {
   startY: number
   endX: number
   endY: number
+  amount?: number
 }
 
 interface Props {
@@ -27,6 +28,7 @@ interface Particle {
   endY: number
   t: number   // 0→1
   done: boolean
+  amount?: number
 }
 
 const DURATION_MS = 600
@@ -52,6 +54,7 @@ export default function FloatingCurrency({ emissions, onDone }: Props) {
           endY: e.endY,
           t: 0,
           done: false,
+          amount: e.amount,
         })
       }
     }
@@ -129,6 +132,16 @@ export default function FloatingCurrency({ emissions, onDone }: Props) {
           ctx.strokeStyle = '#ffaa00'
           ctx.lineWidth = 0.5
           ctx.stroke()
+          if (p.amount != null && p.amount > 0) {
+            ctx.font = 'bold 11px monospace'
+            ctx.textAlign = 'left'
+            ctx.strokeStyle = '#000000'
+            ctx.lineWidth = 2.5
+            ctx.fillStyle = '#ffd700'
+            const label = `+${p.amount}`
+            ctx.strokeText(label, p.x + 7, p.y + 4)
+            ctx.fillText(label, p.x + 7, p.y + 4)
+          }
         }
         ctx.restore()
 

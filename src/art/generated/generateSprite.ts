@@ -257,6 +257,8 @@ export function generateBossSprite(boss: BossInput): string {
     drawBossCherub(pc, pal, logW, logH)
   } else if (tags.includes('goblin') || tags.includes('vehicle')) {
     drawBossVehicle(pc, pal, logW, logH)
+  } else if (tags.includes('mushroom') || tags.includes('spore')) {
+    drawBossMushroomMatriarch(pc, pal, logW, logH)
   } else {
     drawBossGeneric(pc, pal, logW, logH, rng)
   }
@@ -753,5 +755,229 @@ export function generateChestSprite(rarity: Rarity, state: 'closed'|'open'|'crac
   p(pc, 4, 3, '#ffffff88')
   p(pc, 5, 4, '#ffffff66')
 
+  return toDataURL(canvas)
+}
+
+// ── Boss: Mushroom Matriarch ──────────────────────────────────────────────────
+
+function drawBossMushroomMatriarch(pc: ReturnType<typeof createPC>['pc'], pal: ReturnType<typeof makeBossPalette>, w: number, h: number) {
+  const capH = Math.floor(h * 0.45)
+  const stemX = Math.floor(w / 2) - 5
+  const stemW = 10
+
+  // Giant rounded cap
+  r(pc, 3, 3, w - 6, capH, pal.B)
+  r(pc, 6, 1, w - 12, 4, pal.B)        // crown arch
+  o(pc, 3, 3, w - 6, capH, pal.K)
+
+  // Cap spots (big pale blobs)
+  r(pc, 6, 5, 6, 5, pal.A)
+  r(pc, w - 12, 5, 6, 5, pal.A)
+  r(pc, w / 2 - 3, 3, 6, 4, pal.A)
+
+  // Cracks in cap (damage lines)
+  r(pc, w / 2 - 1, 1, 2, capH + 2, pal.D, 0.65)
+  r(pc, w / 2 + 3, 6, 6, 1, pal.D, 0.55)
+  r(pc, w / 2 - 7, 8, 5, 1, pal.D, 0.55)
+
+  // Glowing eyes under cap brim
+  const eyeY = capH
+  r(pc, 8, eyeY, 5, 5, pal.X)
+  r(pc, w - 13, eyeY, 5, 5, pal.X)
+  r(pc, 9, eyeY + 1, 3, 3, '#44ff44')
+  r(pc, w - 12, eyeY + 1, 3, 3, '#44ff44')
+  p(pc, 10, eyeY + 2, '#ffffff')
+  p(pc, w - 11, eyeY + 2, '#ffffff')
+
+  // Spore puffs around cap edges
+  r(pc, 0, 4, 4, 3, pal.A, 0.55)
+  r(pc, w - 4, 4, 4, 3, pal.A, 0.55)
+  r(pc, 0, 9, 3, 3, pal.A, 0.40)
+  r(pc, w - 3, 9, 3, 3, pal.A, 0.40)
+
+  // Stem (thick, pale)
+  r(pc, stemX, capH + 4, stemW, h - capH - 8, pal.H)
+  o(pc, stemX, capH + 4, stemW, h - capH - 8, pal.K)
+  // Stem highlight
+  r(pc, stemX + 1, capH + 5, 3, h - capH - 12, pal.A)
+  // Stem ring (skirt/gills)
+  r(pc, stemX - 4, capH + 3, stemW + 8, 3, pal.D)
+  o(pc, stemX - 4, capH + 3, stemW + 8, 3, pal.K)
+
+  // Root base
+  r(pc, stemX - 3, h - 5, stemW + 6, 3, pal.D)
+  o(pc, stemX - 3, h - 5, stemW + 6, 3, pal.K)
+
+  // Ground shadow
+  r(pc, 4, h - 4, w - 8, 2, '#00000044')
+}
+
+// ── Mount (16×12 logical, 96×72 canvas) ──────────────────────────────────────
+
+interface MountInput {
+  id: string
+  rarity: Rarity
+  element: string
+  tags: string[]
+  palette?: string[]
+}
+
+function makeMountPalette(mount: MountInput): ReturnType<typeof makeSpritePalette> {
+  const cp = mount.palette ?? []
+  const bodyBase = cp[0] ?? (ELEMENT_COLOURS[mount.element] ?? '#886644')
+  const rc = RARITY_COLOURS[mount.rarity]
+  return {
+    K: '#111122',
+    H: cp[2] ?? lighten(bodyBase, 45),
+    B: bodyBase,
+    A: lighten(bodyBase, 55),
+    D: cp[1] ?? darken(bodyBase, 40),
+    L: darken(bodyBase, 28),
+    F: darken(bodyBase, 58),
+    P: rc.primary,
+    X: '#1a1a2e',
+    E: '#ffffff',
+    G: rc.glow,
+    S: ['#000000', 0.25] as [string, number],
+  }
+}
+
+// Tortoise — wide domed shell, head right, 4 stubs
+function drawMountTortoise(pc: ReturnType<typeof createPC>['pc'], pal: ReturnType<typeof makeSpritePalette>) {
+  r(pc, 2, 1, 11, 5, pal.B); o(pc, 2, 1, 11, 5, pal.K)
+  r(pc, 4, 0, 7, 1, pal.K)   // top arch
+  r(pc, 4, 2, 3, 2, pal.A);  r(pc, 8, 2, 3, 2, pal.A)   // shell highlights
+  r(pc, 6, 4, 3, 1, pal.A)
+  r(pc, 2, 6, 11, 1, pal.D)  // underbelly
+  r(pc, 13, 3, 3, 3, pal.H); o(pc, 13, 3, 3, 3, pal.K)  // head peeking right
+  p(pc, 14, 3, pal.X)          // eye
+  r(pc, 3, 7, 2, 2, pal.H);  o(pc, 3, 7, 2, 2, pal.K)   // legs
+  r(pc, 6, 7, 2, 2, pal.H);  o(pc, 6, 7, 2, 2, pal.K)
+  r(pc, 9, 7, 2, 2, pal.H);  o(pc, 9, 7, 2, 2, pal.K)
+  r(pc, 12, 7, 2, 2, pal.H); o(pc, 12, 7, 2, 2, pal.K)
+  r(pc, 2, 10, 13, 1, '#000000', 0.22)
+}
+
+// Boar — stocky oval body, snout left, tusks, curly tail, 4 chunky legs
+function drawMountBoar(pc: ReturnType<typeof createPC>['pc'], pal: ReturnType<typeof makeSpritePalette>) {
+  r(pc, 3, 2, 10, 5, pal.B);  o(pc, 3, 2, 10, 5, pal.K)  // body
+  r(pc, 0, 3, 5, 4, pal.H);   o(pc, 0, 3, 5, 4, pal.K)   // snout/head left
+  p(pc, 0, 4, pal.D); p(pc, 0, 5, pal.D)  // nostrils
+  p(pc, 3, 3, pal.X)          // eye
+  p(pc, 0, 7, pal.A); p(pc, 1, 7, pal.A)  // tusks
+  r(pc, 5, 3, 4, 2, pal.A)    // body highlight
+  p(pc, 13, 3, pal.D); p(pc, 14, 4, pal.D); p(pc, 13, 5, pal.D)  // curly tail
+  r(pc, 3, 7, 2, 3, pal.H);  o(pc, 3, 7, 2, 3, pal.K)   // legs
+  r(pc, 6, 7, 2, 3, pal.H);  o(pc, 6, 7, 2, 3, pal.K)
+  r(pc, 9, 7, 2, 3, pal.H);  o(pc, 9, 7, 2, 3, pal.K)
+  r(pc, 12, 7, 2, 3, pal.H); o(pc, 12, 7, 2, 3, pal.K)
+  r(pc, 3, 10, 2, 1, pal.F); r(pc, 6, 10, 2, 1, pal.F)   // hooves
+  r(pc, 9, 10, 2, 1, pal.F); r(pc, 12, 10, 2, 1, pal.F)
+  r(pc, 2, 11, 13, 1, '#000000', 0.22)
+}
+
+// Serpent — S-curve body with triangular head top-right, tail bottom-left
+function drawMountSerpent(pc: ReturnType<typeof createPC>['pc'], pal: ReturnType<typeof makeSpritePalette>) {
+  // Head + upper body (top-right)
+  r(pc, 12, 0, 4, 3, pal.B); o(pc, 12, 0, 4, 3, pal.K)
+  p(pc, 13, 0, pal.X)           // eye
+  p(pc, 15, 1, pal.P); p(pc, 15, 2, pal.P)  // forked tongue
+  // Upper body curve
+  r(pc, 8, 2, 6, 3, pal.B); o(pc, 8, 2, 6, 3, pal.K)
+  p(pc, 9, 2, pal.A); p(pc, 11, 2, pal.A); p(pc, 13, 3, pal.A)  // scales
+  // Middle body
+  r(pc, 4, 4, 7, 3, pal.B); o(pc, 4, 4, 7, 3, pal.K)
+  p(pc, 5, 4, pal.A); p(pc, 7, 5, pal.A); p(pc, 9, 5, pal.A)
+  // Lower body
+  r(pc, 1, 7, 8, 3, pal.B); o(pc, 1, 7, 8, 3, pal.K)
+  p(pc, 2, 7, pal.A); p(pc, 5, 8, pal.A); p(pc, 7, 8, pal.A)
+  // Tail tip
+  r(pc, 0, 9, 3, 2, pal.D)
+  p(pc, 0, 10, pal.K); p(pc, 1, 11, pal.K)
+  r(pc, 0, 11, 8, 1, '#000000', 0.18)
+}
+
+// Stag — slim body, antler branches, 4 long legs
+function drawMountStag(pc: ReturnType<typeof createPC>['pc'], pal: ReturnType<typeof makeSpritePalette>) {
+  // Antlers
+  r(pc, 4, 0, 1, 4, pal.D)
+  p(pc, 3, 0, pal.D); p(pc, 3, 1, pal.D); p(pc, 5, 0, pal.D)
+  r(pc, 10, 0, 1, 4, pal.D)
+  p(pc, 9, 0, pal.D); p(pc, 9, 1, pal.D); p(pc, 11, 0, pal.D)
+  // Body
+  r(pc, 3, 4, 10, 4, pal.B); o(pc, 3, 4, 10, 4, pal.K)
+  r(pc, 5, 5, 5, 2, pal.A)    // highlight
+  // Head
+  r(pc, 5, 2, 5, 3, pal.H);  o(pc, 5, 2, 5, 3, pal.K)
+  p(pc, 6, 2, pal.X)           // eye
+  p(pc, 9, 4, pal.D)           // nose
+  // 4 slim legs
+  r(pc, 4, 8, 1, 3, pal.L); r(pc, 7, 8, 1, 3, pal.L)
+  r(pc, 9, 8, 1, 3, pal.L); r(pc, 12, 8, 1, 3, pal.L)
+  // Hooves
+  p(pc, 4, 11, pal.F); p(pc, 7, 11, pal.F)
+  p(pc, 9, 11, pal.F); p(pc, 12, 11, pal.F)
+  r(pc, 3, 11, 11, 1, '#000000', 0.20)
+}
+
+// Drake — wings spread, chunky body, head right, tail left
+function drawMountDrake(pc: ReturnType<typeof createPC>['pc'], pal: ReturnType<typeof makeSpritePalette>) {
+  // Wings
+  r(pc, 0, 2, 5, 4, pal.D);  o(pc, 0, 2, 5, 4, pal.K)
+  r(pc, 11, 2, 5, 4, pal.D); o(pc, 11, 2, 5, 4, pal.K)
+  p(pc, 1, 3, pal.P); p(pc, 2, 4, pal.P); p(pc, 3, 5, pal.P)     // left membrane
+  p(pc, 14, 3, pal.P); p(pc, 13, 4, pal.P); p(pc, 12, 5, pal.P)  // right membrane
+  // Body
+  r(pc, 4, 3, 8, 5, pal.B); o(pc, 4, 3, 8, 5, pal.K)
+  r(pc, 6, 4, 4, 2, pal.A)
+  // Head + neck (right side)
+  r(pc, 10, 0, 5, 4, pal.B); o(pc, 10, 0, 5, 4, pal.K)
+  p(pc, 11, 1, pal.X)           // eye
+  p(pc, 11, 0, pal.P); p(pc, 13, 0, pal.P)  // horns
+  r(pc, 9, 2, 3, 3, pal.B)      // neck join
+  // Tail (left)
+  r(pc, 1, 6, 4, 2, pal.B)
+  p(pc, 0, 7, pal.D); p(pc, 0, 8, pal.D)
+  // Feet / claws
+  r(pc, 5, 8, 2, 2, pal.H); r(pc, 9, 8, 2, 2, pal.H)
+  p(pc, 5, 10, pal.K); p(pc, 6, 10, pal.K)
+  p(pc, 9, 10, pal.K); p(pc, 10, 10, pal.K)
+  r(pc, 4, 11, 8, 1, '#000000', 0.14)  // lighter shadow (flying)
+}
+
+export function generateMountSprite(mount: MountInput): string {
+  const { canvas, pc } = createPC(16, 12)
+  const pal = makeMountPalette(mount)
+  const rc = RARITY_COLOURS[mount.rarity]
+  const elemColor = ELEMENT_COLOURS[mount.element] ?? '#8888cc'
+
+  if (mount.rarity === 'legendary' || mount.rarity === 'mythic') {
+    glow(pc, 2, 1, 12, 9, rc.glow, 8)
+  } else if (mount.rarity === 'epic') {
+    glow(pc, 3, 1, 10, 8, rc.glow, 5)
+  }
+
+  const t = mount.tags.join(' ').toLowerCase()
+  const id = mount.id.toLowerCase()
+
+  if (t.includes('serpent'))                              drawMountSerpent(pc, pal)
+  else if (t.includes('drake') || t.includes('dragon'))  drawMountDrake(pc, pal)
+  else if (id.includes('tortoise'))                      drawMountTortoise(pc, pal)
+  else if (id.includes('stag') || t.includes('majestic')) drawMountStag(pc, pal)
+  else                                                   drawMountBoar(pc, pal)
+
+  // Rainbow drake: rainbow tint row
+  if (mount.rarity === 'mythic' && t.includes('drake')) {
+    const cols = ['#ff0000','#ff8800','#ffff00','#00ff00','#00ffff','#0088ff','#ff00ff','#ff0000']
+    for (let i = 0; i < 8; i++) p(pc, 4 + i, 3, cols[i], 0.55)
+    for (let i = 0; i < 8; i++) p(pc, 4 + i, 6, cols[(i + 4) % 8], 0.35)
+  }
+
+  if (mount.rarity !== 'common') {
+    p(pc, 0, 0, rc.primary); p(pc, 15, 0, rc.primary)
+    p(pc, 0, 11, rc.primary); p(pc, 15, 11, rc.primary)
+  }
+
+  addSpriteShading(pc, elemColor)
   return toDataURL(canvas)
 }

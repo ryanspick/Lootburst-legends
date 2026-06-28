@@ -83,6 +83,7 @@ export function computeSquadPower(
   heroIds: string[],
   heroesData: { heroes: Array<{ id: string }> },
   equippedGearIds: string[],
+  heroLevels?: number[],
 ): number {
   let power = 0
   for (let i = 0; i < heroIds.length; i++) {
@@ -92,7 +93,8 @@ export function computeSquadPower(
     const baseAtk = 105  + idx * 15
     const baseDef = 32
     const gear = computeHeroGearBonuses(equippedGearIds)
-    power += Math.round((baseAtk + gear.atk) * 8 + (baseHp + gear.hp) * 0.3 + (baseDef + gear.def) * 4)
+    const levelMult = 1 + ((heroLevels?.[i] ?? 1) - 1) * 0.05
+    power += Math.round(((baseAtk + gear.atk) * 8 + (baseHp + gear.hp) * 0.3 + (baseDef + gear.def) * 4) * levelMult)
   }
   return power
 }

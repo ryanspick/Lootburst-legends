@@ -124,7 +124,9 @@ interface GameState {
   upgradeHeroStar: (id: string) => void
   addShardsToHero: (id: string, amount: number) => void
   setSquadSlot: (slot: 0 | 1 | 2, heroId: string | null) => void
+  addShards: (amount: number) => void
   addGear: (id: string) => void
+  removeGear: (instanceId: string) => void
   equipGear: (instanceId: string, heroId: string, slot: GearSlot) => void
   unequipGear: (instanceId: string) => void
   unequipHeroSlot: (heroId: string, slot: GearSlot) => void
@@ -252,11 +254,24 @@ export const useGameStore = create<GameState>()(
       },
 
       upgradeHeroStar: (id) =>
-        set(s => ({
-          ownedHeroes: s.ownedHeroes.map(h =>
-            h.id === id ? { ...h, stars: Math.min(h.stars + 1, 5) } : h
-          ),
-        })),
+        set(s => {
+          const hero = s.ownedHeroes.find(h => h.id === id)
+          if (!hero) return {}
+          const cost = (hero.stars + 1) * 20
+          if (hero.stars >= 5) return {}
+          if (hero.shards + s.shards < cost) return {}
+          // Drain hero's own shards first, then pull remainder from global pool
+          const fromHero = Math.min(hero.shards, cost)
+          const fromGlobal = cost - fromHero
+          return {
+            shards: Math.max(0, s.shards - fromGlobal),
+            ownedHeroes: s.ownedHeroes.map(h =>
+              h.id === id
+                ? { ...h, stars: h.stars + 1, shards: h.shards - fromHero }
+                : h
+            ),
+          }
+        }),
 
       addShardsToHero: (id, amount) =>
         set(s => ({
@@ -316,6 +331,13 @@ export const useGameStore = create<GameState>()(
               ? { ...g, equipped: false, equippedHeroId: undefined, equippedSlot: undefined }
               : g
           ),
+        })),
+
+      addShards: (amount) => set(s => ({ shards: s.shards + amount })),
+
+      removeGear: (instanceId) =>
+        set(s => ({
+          ownedGear: s.ownedGear.filter(g => g.instanceId !== instanceId),
         })),
 
       incrementPity: () => set(s => ({ pityCount: s.pityCount + 1 })),

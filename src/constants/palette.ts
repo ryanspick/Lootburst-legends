@@ -54,6 +54,8 @@ export const ELEMENT_COLOURS: Record<string, string> = {
   nature:  PALETTE.nature,
   gold:    PALETTE.gold,
   void:    PALETTE.purple,
+  earth:   '#886644',
+  arcane:  '#ff88ee',
 }
 
 export const RARITY_COLOURS = {

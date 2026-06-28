@@ -117,6 +117,8 @@ export interface PostRunReward {
   heroesLeveled: string[]
   newRecords: string[]
   wasWipe: boolean
+  elapsedMs: number
+  tierLevel: number
 }
 
 export interface RiftRunState {
@@ -175,6 +177,14 @@ export interface RiftRunState {
   // Trickle-spawn queue — populated by spawnWave, drained gradually in tickCombat
   pendingSpawns: PendingSpawn[]
   spawnTimerMs:  number
+
+  // Pet companion — fires combat effects on a cooldown
+  activePetId:    string
+  petCooldownMs:  number
+  petBonusLoot:   boolean  // loot_magnet passive: adds extra loot item
+
+  // Equipped mount — bonus applied once at run start
+  activeMountId: string
 }
 
 export interface TimelineEvent {
@@ -189,4 +199,5 @@ export interface PendingSpawn {
   x:        number
   y:        number
   diffMult: number
+  hpMult:   number  // wave-progression HP scalar (1.0 for wave 1, up to 2.35 for wave 5)
 }

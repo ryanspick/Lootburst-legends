@@ -105,6 +105,21 @@
   text-transform: capitalize;
 }
 
+.levelPip {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  font-family: monospace;
+  font-size: 7px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #44ccff;
+  background: #001a2a;
+  border: 1px solid #44ccff44;
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+
 .squadPip {
   position: absolute;
   bottom: 4px;

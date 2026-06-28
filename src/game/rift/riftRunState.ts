@@ -4,6 +4,7 @@ import type { HeroGearBonuses, RunGearBonuses } from '@/game/gear/gearStats'
 import heroesData from '@/data/art/heroes.visual.json'
 import enemiesData from '@/data/art/enemies.visual.json'
 import bossesData from '@/data/art/bosses.visual.json'
+import petsData from '@/data/art/pets.visual.json'
 import {
   getHeroSlot, CENTER_X, CENTER_Y, BOSS_X, BOSS_Y_POS,
   ENEMY_SPAWN_RADIUS_X, ENEMY_SPAWN_RADIUS_Y, WAVE_ANGLE_OFFSETS,
@@ -40,20 +41,23 @@ function makeHeroEntity(
   slotIndex: number,
   totalHeroes: number,
   gear: HeroGearBonuses = { atk: 0, hp: 0, def: 0 },
+  heroLevel = 1,
 ): CombatEntity {
   const def = heroesData.heroes.find(h => h.id === heroId)
   if (!def) throw new Error(`Unknown hero: ${heroId}`)
   const idx = heroesData.heroes.indexOf(def)
   const pos = getHeroSlot(slotIndex, totalHeroes)
-  const baseHp  = 1000 + idx * 80   // generous HP — early runs should feel winnable
-  const baseAtk = 105  + idx * 15   // strong attack = kills feel satisfying
-  const baseDef = 32
+  const baseHp  = 1000 + idx * 80
+  const baseAtk = 105  + idx * 15
+  const baseDef = 14
+  // +5% HP and ATK per level above 1 (level 10 = +45%)
+  const levelMult = 1 + (heroLevel - 1) * 0.05
   return {
     id: heroId,
     displayName: def.displayName,
-    hp: baseHp + gear.hp,
-    maxHp: baseHp + gear.hp,
-    atk: baseAtk + gear.atk,
+    hp: Math.round((baseHp + gear.hp) * levelMult),
+    maxHp: Math.round((baseHp + gear.hp) * levelMult),
+    atk: Math.round((baseAtk + gear.atk) * levelMult),
     def: baseDef + gear.def,
     spd: 1.0,
     x: pos.x,
@@ -73,12 +77,16 @@ function makeHeroEntity(
   }
 }
 
-function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, diffMult = 1): CombatEntity {
+// HP scales per wave — each successive wave spawns tankier enemies for a smooth ramp
+const WAVE_HP_SCALE = [1.0, 1.25, 1.55, 1.90, 2.35] as const
+
+function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, diffMult = 1, hpMult = 1): CombatEntity {
   const def = enemiesData.enemies.find(e => e.id === enemyId)
   if (!def) throw new Error(`Unknown enemy: ${enemyId}`)
   const isElite = def.tier === 'elite'
-  // HP scaled down for horde mode (10× enemy counts): normal ~20%, elite ~25%
-  const base = isElite ? Math.round(350 * diffMult) : Math.round(56 * diffMult)
+  const base = isElite
+    ? Math.round(350 * diffMult * hpMult)
+    : Math.round(56  * diffMult * hpMult)
   const atkScale = 1 + (diffMult - 1) * 0.65
   return {
     id: `${enemyId}_${index}_${Date.now()}`,
@@ -138,7 +146,7 @@ function makeBossEntity(bossId: string, diffMult = 1): CombatEntity {
 }
 
 // Loot table per tier level — quantity and rarity scale super-linearly with tier
-function buildTierLoot(tierLevel: number, kills: number): Array<{ id: string; rarity: Rarity; name: string }> {
+function buildTierLoot(tierLevel: number, kills: number, bonusItem = false): Array<{ id: string; rarity: Rarity; name: string }> {
   type Item = { id: string; rarity: Rarity; name: string }
   const tables: Record<number, { minKills: number; items: Item[] }> = {
     1: { minKills: 8,  items: [
@@ -169,7 +177,12 @@ function buildTierLoot(tierLevel: number, kills: number): Array<{ id: string; ra
     ]},
   }
   const entry = tables[tierLevel] ?? tables[1]
-  return kills >= entry.minKills ? entry.items : []
+  const items = kills >= entry.minKills ? [...entry.items] : []
+  if (bonusItem && items.length > 0) {
+    // loot_magnet: duplicate one random item from the table as bonus
+    items.push(entry.items[Math.floor(Math.random() * entry.items.length)])
+  }
+  return items
 }
 
 const BOOST_EFFECTS: Record<string, (s: RiftRunState) => void> = {
@@ -180,6 +193,35 @@ const BOOST_EFFECTS: Record<string, (s: RiftRunState) => void> = {
   'boost_fury_elixir':  s => { s.atkMult = Math.min(s.atkMult * 1.25, 8) },
 }
 
+// Pet fire cooldowns and initial delays (ms)
+const PET_CD: Record<string, number> = {
+  coin_divebomb: 8000, shield_bubble: 18000, loot_magnet: 0,
+  egg_bomb: 10000,     fire_breath: 7000,    phase_strike: 15000,
+  golden_sting: 8000,  copy_attack: 5000,
+}
+// Stagger so pet doesn't fire the moment combat starts
+const PET_INITIAL_CD: Record<string, number> = {
+  coin_divebomb: 8000, shield_bubble: 12000, loot_magnet: 0,
+  egg_bomb: 6000,      fire_breath: 5000,    phase_strike: 10000,
+  golden_sting: 7000,  copy_attack: 4000,
+}
+function getPetEffect(petId: string): string {
+  return petsData.pets.find(p => p.id === petId)?.combatEffect ?? ''
+}
+function getPetInitialCd(petId: string): number {
+  const effect = getPetEffect(petId)
+  return PET_INITIAL_CD[effect] ?? 8000
+}
+
+// Mount stat bonuses applied once at run start
+const MOUNT_BONUSES: Record<string, { atkMult?: number; hpMult?: number; goldMult?: number; critChance?: number }> = {
+  mount_iron_tortoise: { hpMult: 0.15 },
+  mount_golden_boar:   { goldMult: 0.20 },
+  mount_void_serpent:  { atkMult: 0.10, critChance: 0.05 },
+  mount_crystal_stag:  { hpMult: 0.10, atkMult: 0.10 },
+  mount_rainbow_drake: { hpMult: 0.15, atkMult: 0.15, goldMult: 0.10 },
+}
+
 export function createInitialRiftState(
   heroIds: string[],
   options?: {
@@ -188,13 +230,16 @@ export function createInitialRiftState(
     rewardMult?: number
     tierLevel?: number
     heroGearBonuses?: HeroGearBonuses[]
+    heroLevels?: number[]
     runGearBonuses?: RunGearBonuses
+    equippedPetId?: string
+    equippedMountId?: string
   },
 ): { state: RiftRunState; timeline: TimelineEvent[] } {
   const squadIds = heroIds.slice(0, 3)
 
   const heroes: CombatEntity[] = squadIds.map((id, i) =>
-    makeHeroEntity(id, i, squadIds.length, options?.heroGearBonuses?.[i])
+    makeHeroEntity(id, i, squadIds.length, options?.heroGearBonuses?.[i], options?.heroLevels?.[i] ?? 1)
   )
 
   const state: RiftRunState = {
@@ -236,6 +281,10 @@ export function createInitialRiftState(
     bossPhase: 1,
     pendingSpawns: [],
     spawnTimerMs: 0,
+    activePetId:   options?.equippedPetId ?? 'pet_coin_bat',
+    petCooldownMs: getPetInitialCd(options?.equippedPetId ?? 'pet_coin_bat'),
+    petBonusLoot:  false,
+    activeMountId: options?.equippedMountId ?? '',
   }
 
   for (const id of (options?.startBoosts ?? [])) {
@@ -252,6 +301,25 @@ export function createInitialRiftState(
     state.lifeSteal   = Math.min(0.60, state.lifeSteal + rgb.lifeStealBonus)
   }
 
+  // Apply mount bonuses
+  const mb = MOUNT_BONUSES[state.activeMountId]
+  if (mb) {
+    if (mb.atkMult)    state.atkMult     = Math.min(state.atkMult * (1 + mb.atkMult), 8)
+    if (mb.goldMult)   state.goldMult   += mb.goldMult
+    if (mb.critChance) state.critChance  = Math.min(0.80, state.critChance + mb.critChance)
+    if (mb.hpMult) {
+      for (const hero of state.heroes) {
+        hero.hp     = Math.round(hero.hp * (1 + mb.hpMult))
+        hero.maxHp  = hero.hp
+      }
+    }
+  }
+
+  // Loot magnet pet: passive flag so buildTierLoot adds a bonus item
+  if (getPetEffect(state.activePetId) === 'loot_magnet') {
+    state.petBonusLoot = true
+  }
+
   return { state, timeline: cloneTimeline() }
 }
 
@@ -266,6 +334,7 @@ const MAX_ALIVE_ENEMIES  = 60
 export function spawnWave(state: RiftRunState, wave: number, count: number, pattern: SpawnPattern = 'ring'): void {
   const pool    = getEnemyPoolForWave(wave)
   const diff    = state.difficultyMult ?? 1
+  const hpMult  = WAVE_HP_SCALE[Math.max(0, Math.min(wave - 1, WAVE_HP_SCALE.length - 1))]
   const pending: PendingSpawn[] = []
 
   for (let i = 0; i < count; i++) {
@@ -297,7 +366,7 @@ export function spawnWave(state: RiftRunState, wave: number, count: number, patt
       ey = Math.round(CENTER_Y + Math.sin(angle) * ENEMY_SPAWN_RADIUS_Y)
     }
 
-    pending.push({ enemyId, x: ex, y: ey, diffMult: diff })
+    pending.push({ enemyId, x: ex, y: ey, diffMult: diff, hpMult })
   }
 
   // Append to queue (don't reset timer — let existing drip continue)
@@ -306,25 +375,126 @@ export function spawnWave(state: RiftRunState, wave: number, count: number, patt
 
 export function spawnBoss(state: RiftRunState, bossId: string): void {
   state.boss = makeBossEntity(bossId, state.difficultyMult ?? 1)
-  state.enemies = []
-  state.projectiles = []  // clear in-flight projectiles on boss spawn
+  // Animate remaining enemies out rather than hard-clearing (avoids visual pop/despawn)
+  for (const e of state.enemies) {
+    if (e.alive) { e.alive = false; e.deathAnimMs = 450 }
+  }
+  state.pendingSpawns = []
+  state.projectiles = []
+}
+
+function tickPetEffect(state: RiftRunState, dtMs: number): void {
+  const effect = getPetEffect(state.activePetId)
+  if (!effect || effect === 'loot_magnet') return   // loot_magnet is passive, handled at init
+
+  state.petCooldownMs -= dtMs
+  if (state.petCooldownMs > 0) return
+  state.petCooldownMs = PET_CD[effect] ?? 8000
+
+  const aliveEnemies = state.enemies.filter(e => e.alive)
+  const aliveBoss    = state.boss?.alive ? [state.boss] : []
+  const targets      = [...aliveEnemies, ...aliveBoss]
+  const aliveHeroes  = state.heroes.filter(h => h.alive)
+  if (aliveHeroes.length === 0) return
+
+  const avgAtk = Math.round(aliveHeroes.reduce((s, h) => s + h.atk, 0) / aliveHeroes.length)
+
+  function petDamage(target: CombatEntity, dmg: number, ignoresDef = false): void {
+    const reduced = ignoresDef ? dmg : Math.max(1, dmg - Math.floor(target.def * 0.5))
+    target.hp = Math.max(0, target.hp - reduced)
+    if (target.hp <= 0) target.alive = false
+    state.damageNumbers.push({
+      id: ++_dmgId, x: target.x, y: target.y - 20,
+      value: reduced, isCrit: false, color: '#ffffff', lifeMs: 700, maxLifeMs: 700,
+    })
+  }
+
+  function petAnnounce(text: string, color: string): void {
+    state.abilityAnnounces.push({
+      x: aliveHeroes[0].x, y: aliveHeroes[0].y - 30,
+      text, color, lifeMs: 1200, maxLifeMs: 1200,
+    })
+  }
+
+  const rndTarget = targets.length > 0
+    ? targets[Math.floor(Math.random() * targets.length)]
+    : null
+
+  switch (effect) {
+    case 'coin_divebomb':
+      state.goldCollected += 20
+      state.damageNumbers.push({
+        id: ++_dmgId, x: aliveHeroes[0].x, y: aliveHeroes[0].y - 30,
+        value: 20, isCrit: false, color: '#ffd700', label: '💰', lifeMs: 800, maxLifeMs: 800,
+      })
+      playSound('combat_coin_ping')
+      break
+    case 'shield_bubble': {
+      const weakest = aliveHeroes.reduce((a, b) => a.hp < b.hp ? a : b)
+      const heal = 150
+      weakest.hp = Math.min(weakest.maxHp, weakest.hp + heal)
+      petAnnounce(`🐸 +${heal} SHIELD`, '#44ffaa')
+      playSound('combat_shield_boing')
+      break
+    }
+    case 'egg_bomb':
+      if (rndTarget) {
+        petDamage(rndTarget, 60)
+        petAnnounce('🐣 EGG BOMB!', '#ffaa00')
+        emitExplosion({ x: rndTarget.x, y: rndTarget.y }, 12, 'fire')
+      }
+      break
+    case 'fire_breath': {
+      const fireTargets = targets.slice(0, 3)
+      for (const t of fireTargets) petDamage(t, 80)
+      if (fireTargets.length > 0) petAnnounce('🐉 FIRE BREATH!', '#ff6600')
+      break
+    }
+    case 'phase_strike':
+      if (rndTarget) {
+        petDamage(rndTarget, 200, true)
+        petAnnounce('👻 PHASE STRIKE!', '#aa44ff')
+      }
+      break
+    case 'golden_sting':
+      if (rndTarget) {
+        petDamage(rndTarget, 80)
+        state.goldCollected += 30
+        state.damageNumbers.push({
+          id: ++_dmgId, x: rndTarget.x, y: rndTarget.y - 40,
+          value: 30, isCrit: false, color: '#ffd700', label: '💰', lifeMs: 800, maxLifeMs: 800,
+        })
+        petAnnounce('🐝 GOLDEN STING!', '#ffd700')
+        playSound('combat_coin_ping')
+      }
+      break
+    case 'copy_attack':
+      if (rndTarget) {
+        petDamage(rndTarget, avgAtk)
+        petAnnounce('🐶 COPY ATK!', '#88ccff')
+      }
+      break
+  }
 }
 
 export function tickCombat(state: RiftRunState, dtMs: number): void {
   if (state.phase !== 'combat') return
 
-  // Drain pending spawn queue at a capped rate to avoid frame spikes.
-  // Also pause draining if alive count is at budget ceiling.
-  if (state.pendingSpawns.length > 0) {
-    state.spawnTimerMs += dtMs
-    if (state.spawnTimerMs >= SPAWN_INTERVAL_MS) {
-      state.spawnTimerMs = 0
-      const currentAlive = state.enemies.reduce((n, e) => n + (e.alive ? 1 : 0), 0)
-      if (currentAlive < MAX_ALIVE_ENEMIES) {
+  // Pet combat effect
+  tickPetEffect(state, dtMs)
+
+  // Drain pending spawn queue at a steady drip rate (4 per 50ms = ~80/s).
+  // Wave clears when visible enemies hit 0; remaining pending are discarded by the wave director.
+  if (state.pendingSpawns.length > 0 && !state.boss?.alive) {
+    const currentAlive = state.enemies.reduce((n, e) => n + (e.alive ? 1 : 0), 0)
+    if (currentAlive < MAX_ALIVE_ENEMIES) {
+      state.spawnTimerMs += dtMs
+      if (state.spawnTimerMs >= SPAWN_INTERVAL_MS) {
+        state.spawnTimerMs = 0
         const canSpawn = Math.min(SPAWN_BATCH_SIZE, MAX_ALIVE_ENEMIES - currentAlive)
         const batch = state.pendingSpawns.splice(0, canSpawn)
-        for (const { enemyId, x, y, diffMult } of batch) {
-          state.enemies.push(makeEnemyEntity(enemyId, x, y, 0, diffMult))
+        for (const { enemyId, x, y, diffMult, hpMult } of batch) {
+          state.enemies.push(makeEnemyEntity(enemyId, x, y, 0, diffMult, hpMult))
         }
       }
     }
@@ -677,7 +847,7 @@ function killEnemy(state: RiftRunState, enemy: CombatEntity): void {
   enemy.alive = false
   enemy.deathAnimMs = 450
   state.killCount++
-  const goldAmt = Math.round((10 + Math.random() * 10) * state.goldMult)
+  const goldAmt = Math.round((20 + Math.random() * 15) * state.goldMult)
   spawnLoot(state, enemy.x, enemy.y, 'coin', goldAmt)
   playSound('combat_coin_ping')
   emitExplosion({ x: enemy.x, y: enemy.y }, 20, enemy.element)
@@ -693,7 +863,7 @@ function killBoss(state: RiftRunState): void {
   triggerShake('bossDeath')
   triggerHitstop(380)
   emitGoldBeam({ x: state.boss.x, y: state.boss.y })
-  const goldAmt = Math.round(200 * state.goldMult)
+  const goldAmt = Math.round(500 * state.goldMult)
   for (let i = 0; i < 8; i++) {
     spawnLoot(state, state.boss.x + (Math.random() * 60 - 30), state.boss.y + Math.random() * 40, 'gem', 0)
   }
@@ -722,10 +892,12 @@ export function buildPostRunReward(state: RiftRunState, wasWipe = false): void {
     goldEarned: Math.round(state.goldCollected * rm),
     gemsEarned: Math.round(Math.floor(state.killCount / 3) * rm),
     xpEarned: (state.totalDamageDealt / 10) * rm,
-    lootItems: buildTierLoot(state.riftTierLevel, state.killCount),
-    heroesLeveled: state.heroes.filter(h => h.alive).map(h => h.displayName),
+    lootItems: buildTierLoot(state.riftTierLevel, state.killCount, state.petBonusLoot),
+    heroesLeveled: [],
     newRecords: state.killCount >= 20 ? ['Kill Record'] : [],
     wasWipe,
+    elapsedMs: state.elapsedMs,
+    tierLevel: state.riftTierLevel,
   }
   state.phase = 'post_run'
 }

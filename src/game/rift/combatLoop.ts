@@ -220,8 +220,7 @@ function drawEntity(
     }
 
     if (img) {
-      ctx.imageSmoothingEnabled = true
-      ;(ctx as CanvasRenderingContext2D & { imageSmoothingQuality?: string }).imageSmoothingQuality = 'high'
+      ctx.imageSmoothingEnabled = false
       ctx.drawImage(img, -w / 2, -h / 2, w, h)
     } else {
       ctx.fillStyle = '#ff4488'
@@ -269,8 +268,7 @@ function drawEntity(
 
   const img = entity.spriteDataUrl ? getImg(entity.spriteDataUrl) : null
   if (img) {
-    ctx.imageSmoothingEnabled = true
-    ;(ctx as CanvasRenderingContext2D & { imageSmoothingQuality?: string }).imageSmoothingQuality = 'high'
+    ctx.imageSmoothingEnabled = false
     ctx.drawImage(img, -w / 2, -h / 2, w, h)
   } else {
     const rc = RARITY_COLOURS[entity.rarity]
@@ -674,7 +672,7 @@ export function renderRiftFrame(
   }
 
   // Time progress bar
-  drawProgressBar(ctx, state.elapsedMs, 90_000, canvasW)
+  drawProgressBar(ctx, state.elapsedMs, 120_000, canvasW)
 
   // Build entity list sorted by y (painter's algorithm — lower on screen renders in front)
   type EntityEntry = [CombatEntity, number, number]

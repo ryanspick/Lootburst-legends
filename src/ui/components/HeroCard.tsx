@@ -13,6 +13,7 @@ interface Props {
   role: string
   stars: number
   maxStars: number
+  level?: number
   inSquad?: boolean
   selected?: boolean
   locked?: boolean
@@ -27,7 +28,7 @@ const ROLE_ICONS: Record<string, string> = {
 
 export default function HeroCard({
   id, displayName, rarity, element, role,
-  stars, maxStars, inSquad, selected, locked, frameStyle, onClick,
+  stars, maxStars, level, inSquad, selected, locked, frameStyle, onClick,
 }: Props) {
   const ec = ELEMENT_COLOURS[element] ?? '#8888cc'
 
@@ -65,6 +66,11 @@ export default function HeroCard({
 
       {/* Stars */}
       <StarMeter stars={stars} maxStars={maxStars} size="sm" />
+
+      {/* Level pip */}
+      {level != null && level > 1 && (
+        <div className={styles.levelPip}>Lv.{level}</div>
+      )}
 
       {/* Squad indicator */}
       {inSquad && (

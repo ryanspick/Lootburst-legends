@@ -3,6 +3,7 @@ import bossesData from '@/data/art/bosses.visual.json'
 import enemiesData from '@/data/art/enemies.visual.json'
 import gearData from '@/data/art/gear.visual.json'
 import petsData from '@/data/art/pets.visual.json'
+import mountsData from '@/data/art/mounts.visual.json'
 import type { Rarity } from '@/constants/palette'
 import {
   generateHeroSprite,
@@ -12,6 +13,7 @@ import {
   generatePetSprite,
   generateCapsuleSprite,
   generateChestSprite,
+  generateMountSprite,
 } from './generateSprite'
 
 const _cache = new Map<string, string>()
@@ -72,6 +74,18 @@ function gen(id: string): string | null {
     })
   }
 
+  // Mount
+  const mount = mountsData.mounts.find(m => m.id === id)
+  if (mount) {
+    return generateMountSprite({
+      id: mount.id,
+      rarity: mount.rarity as Rarity,
+      element: mount.element,
+      tags: mount.tags,
+      palette: mount.palette,
+    })
+  }
+
   // Capsule / chest by convention
   if (id.startsWith('capsule_')) {
     const rarity = id.replace('capsule_', '') as Rarity
@@ -106,6 +120,7 @@ export function preGenerateAll(): void {
     ...enemiesData.enemies.map(e => e.id),
     ...gearData.gear.map(g => g.id),
     ...petsData.pets.map(p => p.id),
+    ...mountsData.mounts.map(m => m.id),
   ]
   const rarities: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic']
   rarities.forEach(r => {
