@@ -27,8 +27,8 @@ let _projId = 0
 const BASIC_CD      = 1100   // slightly faster basics = more responsive feel
 const SKILL_CD      = 4500
 const ULTIMATE_CD   = 11000
-const ENEMY_ATK_CD  = 2200   // normal enemies — slow hits so packs don't burst-kill
-const ELITE_ATK_CD  = 3200   // elites hit slow but hard
+const ENEMY_ATK_CD  = 3000   // normal enemies — slow enough that packs don't burst-kill
+const ELITE_ATK_CD  = 4800   // elites hit very slow; each hit is punishing but rare
 const BOSS_ATK_CD   = 1800   // bosses attack frequently but for moderate damage
 const BOSS_SKILL_CD = 9_000  // boss skill cooldown (resets after each use)
 const BOSS_ULT_CD   = 22_000 // boss ultimate cooldown (resets after each use)
@@ -80,7 +80,7 @@ function makeHeroEntity(
 }
 
 // HP scales per wave — each successive wave spawns tankier enemies for a smooth ramp
-const WAVE_HP_SCALE = [1.0, 1.25, 1.55, 1.90, 2.35] as const
+const WAVE_HP_SCALE = [1.0, 1.20, 1.42, 1.68, 1.98, 2.32, 2.70] as const
 
 function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, diffMult = 1, hpMult = 1): CombatEntity {
   const def = enemiesData.enemies.find(e => e.id === enemyId)
@@ -95,7 +95,7 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
     displayName: def.displayName,
     hp: base,
     maxHp: base,
-    atk: isElite ? Math.round(36 * atkScale) : Math.round(10 * atkScale),
+    atk: isElite ? Math.round(26 * atkScale) : Math.round(9 * atkScale),
     def: isElite ? 8 : 2,
     spd: 0.8,
     x,
@@ -106,8 +106,8 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
     assetId: enemyId,
     spriteDataUrl: getGeneratedSprite(enemyId),
     alive: true,
-    // Wide stagger so a full pack doesn't burst-attack simultaneously
-    hitstunMs: 800 + Math.random() * 2800,
+    // Wide stagger so a full pack doesn't burst-attack simultaneously; first hit no earlier than 1.5s
+    hitstunMs: 1500 + Math.random() * 4000,
     flashMs: 0,
     deathAnimMs: 0,
     basicCdMs: 0,
