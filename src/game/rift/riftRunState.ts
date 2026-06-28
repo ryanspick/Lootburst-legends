@@ -224,6 +224,7 @@ const BOSS_STAT_CONFIG: Record<string, { hp: number; atk: number; def: number; i
   boss_tax_collector_mimic: { hp: 24_000, atk: 58, def: 36, isFinal: true  },
   boss_void_arcade_dragon:  { hp: 27_000, atk: 62, def: 38, isFinal: true  },
   boss_moon_vault:          { hp: 30_000, atk: 66, def: 40, isFinal: true  },
+  boss_star_eater_cherub:   { hp: 36_000, atk: 72, def: 44, isFinal: true  },
 }
 
 // Per-boss ability flavour — drives skill/ult text, colours, AoE mult, and special effects
@@ -241,6 +242,7 @@ const BOSS_ABILITY_CFG: Record<string, BossAbilityDef> = {
   boss_void_arcade_dragon:  { skillName: '◆ Glitch Blast',   skillColor: '#00ffff', skillAtkMult: 1.8, ultName: '★ BULLET HELL!',     ultColor: '#ff00ff', ultAtkMult: 3.3, ultFlashColor: '#aa00ff' },
   boss_neon_bone_hydra:     { skillName: '◆ Hydra Strike',   skillColor: '#ff44ff', skillAtkMult: 1.8, ultName: '★ NEON SURGE!',      ultColor: '#ff00ff', ultAtkMult: 3.2, ultFlashColor: '#aa00ff' },
   boss_moon_vault:          { skillName: '◆ Moonbeam',       skillColor: '#aaeeff', skillAtkMult: 1.7, ultName: '★ VAULT LOCK!',      ultColor: '#ffffff', ultAtkMult: 3.1, ultFlashColor: '#0088ff' },
+  boss_star_eater_cherub:   { skillName: '◆ Starfall',       skillColor: '#ccaaff', skillAtkMult: 1.9, ultName: '★ VOID DEVOUR!',     ultColor: '#ffffff', ultAtkMult: 3.5, ultFlashColor: '#6600ff' },
 }
 
 // Mount stat bonuses applied once at run start

@@ -1,6 +1,6 @@
 import type { TimelineEvent } from './riftTypes'
 
-export const RIFT_DURATION_MS  = 165_000   // longest zone duration; HUD timer max
+export const RIFT_DURATION_MS  = 170_000   // longest zone duration; HUD timer max
 export const WAVE_CLEAR_DELAY_MS = 6_000
 
 const DEFAULT_ZONE_ID = 'candy_cavern_rift'
@@ -42,6 +42,15 @@ const ZONE_ENEMY_POOLS: Record<string, Record<number, string[]>> = {
     5: ['enemy_void_wisp', 'enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper'],
     6: ['enemy_void_wisp', 'enemy_ice_sprite', 'enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper'],
     7: ['enemy_ghost', 'enemy_ice_sprite', 'enemy_elite_shadow_reaper', 'enemy_elite_crystal_golem'],
+  },
+  starforge_nursery: {
+    1: ['enemy_ghost', 'enemy_void_wisp', 'enemy_ice_sprite'],
+    2: ['enemy_void_wisp', 'enemy_ice_sprite', 'enemy_flame_imp'],
+    3: ['enemy_void_wisp', 'enemy_flame_imp', 'enemy_ghost'],
+    4: ['enemy_void_wisp', 'enemy_ice_sprite', 'enemy_elite_shadow_reaper'],
+    5: ['enemy_void_wisp', 'enemy_elite_shadow_reaper', 'enemy_elite_crystal_golem'],
+    6: ['enemy_void_wisp', 'enemy_ice_sprite', 'enemy_elite_shadow_reaper', 'enemy_elite_crystal_golem'],
+    7: ['enemy_void_wisp', 'enemy_flame_imp', 'enemy_elite_shadow_reaper', 'enemy_elite_gold_mimic'],
   },
 }
 
@@ -119,6 +128,23 @@ const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
     ev(146_000,  'boss_warning',  { bossId: 'boss_moon_vault' }),
     ev(150_000,  'final_boss',    { bossId: 'boss_moon_vault' }),
     ev(165_000,  'end_run'),
+  ],
+  starforge_nursery: [
+    ev(0,        'wave_spawn',    { wave: 1, count: 30, pattern: 'ring' }),
+    ev(0,        'wave_spawn',    { wave: 2, count: 36, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',    { wave: 3, count: 42, pattern: 'burst_sides' }),
+    ev(62_000,   'upgrade_choice'),
+    ev(65_000,   'wave_spawn',    { wave: 4, count: 46, pattern: 'burst_top' }),
+    ev(65_000,   'wave_spawn',    { wave: 5, count: 50, pattern: 'ring' }),
+    ev(98_000,   'upgrade_choice'),
+    ev(102_000,  'boss_warning',  { bossId: 'boss_moon_vault' }),
+    ev(106_000,  'mid_boss',      { bossId: 'boss_moon_vault' }),
+    ev(120_000,  'wave_spawn',    { wave: 6, count: 34, pattern: 'burst_sides' }),
+    ev(120_000,  'wave_spawn',    { wave: 7, count: 40, pattern: 'scatter' }),
+    ev(144_000,  'upgrade_choice'),
+    ev(150_000,  'boss_warning',  { bossId: 'boss_star_eater_cherub' }),
+    ev(154_000,  'final_boss',    { bossId: 'boss_star_eater_cherub' }),
+    ev(170_000,  'end_run'),
   ],
 }
 
