@@ -700,7 +700,7 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
     const dist = Math.sqrt(dx * dx + dy * dy)
     if (dist < 5) {
       loot.collected = true
-      state.goldCollected += loot.type === 'coin' ? 5 : loot.type === 'gem' ? 20 : 0
+      state.goldCollected += loot.value
     } else {
       const spd = Math.min(dist, 4)
       loot.x += (dx / dist) * spd
@@ -871,7 +871,7 @@ function killBoss(state: RiftRunState): void {
   emitCoinBurst({ x: state.boss.x, y: state.boss.y }, 20)
 }
 
-function spawnLoot(state: RiftRunState, x: number, y: number, type: 'coin' | 'gem', _value: number): void {
+function spawnLoot(state: RiftRunState, x: number, y: number, type: 'coin' | 'gem', value: number): void {
   const heroTarget = state.heroes.find(h => h.alive)
   state.lootDrops.push({
     id: _lootId++,
@@ -881,6 +881,7 @@ function spawnLoot(state: RiftRunState, x: number, y: number, type: 'coin' | 'ge
     targetY: heroTarget?.y ?? CENTER_Y,
     type,
     rarity: 'common',
+    value: value > 0 ? value : (type === 'gem' ? 20 : 0),
     collected: false,
     lifeMs: 3500,
   })

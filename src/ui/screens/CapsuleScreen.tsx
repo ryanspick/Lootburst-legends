@@ -123,16 +123,20 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
     playSound('ui_pull_button_charge')
 
     const items: LootItem[] = []
+    // snapshot owned heroes before any addHero calls so dupe check is accurate per-pull
+    const ownedSnapshot = new Set(ownedHeroes.map(h => h.id))
     for (let i = 0; i < 10; i++) {
       const rarity = resolvePull()
       const heroId = pickHeroForRarity(rarity)
+      const isDupe = ownedSnapshot.has(heroId)
+      if (!isDupe) ownedSnapshot.add(heroId)
       addHero(heroId)
       recordCapsulePull()
       if (i === 9) onPull?.()
       const hero = heroesData.heroes.find(h => h.id === heroId)
       items.push({
         id: `pull_${i}_${heroId}`,
-        name: hero?.displayName ?? heroId,
+        name: isDupe ? `${hero?.displayName ?? heroId} ✦DUP` : (hero?.displayName ?? heroId),
         rarity,
         type: 'hero',
         assetId: heroId,

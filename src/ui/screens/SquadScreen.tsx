@@ -6,7 +6,9 @@ import HeroCard from '@/ui/components/HeroCard'
 import HeroDetailPanel from '@/ui/components/HeroDetailPanel'
 import SquadSlot from '@/ui/components/SquadSlot'
 import heroesData from '@/data/art/heroes.visual.json'
+import gearData from '@/data/art/gear.visual.json'
 import { useGameStore } from '@/store/gameStore'
+import type { GearSlot as GearSlotType } from '@/store/gameStore'
 import type { Rarity } from '@/constants/palette'
 import { emitUpgradeCardSparkle } from '@/vfx/emitters'
 import { computeSynergies } from '@/game/synergy/synergyEngine'
@@ -14,10 +16,10 @@ import styles from './SquadScreen.module.css'
 
 const SQUAD_SIZE = 3
 
-const SLOT_CONFIG = [
-  { slot: 'weapon', label: 'Weapon', icon: '⚔' },
-  { slot: 'armor',  label: 'Armor',  icon: '🛡' },
-  { slot: 'charm',  label: 'Charm',  icon: '💎' },
+const SLOT_CONFIG: { slot: GearSlotType; label: string; icon: string }[] = [
+  { slot: 'weapon',  label: 'Weapon',  icon: '⚔' },
+  { slot: 'trinket', label: 'Trinket', icon: '💫' },
+  { slot: 'relic',   label: 'Relic',   icon: '🛡' },
 ]
 
 export default function SquadScreen() {
@@ -27,6 +29,7 @@ export default function SquadScreen() {
 
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
   const ownedHeroes = useGameStore(s => s.ownedHeroes)
+  const ownedGear = useGameStore(s => s.ownedGear)
   const globalShards = useGameStore(s => s.shards)
   const setSquadSlot = useGameStore(s => s.setSquadSlot)
   const upgradeHeroStar = useGameStore(s => s.upgradeHeroStar)
@@ -120,14 +123,26 @@ export default function SquadScreen() {
           />
           {/* Gear loadout */}
           <div className={styles.gearSlots}>
-            {SLOT_CONFIG.map(cfg => (
-              <GearSlot
-                key={cfg.slot}
-                slot={cfg.slot}
-                slotLabel={cfg.label}
-                slotIcon={cfg.icon}
-              />
-            ))}
+            {SLOT_CONFIG.map(cfg => {
+              const equipped = selected
+                ? ownedGear.find(g => g.equipped && g.equippedHeroId === selected && g.equippedSlot === cfg.slot)
+                : undefined
+              const visual = equipped ? gearData.gear.find(g => g.id === equipped.id) : undefined
+              return (
+                <GearSlot
+                  key={cfg.slot}
+                  slot={cfg.slot}
+                  slotLabel={cfg.label}
+                  slotIcon={cfg.icon}
+                  equippedGear={visual ? {
+                    id: visual.id,
+                    displayName: visual.displayName,
+                    slot: visual.slot,
+                    rarity: visual.rarity as Rarity,
+                  } : undefined}
+                />
+              )
+            })}
           </div>
         </div>
       )}

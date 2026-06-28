@@ -82,6 +82,7 @@ export interface LootDrop {
   targetY: number
   type: 'coin' | 'gem' | 'item'
   rarity: Rarity
+  value: number
   collected: boolean
   lifeMs: number
 }
