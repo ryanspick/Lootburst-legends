@@ -192,12 +192,15 @@ export default function RewardSummary({ reward, killCount, totalDamage, elapsedM
 
       {/* Heroes leveled */}
       {(phase === 'loot' || phase === 'cta') && reward.heroesLeveled.length > 0 && (
-        <div className={styles.heroesRow}>
-          {reward.heroesLeveled.map(name => (
-            <div key={name} className={styles.heroLeveledChip}>
-              ⬆ {name.split(' ')[0]}
-            </div>
-          ))}
+        <div className={styles.levelUpBlock}>
+          <div className={styles.levelUpHeader}>✦ LEVEL UP! ✦</div>
+          <div className={styles.heroesRow}>
+            {reward.heroesLeveled.map(name => (
+              <div key={name} className={styles.heroLeveledChip}>
+                ⬆ {name}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

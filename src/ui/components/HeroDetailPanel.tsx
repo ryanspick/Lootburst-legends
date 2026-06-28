@@ -28,6 +28,8 @@ interface Props {
   owned?: OwnedData
   globalShards?: number
   inSquad?: boolean
+  skillDesc?: string
+  ultDesc?: string
   onAddToSquad?: () => void
   onUpgrade?: () => void
 }
@@ -42,6 +44,7 @@ const SHARDS_PER_STAR = 20
 export default function HeroDetailPanel({
   id, displayName, rarity, element, role, tags = [],
   stars, maxStars, owned, globalShards = 0, inSquad,
+  skillDesc, ultDesc,
   onAddToSquad, onUpgrade,
 }: Props) {
   const ec = ELEMENT_COLOURS[element] ?? '#8888cc'
@@ -108,6 +111,24 @@ export default function HeroDetailPanel({
           {tags.map(t => (
             <span key={t} className={styles.tag}>{t}</span>
           ))}
+        </div>
+      )}
+
+      {/* Abilities */}
+      {(skillDesc || ultDesc) && (
+        <div className={styles.abilities}>
+          {skillDesc && (
+            <div className={styles.ability}>
+              <span className={styles.abilityLabel} style={{ color: ec }}>◆ SKILL</span>
+              <span className={styles.abilityDesc}>{skillDesc}</span>
+            </div>
+          )}
+          {ultDesc && (
+            <div className={styles.ability}>
+              <span className={styles.abilityLabel} style={{ color: rc.primary }}>★ ULTIMATE</span>
+              <span className={styles.abilityDesc}>{ultDesc}</span>
+            </div>
+          )}
         </div>
       )}
 

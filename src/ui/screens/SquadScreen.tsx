@@ -113,11 +113,14 @@ export default function SquadScreen() {
             rarity={selectedHero.rarity as Rarity}
             element={selectedHero.element}
             role={selectedHero.role}
+            tags={selectedHero.tags}
             stars={selectedOwned?.stars ?? 0}
             maxStars={selectedHero.maxStars}
             owned={selectedOwned ? { stars: selectedOwned.stars, shards: selectedOwned.shards, level: selectedOwned.level, xp: selectedOwned.xp } : undefined}
             globalShards={globalShards}
             inSquad={squad.includes(selectedHero.id)}
+            skillDesc={(selectedHero as { skillDesc?: string }).skillDesc}
+            ultDesc={(selectedHero as { ultDesc?: string }).ultDesc}
             onAddToSquad={selectedOwned ? () => assignToSquad(selectedHero.id) : undefined}
             onUpgrade={selectedOwned ? () => handleUpgrade(selectedHero.id) : undefined}
           />

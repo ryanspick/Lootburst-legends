@@ -35,6 +35,7 @@ const ELEMENT_GLOW: Record<string, string> = {
   fire: '#ff7722', ice: '#66ddff', earth: '#88cc33', void: '#cc44ff',
   arcane: '#ff88ee', nature: '#44ff88', electric: '#ffee44',
   water: '#4488ff', metal: '#bbccdd', shadow: '#8844cc', light: '#ffeeaa',
+  machine: '#cd7f32', gold: '#ffd700', storm: '#00ffff', holy: '#fff888',
 }
 
 function easeOutCubic(t: number): number {

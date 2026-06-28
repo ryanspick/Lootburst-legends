@@ -521,6 +521,9 @@ export default function RiftRunScreen({ onExit }: Props) {
               W{currentWaveNum}/7 · {stats.enemiesLeft}▼
             </span>
           )}
+          {stats.enemiesLeft === 0 && !bossSnap?.alive && currentWaveNum > 0 && phase === 'combat' && (
+            <span className={styles.bossApproaching}>⚠ BOSS SOON</span>
+          )}
         </div>
         <div className={styles.hudCenter}>
           <div className={styles.hudTimer} data-urgent={timeLeft <= 15 ? 'true' : undefined}>

@@ -199,23 +199,53 @@
 
 /* ── Heroes leveled ─────────────────────────────────────────────── */
 
+.levelUpBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: fadeUp 0.4s ease-out 1.4s both;
+}
+
+.levelUpHeader {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #44ff88;
+  text-shadow: 0 0 12px #44ff8888;
+  animation: levelUpGlow 1.4s ease-in-out infinite;
+}
+
+@keyframes levelUpGlow {
+  0%, 100% { text-shadow: 0 0 8px #44ff8866; }
+  50%       { text-shadow: 0 0 22px #44ff88cc, 0 0 40px #44ff8844; }
+}
+
 .heroesRow {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   justify-content: center;
-  animation: fadeUp 0.4s ease-out 1.4s both;
 }
 
 .heroLeveledChip {
   font-family: monospace;
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 700;
   letter-spacing: 1px;
   color: #44ff88;
   background: #001a0a;
-  border: 1px solid #44ff8844;
+  border: 1px solid #44ff8888;
   border-radius: 20px;
-  padding: 4px 12px;
+  padding: 6px 14px;
+  box-shadow: 0 0 10px #44ff8833;
+  animation: chipPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes chipPop {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 /* ── CTA ─────────────────────────────────────────────────────────── */

@@ -151,6 +151,35 @@
   padding: 2px 6px;
 }
 
+.abilities {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ability {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 10px;
+  background: #0a0a1a;
+  border: 1px solid #2233aa33;
+  border-radius: 6px;
+}
+
+.abilityLabel {
+  font-family: monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.abilityDesc {
+  font-size: 10px;
+  color: #aabbcc;
+  line-height: 1.4;
+}
+
 .actions {
   display: flex;
   gap: 8px;

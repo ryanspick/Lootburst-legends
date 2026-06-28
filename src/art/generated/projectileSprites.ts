@@ -23,6 +23,10 @@ const ELEMENT_PALETTE: Record<string, OrbPalette> = {
   metal:    { core: '#ffffff', bright: '#eef4ff', mid: '#bbccdd', outer: '#778899', rim: '#334455' },
   shadow:   { core: '#ffffff', bright: '#ead0ff', mid: '#8844cc', outer: '#440088', rim: '#110033' },
   light:    { core: '#ffffff', bright: '#fffff0', mid: '#ffeeaa', outer: '#ddaa00', rim: '#886600' },
+  machine:  { core: '#ffffff', bright: '#ffe8c8', mid: '#cd7f32', outer: '#885522', rim: '#3a2010' },
+  gold:     { core: '#ffffff', bright: '#fffacc', mid: '#ffd700', outer: '#cc8800', rim: '#664400' },
+  storm:    { core: '#ffffff', bright: '#d0fffe', mid: '#00ffff', outer: '#0099cc', rim: '#003344' },
+  holy:     { core: '#ffffff', bright: '#ffffd8', mid: '#fff888', outer: '#ddcc00', rim: '#887700' },
 }
 const DEFAULT_PAL: OrbPalette = {
   core: '#ffffff', bright: '#ddddff', mid: '#8888ff', outer: '#4444cc', rim: '#221144',

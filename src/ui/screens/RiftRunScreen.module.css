@@ -64,6 +64,19 @@
   letter-spacing: 0.5px;
 }
 
+.bossApproaching {
+  font-size: 9px;
+  font-weight: 700;
+  color: #ff8844;
+  letter-spacing: 1px;
+  animation: bossApproachPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes bossApproachPulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
+}
+
 .hudTimer {
   font-size: 20px;
   font-weight: bold;

@@ -12,6 +12,8 @@
       "vfxProfile": "machine_tank",
       "soundProfile": "tank",
       "tags": ["tank", "machine", "starter"],
+      "skillDesc": "Shield Charge — crashes shield-first into the nearest foe, dealing 1.6× ATK and taunting nearby enemies.",
+      "ultDesc": "Iron Fortress — becomes briefly invulnerable and reflects 50% of all incoming damage back at attackers.",
       "silhouetteNotes": "Round shield on left arm, tiny sword, copper-toned armour, stubby chibi legs",
       "palette": ["#cd7f32", "#8b5e3c", "#ffd700", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, copper tank knight, round shield, tiny sword, thick outline, copper sparks, 4-frame idle bob."
@@ -28,6 +30,8 @@
       "vfxProfile": "nature_healer",
       "soundProfile": "healer",
       "tags": ["healer", "nature", "poison", "starter"],
+      "skillDesc": "Spore Mend — releases a cloud of healing spores that restore 1.4× ATK as HP to all heroes.",
+      "ultDesc": "Mycelium Surge — massive AoE spore explosion that heals all allies and poisons every enemy on screen.",
       "silhouetteNotes": "Large mushroom cap hat, spore pouch on back, short staff with glowing green tip",
       "palette": ["#22c55e", "#aaff00", "#f97316", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, mushroom healer, spore pouch, green healing particles, cap bob, friendly face."
@@ -44,6 +48,8 @@
       "vfxProfile": "machine_ranged",
       "soundProfile": "ranged",
       "tags": ["ranged", "machine", "gold", "starter"],
+      "skillDesc": "Spark Burst — fires 5 electrified sparks in a fan pattern, each dealing 0.5× ATK to separate targets.",
+      "ultDesc": "Coin Barrage — unleashes a rapid volley of electrified coins at 2.5× ATK total; crits drop bonus gold.",
       "silhouetteNotes": "Tiny goblin with oversized spark pistol, goggles, coin bag on belt",
       "palette": ["#22c55e", "#ffd700", "#cd7f32", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, goblin gunner, spark pistol, goggles, coin crits, thick outline."
@@ -60,6 +66,8 @@
       "vfxProfile": "earth_tank",
       "soundProfile": "tank",
       "tags": ["tank", "earth", "starter"],
+      "skillDesc": "Boulder Toss — hurls a massive boulder dealing 1.6× ATK to a row of enemies.",
+      "ultDesc": "Earthshatter — slams the ground with both fists, stunning all enemies and dealing 2.8× ATK to all.",
       "silhouetteNotes": "Chunky rock body, glowing orange cracks on torso, tiny pebble arms",
       "palette": ["#78716c", "#ffa500", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, tiny rock golem, glowing orange cracks, stubby stone arms, 4-frame idle rumble."
@@ -76,6 +84,8 @@
       "vfxProfile": "fire_bomber",
       "soundProfile": "caster",
       "tags": ["fire", "bomber", "aoe"],
+      "skillDesc": "Cherry Kaboom — lobs a bomb that detonates in a blast radius for 1.7× ATK fire damage.",
+      "ultDesc": "Inferno Barrage — drops 8 cherry bombs across the arena dealing 3.0× ATK total fire damage in a chain of explosions.",
       "silhouetteNotes": "Red imp with oversized cherry bombs, black match stick, pixel burst explosion trail",
       "palette": ["#ef4444", "#ff6600", "#ffd700", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, red imp fire bomber, cherry bombs, match stick, orange burst trail, 4-frame idle hop."
@@ -92,6 +102,8 @@
       "vfxProfile": "bubble_shield",
       "soundProfile": "healer",
       "tags": ["healer", "shield", "ice", "cyan"],
+      "skillDesc": "Shield Bubble — wraps the lowest-HP hero in an ice bubble that absorbs the next 2 incoming hits.",
+      "ultDesc": "Arctic Blessing — blankets all heroes in protective ice shields and heals the entire squad for 2.5× ATK HP.",
       "silhouetteNotes": "Chubby priest in robes, floating cyan bubbles around arms, staff with orb",
       "palette": ["#00ffff", "#0ea5e9", "#ffffff", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, bubble priest, cyan shield orbs, flowing robes, 4-frame gentle float idle."
@@ -108,6 +120,8 @@
       "vfxProfile": "shadow_ranged",
       "soundProfile": "ranged",
       "tags": ["ranged", "shadow", "split"],
+      "skillDesc": "Silver Split — fires a moon arrow that splits into 3 shadow bolts on impact, each dealing 1.6× ATK.",
+      "ultDesc": "Crescent Storm — unleashes 12 splitting moon arrows in all directions at 2.8× ATK total damage.",
       "silhouetteNotes": "Slim archer, crescent bow, silver arrows that split on impact, moon emblem on chest",
       "palette": ["#c8c8c8", "#8a2be2", "#e2e8f0", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, moonlit archer, crescent bow, silver split arrows, shadow aura, 4-frame idle stance."
@@ -124,6 +138,8 @@
       "vfxProfile": "gold_support",
       "soundProfile": "support",
       "tags": ["support", "gold", "drop-bonus", "crown"],
+      "skillDesc": "Royal Heist — commands minion rats to swarm a target for 1.5× ATK; guaranteed 1 extra gold drop on kill.",
+      "ultDesc": "Golden Jubilee — all gold drops triple for 8 seconds; allies gain a 20% ATK bonus for the duration.",
       "silhouetteNotes": "Rat in jewelled crown, gold trail behind, tiny scepter, coin pile base",
       "palette": ["#ffd700", "#c8a400", "#78716c", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, rat king, jeweled crown, gold coin trail, scepter, 4-frame strut idle."
@@ -140,6 +156,8 @@
       "vfxProfile": "neon_assassin",
       "soundProfile": "assassin",
       "tags": ["assassin", "shadow", "afterimage", "neon"],
+      "skillDesc": "Afterimage Slash — dashes through enemies leaving 3 neon afterimage cuts behind at 1.7× ATK each.",
+      "ultDesc": "Neon Death Dance — unleashes 10 rapid slashes on the highest-HP enemy dealing 3.2× ATK total.",
       "silhouetteNotes": "Slim dancer with twin blades, purple-pink neon afterimage trail, mask, flowing sash",
       "palette": ["#a855f7", "#ff69b4", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, neon assassin, purple pink twin blades, dash afterimages, 6-frame slash."
@@ -156,6 +174,8 @@
       "vfxProfile": "storm_support",
       "soundProfile": "support",
       "tags": ["support", "storm", "totem", "lightning"],
+      "skillDesc": "Static Charge — charges up the totem, boosting all allies' attack speed by 30% for 6 seconds.",
+      "ultDesc": "Lightning Cascade — totem fires 5 lightning bolts that each chain to 2 additional targets at 3.0× ATK total.",
       "silhouetteNotes": "Small bear cub, totem pole on back that crackles with lightning, cyan storm clouds above head",
       "palette": ["#00ffff", "#facc15", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, tiny bear cub, glowing totem pole backpack, cyan lightning, 4-frame idle charge."
@@ -172,6 +192,8 @@
       "vfxProfile": "ice_caster",
       "soundProfile": "caster",
       "tags": ["caster", "ice", "freeze", "lantern"],
+      "skillDesc": "Frost Shards — fires 4 ice shards that each deal 1.6× ATK and slow struck enemies by 30% for 3 seconds.",
+      "ultDesc": "Blizzard Lantern — freezes all enemies solid for 2 seconds and detonates for 3.3× ATK AoE ice damage.",
       "silhouetteNotes": "Mage with floating ice lantern, blue crystal shards orbiting, frosty robe hem",
       "palette": ["#00e5ff", "#0ea5e9", "#ffffff", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, frost mage, glowing ice lantern, crystal shard orbit, frozen robe, 4-frame idle float."
@@ -188,6 +210,8 @@
       "vfxProfile": "mimic_loot",
       "soundProfile": "caster",
       "tags": ["mimic", "gold", "loot", "treasure"],
+      "skillDesc": "Treasure Bite — snaps golden jaws at 1.7× ATK and randomly drops bonus gear or gold on hit.",
+      "ultDesc": "Loot Eruption — spews a torrent of gold and relics for 3.1× ATK damage and grants all allies +25% ATK.",
       "silhouetteNotes": "Treasure chest with eyes and mechanical jaw, gold teeth, loot items spilling from mouth",
       "palette": ["#ffd700", "#c8a400", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, golden mimic chest, animated jaw, treasure spilling, gold glow eyes, 4-frame chomp idle."
@@ -204,6 +228,8 @@
       "vfxProfile": "holy_support",
       "soundProfile": "paladin",
       "tags": ["support", "holy", "rhythm", "shockwave"],
+      "skillDesc": "Rhythm Pulse — beats the sun drum to send a holy shockwave at 1.6× ATK that also heals all allies.",
+      "ultDesc": "Solar Crescendo — drum solo unleashes 3 massive holy shockwaves at 3.4× ATK and revives 1 fallen hero.",
       "silhouetteNotes": "Golden armoured paladin with sun drum, rhythm shockwaves radiate on beat, halo, golden glow",
       "palette": ["#ffd700", "#ffa500", "#ffffff", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, golden paladin drummer, sun drum backpack, rhythm shockwave rings, halo glow, 6-frame legendary idle."
@@ -220,6 +246,8 @@
       "vfxProfile": "void_caster",
       "soundProfile": "caster",
       "tags": ["caster", "void", "candy", "orbital"],
+      "skillDesc": "Candy Hex — fires a void-corrupted candy projectile that chains to 3 targets for 1.8× ATK each.",
+      "ultDesc": "Orbital Collapse — orbiting candies implode into a singularity dealing 3.5× ATK to all enemies on screen.",
       "silhouetteNotes": "Purple-black witch with candy orbital rings, oversized hat, cute but void-corrupted, dark candy dripping",
       "palette": ["#8a2be2", "#ff69b4", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, void candy witch, huge hat, purple candy orbitals, dark void drips, 6-frame legendary idle float."
@@ -236,6 +264,8 @@
       "vfxProfile": "fire_ranged",
       "soundProfile": "ranged",
       "tags": ["rider", "fire", "loot", "courier"],
+      "skillDesc": "Flaming Package — delivers an exploding parcel for 1.7× ATK AoE fire damage in a wide radius.",
+      "ultDesc": "Special Delivery — dragon dive-bombs the largest enemy cluster for 3.5× ATK and leaves a burning fire zone.",
       "silhouetteNotes": "Tiny rider on small dragon, burning loot crates strapped to dragon, fire trail, delivery cap",
       "palette": ["#ff6600", "#ffd700", "#22c55e", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, courier riding mini dragon, burning loot crates, fire trail, delivery helmet, 6-frame legendary idle."
@@ -252,6 +282,8 @@
       "vfxProfile": "rainbow_support",
       "soundProfile": "support",
       "tags": ["support", "rainbow", "bullet-convert", "slime"],
+      "skillDesc": "Prism Splash — bounces a rainbow orb through 5 enemies at 1.5× ATK and converts 2 enemy projectiles into heals.",
+      "ultDesc": "Rainbow Cascade — fills the arena with prismatic energy at 3.0× ATK and converts all enemy bullets into heals.",
       "silhouetteNotes": "Jelly slime body cycling rainbow colours, glowing relics embedded in body, gem eyes",
       "palette": ["#ff0000", "#ffff00", "#00ff00", "#00ffff", "#ff00ff", "#1a1c2c"],
       "spritePrompt": "64x64 transparent chibi pixel sprite sheet, rainbow slime, cycling colour body, embedded relics, gem eyes, 6-frame legendary jiggle idle."
@@ -268,6 +300,8 @@
       "vfxProfile": "mythic_titan",
       "soundProfile": "mythic",
       "tags": ["mythic", "cosmic", "hammer", "constellation"],
+      "skillDesc": "Constellation Smash — slams the cosmic hammer causing star explosions at 2.0× ATK on the impact zone.",
+      "ultDesc": "Big Bang Forge — hurls the hammer across the entire arena wiping enemies for 4.0× ATK with massive screen shake.",
       "silhouetteNotes": "Tiny titan with cosmic hammer too large for it, constellation explosions on hit, star-filled body, forge sparks",
       "palette": ["#ffd700", "#ffffff", "#8a2be2", "#1a1c2c"],
       "spritePrompt": "80x80 transparent chibi pixel sprite sheet, baby cosmic titan, oversized star-forge hammer, constellation trail, glowing forge eyes, 6-frame mythic idle pulse."
@@ -284,6 +318,8 @@
       "vfxProfile": "mythic_capsule",
       "soundProfile": "mythic",
       "tags": ["mythic", "capsule", "screen-effect", "collector"],
+      "skillDesc": "Capsule Shower — rains 3 capsules on allies; each one boosts a random hero stat for 10 seconds.",
+      "ultDesc": "GACHA AVALANCHE! — transforms the screen into a capsule machine for 4.0× ATK and rewards bonus run loot.",
       "silhouetteNotes": "King with capsule machine for a crown, capsules orbiting, ultimate turns screen into capsule machine",
       "palette": ["#ff00ff", "#ffd700", "#00ffff", "#1a1c2c"],
       "spritePrompt": "80x80 transparent chibi pixel sprite sheet, capsule king, capsule-machine crown, rainbow orbiting capsules, 6-frame mythic idle spin."
@@ -300,6 +336,8 @@
       "vfxProfile": "mythic_reaper",
       "soundProfile": "mythic",
       "tags": ["mythic", "rainbow", "scythe", "assassin", "cat"],
+      "skillDesc": "Scythe Arc — swings the rainbow scythe in a wide arc hitting all enemies on screen for 1.8× ATK.",
+      "ultDesc": "PRISMATIC REAP! — leaps off screen and crashes down with a 9-hit rainbow scythe combo for 4.5× ATK total.",
       "silhouetteNotes": "Black cat with massive rainbow scythe, death-arc rainbow trails, cosmic particles, reaper hood",
       "palette": ["#ff0000", "#ffff00", "#00ff00", "#00ffff", "#ff00ff", "#1a1c2c"],
       "spritePrompt": "80x80 transparent pixel sprite sheet, black cat with rainbow scythe, cosmic particles, mythic aura, 6-frame ultimate pose."
