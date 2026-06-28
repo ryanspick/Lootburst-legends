@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import RarityFrame from '@/ui/components/RarityFrame'
 import SpriteCharacter from '@/ui/components/SpriteCharacter'
 import MountCard from '@/ui/components/MountCard'
@@ -14,10 +14,144 @@ import type { CosmeticType } from '@/data/cosmeticsData'
 import type { Rarity } from '@/constants/palette'
 import { emitCoinBurst, emitGemScatter } from '@/vfx/emitters'
 import { ACHIEVEMENTS, RARITY_COLOR, type AchievementStats } from '@/data/achievementsData'
+import { ZONES } from '@/game/rift/zoneBackgrounds'
 import styles from './ProgressScreen.module.css'
 
-const TABS = ['Pets', 'Mounts', 'Cosmetics', 'Stats', 'Achievements'] as const
+const TABS = ['Pets', 'Mounts', 'Cosmetics', 'Stats', 'Records', 'Achievements'] as const
 type Tab = typeof TABS[number]
+
+const TROPHY_MEDALS = ['🥇', '🥈', '🥉']
+const ZONE_EMOJI: Record<string, string> = {
+  candy_cavern_rift:    '🍬',
+  goblin_glitter_mines: '⛏️',
+  void_arcade:          '🕹️',
+  moon_vault:           '🌙',
+  starforge_nursery:    '⭐',
+}
+
+function RecordsTab({ runHistory }: { runHistory: import('@/store/gameStore').RunRecord[] }) {
+  const topRuns = useMemo(
+    () => [...runHistory].sort((a, b) => b.kills - a.kills).slice(0, 3),
+    [runHistory],
+  )
+
+  const zoneBests = useMemo(() => {
+    const map = new Map<string, { kills: number; wasWipe: boolean }>()
+    for (const run of runHistory) {
+      if (!run.zoneId) continue
+      const prev = map.get(run.zoneId)
+      if (!prev || run.kills > prev.kills) map.set(run.zoneId, { kills: run.kills, wasWipe: run.wasWipe })
+    }
+    return ZONES.map(z => ({ zone: z, best: map.get(z.id) ?? null }))
+  }, [runHistory])
+
+  const winStreak = useMemo(() => {
+    let streak = 0
+    for (const run of runHistory) {
+      if (run.wasWipe) break
+      streak++
+    }
+    return streak
+  }, [runHistory])
+
+  const categoryRecords = useMemo(() => {
+    if (!runHistory.length) return []
+    const bestKills  = [...runHistory].sort((a, b) => b.kills - a.kills)[0]
+    const bestGold   = [...runHistory].sort((a, b) => b.goldEarned - a.goldEarned)[0]
+    const bestTime   = [...runHistory].filter(r => !r.wasWipe).sort((a, b) => b.elapsedMs - a.elapsedMs)[0]
+    const bestTier   = [...runHistory].sort((a, b) => b.tierLevel - a.tierLevel)[0]
+    const toTime = (ms: number) => { const s = Math.floor(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` }
+    return [
+      { label: 'Most Kills',   value: bestKills.kills.toLocaleString() + ' kills',           color: '#ff4488' },
+      { label: 'Most Gold',    value: bestGold.goldEarned.toLocaleString() + ' 💰',           color: '#ffd700' },
+      { label: 'Longest Win',  value: bestTime ? toTime(bestTime.elapsedMs) : '—',            color: '#44ccff' },
+      { label: 'Highest Tier', value: 'T' + bestTier.tierLevel,                               color: '#aa44ff' },
+    ]
+  }, [runHistory])
+
+  if (!runHistory.length) {
+    return (
+      <div className={styles.section}>
+        <div className={styles.recordsEmpty}>
+          <div className={styles.recordsEmptyIcon}>🏆</div>
+          <div className={styles.recordsEmptyText}>Complete a rift to earn records</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.section}>
+      {/* Top 3 trophy runs */}
+      <div className={styles.sectionHeader}>
+        <span className={styles.sectionTitle}>TOP RUNS</span>
+        <span className={styles.sectionCount}>by kills</span>
+      </div>
+      <div className={styles.trophyList}>
+        {topRuns.map((run, i) => {
+          const secs = Math.floor(run.elapsedMs / 1000)
+          const timeStr = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`
+          const zoneName = ZONES.find(z => z.id === run.zoneId)?.displayName ?? run.zoneId ?? '—'
+          return (
+            <div key={i} className={`${styles.trophyRow} ${run.wasWipe ? styles.trophyWipe : styles.trophyWin}`}>
+              <span className={styles.trophyMedal}>{TROPHY_MEDALS[i]}</span>
+              <div className={styles.trophyMain}>
+                <span className={styles.trophyKills}>{run.kills.toLocaleString()} kills</span>
+                <span className={styles.trophyZone}>{ZONE_EMOJI[run.zoneId] ?? '🗺️'} {zoneName} · T{run.tierLevel}</span>
+              </div>
+              <div className={styles.trophySide}>
+                <span className={styles.trophyGold}>+{run.goldEarned.toLocaleString()} 💰</span>
+                <span className={styles.trophyTime}>{timeStr}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Category records */}
+      <div className={styles.sectionHeader} style={{ marginTop: 16 }}>
+        <span className={styles.sectionTitle}>RECORDS</span>
+      </div>
+      <div className={styles.categoryRecords}>
+        {categoryRecords.map(({ label, value, color }) => (
+          <div key={label} className={styles.categoryRecord}>
+            <span className={styles.categoryLabel}>{label}</span>
+            <strong className={styles.categoryValue} style={{ color }}>{value}</strong>
+          </div>
+        ))}
+      </div>
+
+      {/* Win streak */}
+      <div className={styles.sectionHeader} style={{ marginTop: 16 }}>
+        <span className={styles.sectionTitle}>STREAK</span>
+      </div>
+      <div className={styles.streakRow}>
+        <span className={styles.streakLabel}>Current win streak</span>
+        <span className={styles.streakValue} style={{ color: winStreak > 0 ? '#44cc88' : '#888' }}>
+          {winStreak > 0 ? `🔥 ${winStreak}` : '—'}
+        </span>
+      </div>
+
+      {/* Per-zone bests */}
+      <div className={styles.sectionHeader} style={{ marginTop: 16 }}>
+        <span className={styles.sectionTitle}>ZONE RECORDS</span>
+        <span className={styles.sectionCount}>best kills</span>
+      </div>
+      <div className={styles.zoneBestList}>
+        {zoneBests.map(({ zone, best }) => (
+          <div key={zone.id} className={`${styles.zoneBestRow} ${!best ? styles.zoneBestEmpty : ''}`}>
+            <span className={styles.zoneBestEmoji}>{ZONE_EMOJI[zone.id] ?? '🗺️'}</span>
+            <span className={styles.zoneBestName}>{zone.displayName}</span>
+            {best
+              ? <span className={`${styles.zoneBestKills} ${best.wasWipe ? styles.zoneBestWipe : ''}`}>{best.kills.toLocaleString()}</span>
+              : <span className={styles.zoneBestNone}>—</span>
+            }
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function ProgressScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('Pets')
@@ -342,6 +476,10 @@ export default function ProgressScreen() {
             </>
           )}
         </div>
+      )}
+
+      {activeTab === 'Records' && (
+        <RecordsTab runHistory={runHistory} />
       )}
 
       {activeTab === 'Achievements' && (

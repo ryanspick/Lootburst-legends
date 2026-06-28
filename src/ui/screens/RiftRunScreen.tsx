@@ -193,16 +193,18 @@ export default function RiftRunScreen({ onExit }: Props) {
     addGold(postRun.goldEarned)
     addGems(postRun.gemsEarned)
     postRun.lootItems.forEach(item => addGear(item.id))
+    // Award XP to active squad heroes — mutates postRun.heroesLeveled in place for RewardSummary
+    const s = useGameStore.getState()
+    const heroIds = s.squadHeroIds.filter(Boolean)
     recordRiftResult({
       kills: killCount,
       goldEarned: postRun.goldEarned,
       elapsedMs: postRun.elapsedMs,
       tierLevel: postRun.tierLevel,
       wasWipe: postRun.wasWipe,
+      zoneId: ZONES[zoneIdxRef.current].id,
+      heroIds,
     })
-    // Award XP to active squad heroes — mutates postRun.heroesLeveled in place for RewardSummary
-    const s = useGameStore.getState()
-    const heroIds = s.squadHeroIds.filter(Boolean)
     const leveledIds = awardRunXp(heroIds, Math.round(postRun.xpEarned))
     if (leveledIds.length > 0) {
       postRun.heroesLeveled = leveledIds.map(id =>

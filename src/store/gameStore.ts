@@ -19,6 +19,8 @@ export interface RunRecord {
   tierLevel: number
   wasWipe: boolean
   timestamp: number
+  zoneId: string
+  heroIds: string[]
 }
 
 export interface OwnedHero {
@@ -132,7 +134,7 @@ interface GameState {
   unequipHeroSlot: (heroId: string, slot: GearSlot) => void
   incrementPity: () => void
   resetPity: () => void
-  recordRiftResult: (result: { kills: number; goldEarned: number; elapsedMs?: number; tierLevel?: number; wasWipe?: boolean }) => void
+  recordRiftResult: (result: { kills: number; goldEarned: number; elapsedMs?: number; tierLevel?: number; wasWipe?: boolean; zoneId?: string; heroIds?: string[] }) => void
   recordCapsulePull: () => void
   setLastSeen: () => void
   initGemOffer: () => void
@@ -343,7 +345,7 @@ export const useGameStore = create<GameState>()(
       incrementPity: () => set(s => ({ pityCount: s.pityCount + 1 })),
       resetPity: () => set({ pityCount: 0 }),
 
-      recordRiftResult: ({ kills, goldEarned, elapsedMs = 0, tierLevel = 1, wasWipe = false }) => {
+      recordRiftResult: ({ kills, goldEarned, elapsedMs = 0, tierLevel = 1, wasWipe = false, zoneId = '', heroIds = [] }) => {
         const today = getDailyQuestDate()
         const s = get()
         const isNewDay = s.dailyQuestDate !== today
@@ -355,7 +357,7 @@ export const useGameStore = create<GameState>()(
           if (q.type === 'kills')       newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + kills, q.target)
           if (q.type === 'gold_earned') newProgress[q.id] = Math.min((newProgress[q.id] ?? 0) + goldEarned, q.target)
         }
-        const record: RunRecord = { kills, goldEarned, elapsedMs, tierLevel, wasWipe, timestamp: Date.now() }
+        const record: RunRecord = { kills, goldEarned, elapsedMs, tierLevel, wasWipe, timestamp: Date.now(), zoneId, heroIds }
         set(st => ({
           totalRifts: st.totalRifts + 1,
           totalKills: st.totalKills + kills,

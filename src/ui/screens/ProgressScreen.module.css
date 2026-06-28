@@ -501,3 +501,138 @@
   font-size: 14px;
   opacity: 0.5;
 }
+
+/* ── Records tab ────────────────────────────────────────────────────────── */
+.recordsEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 48px 20px;
+}
+.recordsEmptyIcon { font-size: 48px; }
+.recordsEmptyText { font-size: 14px; color: var(--text-muted); }
+
+/* Trophy list */
+.trophyList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trophyRow {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--panel-bg);
+  border: 1px solid #2233aa22;
+}
+.trophyWin  { border-left: 3px solid #44ccff66; }
+.trophyWipe { border-left: 3px solid #ff444466; opacity: 0.7; }
+
+.trophyMedal { font-size: 20px; text-align: center; }
+
+.trophyMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.trophyKills {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: monospace;
+}
+.trophyZone {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.trophySide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.trophyGold {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  font-family: monospace;
+}
+.trophyTime {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: monospace;
+}
+
+/* Category records */
+.categoryRecords {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.categoryRecord {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+.categoryLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+.categoryValue {
+  font-size: 14px;
+  font-family: monospace;
+}
+
+/* Streak */
+.streakRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+.streakLabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.streakValue {
+  font-size: 15px;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+/* Zone bests */
+.zoneBestList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.zoneBestRow {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+}
+.zoneBestEmpty { opacity: 0.45; }
+.zoneBestEmoji { font-size: 14px; text-align: center; }
+.zoneBestName  { font-size: 11px; color: var(--text-secondary); }
+.zoneBestKills { font-size: 12px; font-weight: 700; color: #44ccff; font-family: monospace; }
+.zoneBestWipe  { color: #ff6666; }
+.zoneBestNone  { font-size: 12px; color: var(--text-muted); font-family: monospace; }
