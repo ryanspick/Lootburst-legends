@@ -514,7 +514,7 @@ export default function RiftRunScreen({ onExit }: Props) {
           <span ref={goldHudRef} className={styles.hudStat}>💰 {stats.gold}</span>
           {currentWaveNum > 0 && !bossSnap?.alive && (
             <span className={styles.hudStat} style={{ color: '#88ccff', fontSize: 9 }}>
-              W{currentWaveNum}/5 · {stats.enemiesLeft}▼
+              W{currentWaveNum}/7 · {stats.enemiesLeft}▼
             </span>
           )}
         </div>
