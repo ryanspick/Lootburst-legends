@@ -331,6 +331,7 @@ export default function RiftRunScreen({ onExit }: Props) {
               const bId = event.data?.bossId as string
               spawnBoss(state, bId)
               state.bossPhase = 1
+              wavePhaseRef.current = 'active'  // ensures WAVE_CLEAR_DELAY_MS fires on boss death
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
               setBossPhase(1)
@@ -347,6 +348,7 @@ export default function RiftRunScreen({ onExit }: Props) {
               const bId = event.data?.bossId as string
               spawnBoss(state, bId)
               state.bossPhase = 1
+              wavePhaseRef.current = 'active'  // ensures WAVE_CLEAR_DELAY_MS fires on boss death
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
               setBossPhase(1)
@@ -373,11 +375,11 @@ export default function RiftRunScreen({ onExit }: Props) {
           // wave ends the moment heroes kill everything on screen, not after all queued enemies drain.
           const aliveEnemies = state.enemies.filter(e => e.alive).length
 
-          // Detect wave cleared — discard any pending enemies and start rest timer
+          // Detect wave cleared — discard pending spawns and start brief rest
           if (wavePhaseRef.current === 'active' && aliveEnemies === 0 && !bossAlive) {
             state.pendingSpawns = []
             wavePhaseRef.current = 'resting'
-            waveClearTimerRef.current = 300
+            waveClearTimerRef.current = 150  // 150ms: quick transition, coins still visible
             setNextWaveIn(null)
           }
 
