@@ -93,7 +93,7 @@ export default function RiftRunScreen({ onExit }: Props) {
   const [wavePresentation, setWavePresentation] = useState<{ waveIndex: number; enemyCount: number; isBoss?: boolean } | null>(null)
   const [currentWaveNum, setCurrentWaveNum] = useState(0)
   const prevBossAliveRef = useRef<boolean | null>(null)
-  const zoneIdxRef = useRef(Math.floor(Math.random() * ZONES.length))
+  const zoneIdxRef = useRef(Math.max(0, Math.min(ZONES.length - 1, selectedRiftTier - 1)))
   const [showZoneName, setShowZoneName] = useState(false)
   const [floatEmissions, setFloatEmissions] = useState<FloatEmit[]>([])
   const floatIdRef = useRef(0)
@@ -148,6 +148,7 @@ export default function RiftRunScreen({ onExit }: Props) {
       runGearBonuses,
       equippedPetId:   storeSnapshot.equippedPetId,
       equippedMountId: storeSnapshot.equippedMountId,
+      zoneId:          ZONES[zoneIdxRef.current].id,
     })
     stateRef.current = state
     timelineRef.current = timeline

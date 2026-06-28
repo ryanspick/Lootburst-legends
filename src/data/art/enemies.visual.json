@@ -8,6 +8,11 @@
     { "id": "enemy_gear_bug", "displayName": "Gear Bug", "element": "machine", "tier": "normal", "spriteSize": 48, "animationProfile": "gear_bug_enemy", "vfxProfile": "gear_pop", "tags": ["machine", "bug"] },
     { "id": "enemy_ghost", "displayName": "Ghost", "element": "shadow", "tier": "normal", "spriteSize": 48, "animationProfile": "ghost_enemy", "vfxProfile": "ghost_fade", "tags": ["ghost", "flying"] },
     { "id": "enemy_elite_crystal_golem", "displayName": "Crystal Golem", "element": "ice", "tier": "elite", "spriteSize": 64, "animationProfile": "golem_enemy", "vfxProfile": "crystal_shatter", "tags": ["elite", "ice", "golem"] },
-    { "id": "enemy_elite_gold_mimic", "displayName": "Gold Mimic", "element": "gold", "tier": "elite", "spriteSize": 64, "animationProfile": "mimic_enemy", "vfxProfile": "gold_burst", "tags": ["elite", "gold", "mimic"] }
+    { "id": "enemy_elite_gold_mimic", "displayName": "Gold Mimic", "element": "gold", "tier": "elite", "spriteSize": 64, "animationProfile": "mimic_enemy", "vfxProfile": "gold_burst", "tags": ["elite", "gold", "mimic"] },
+    { "id": "enemy_flame_imp", "displayName": "Flame Imp", "element": "fire", "tier": "normal", "spriteSize": 48, "animationProfile": "imp_enemy", "vfxProfile": "fire_puff", "tags": ["fire", "imp"] },
+    { "id": "enemy_ice_sprite", "displayName": "Ice Sprite", "element": "ice", "tier": "normal", "spriteSize": 48, "animationProfile": "sprite_enemy", "vfxProfile": "ice_shatter", "tags": ["ice", "flying"] },
+    { "id": "enemy_void_wisp", "displayName": "Void Wisp", "element": "void", "tier": "normal", "spriteSize": 48, "animationProfile": "wisp_enemy", "vfxProfile": "void_dissolve", "tags": ["void", "flying"] },
+    { "id": "enemy_gold_beetle", "displayName": "Gold Beetle", "element": "gold", "tier": "normal", "spriteSize": 48, "animationProfile": "beetle_enemy", "vfxProfile": "gold_pop", "tags": ["gold", "bug"] },
+    { "id": "enemy_elite_shadow_reaper", "displayName": "Shadow Reaper", "element": "shadow", "tier": "elite", "spriteSize": 64, "animationProfile": "reaper_enemy", "vfxProfile": "shadow_rend", "tags": ["elite", "shadow", "undead"] }
   ]
 }

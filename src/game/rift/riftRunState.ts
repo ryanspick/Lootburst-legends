@@ -11,7 +11,7 @@ import {
   ENEMY_DRIFT_SPEED, ELITE_DRIFT_SPEED, ENEMY_ENGAGE_RADIUS,
 } from './arenaConstants'
 import { getGeneratedSprite } from '@/art/generated'
-import { cloneTimeline, getEnemyPoolForWave } from './waveDirector'
+import { cloneTimeline, getTimelineForZone, getEnemyPoolForWaveInZone } from './waveDirector'
 import { rollUpgradeCards, UPGRADE_CARDS } from './upgradeCards'
 import { triggerHitstop } from '@/animation/hitstop'
 import { triggerShake } from '@/animation/screenShake'
@@ -30,6 +30,8 @@ const ULTIMATE_CD   = 11000
 const ENEMY_ATK_CD  = 2200   // normal enemies — slow hits so packs don't burst-kill
 const ELITE_ATK_CD  = 3200   // elites hit slow but hard
 const BOSS_ATK_CD   = 1800   // bosses attack frequently but for moderate damage
+const BOSS_SKILL_CD = 9_000  // boss skill cooldown (resets after each use)
+const BOSS_ULT_CD   = 22_000 // boss ultimate cooldown (resets after each use)
 
 // Stagger per hero slot so they don't all fire simultaneously
 const BASIC_STAGGER = 400
@@ -115,18 +117,17 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
 }
 
 function makeBossEntity(bossId: string, diffMult = 1): CombatEntity {
-  const def = bossesData.bosses.find(b => b.id === bossId)
+  const def    = bossesData.bosses.find(b => b.id === bossId)
   if (!def) throw new Error(`Unknown boss: ${bossId}`)
-  const isFinal = bossId === 'boss_king_slime_pop'
+  const stats    = BOSS_STAT_CONFIG[bossId] ?? { hp: 9_000, atk: 32, def: 22, isFinal: false }
   const atkScale = 1 + (diffMult - 1) * 0.65
   return {
     id: bossId,
     displayName: def.displayName,
-    // Final boss must be significantly harder than mid-boss
-    hp: isFinal ? Math.round(22000 * diffMult) : Math.round(9000 * diffMult),
-    maxHp: isFinal ? Math.round(22000 * diffMult) : Math.round(9000 * diffMult),
-    atk: isFinal ? Math.round(55 * atkScale) : Math.round(32 * atkScale),
-    def: isFinal ? 35 : 22,
+    hp:    Math.round(stats.hp  * diffMult),
+    maxHp: Math.round(stats.hp  * diffMult),
+    atk:   Math.round(stats.atk * atkScale),
+    def:   stats.def,
     spd: 0.5,
     x: BOSS_X,
     y: BOSS_Y_POS,
@@ -140,8 +141,8 @@ function makeBossEntity(bossId: string, diffMult = 1): CombatEntity {
     flashMs: 0,
     deathAnimMs: 0,
     basicCdMs: 0,
-    skillCdMs: 0,
-    ultimateCdMs: 0,
+    skillCdMs: stats.isFinal ? 7_000 : 9_000,
+    ultimateCdMs: stats.isFinal ? 16_000 : 20_000,
   }
 }
 
@@ -213,6 +214,35 @@ function getPetInitialCd(petId: string): number {
   return PET_INITIAL_CD[effect] ?? 8000
 }
 
+// Per-boss base stats — mid bosses weaker than finals, scale with zone tier
+const BOSS_STAT_CONFIG: Record<string, { hp: number; atk: number; def: number; isFinal: boolean }> = {
+  boss_mushroom_matriarch:  { hp:  9_000, atk: 32, def: 22, isFinal: false },
+  boss_goblin_minecart_ace: { hp: 10_500, atk: 34, def: 24, isFinal: false },
+  boss_pumpkin_gearlord:    { hp: 12_000, atk: 37, def: 26, isFinal: false },
+  boss_neon_bone_hydra:     { hp: 13_500, atk: 40, def: 28, isFinal: false },
+  boss_king_slime_pop:      { hp: 22_000, atk: 55, def: 35, isFinal: true  },
+  boss_tax_collector_mimic: { hp: 24_000, atk: 58, def: 36, isFinal: true  },
+  boss_void_arcade_dragon:  { hp: 27_000, atk: 62, def: 38, isFinal: true  },
+  boss_moon_vault:          { hp: 30_000, atk: 66, def: 40, isFinal: true  },
+}
+
+// Per-boss ability flavour — drives skill/ult text, colours, AoE mult, and special effects
+interface BossAbilityDef {
+  skillName: string; skillColor: string; skillAtkMult: number
+  ultName:   string; ultColor:   string; ultAtkMult:   number; ultFlashColor: string
+  ultHeals?: boolean
+}
+const BOSS_ABILITY_CFG: Record<string, BossAbilityDef> = {
+  boss_mushroom_matriarch:  { skillName: '◆ Spore Cloud',    skillColor: '#66ff44', skillAtkMult: 1.6, ultName: '★ MEGA SPORE!',      ultColor: '#ff0066', ultAtkMult: 2.8, ultFlashColor: '#cc00ff' },
+  boss_king_slime_pop:      { skillName: '◆ Slime Splash',   skillColor: '#44ffaa', skillAtkMult: 1.7, ultName: '★ ROYAL BOUNCE!',    ultColor: '#ff0066', ultAtkMult: 3.0, ultFlashColor: '#00ff88', ultHeals: true },
+  boss_goblin_minecart_ace: { skillName: '◆ Rail Rush',      skillColor: '#cd7f32', skillAtkMult: 1.6, ultName: '★ MINECART SLAM!',   ultColor: '#ff6600', ultAtkMult: 2.9, ultFlashColor: '#ffd700' },
+  boss_tax_collector_mimic: { skillName: '◆ Gold Drain',     skillColor: '#ffd700', skillAtkMult: 1.7, ultName: '★ TAX SEASON!',      ultColor: '#ffaa00', ultAtkMult: 3.1, ultFlashColor: '#ffaa00', ultHeals: true },
+  boss_pumpkin_gearlord:    { skillName: '◆ Gear Throw',     skillColor: '#ff8800', skillAtkMult: 1.7, ultName: '★ GEAR STORM!',      ultColor: '#ff4400', ultAtkMult: 3.0, ultFlashColor: '#ff6600' },
+  boss_void_arcade_dragon:  { skillName: '◆ Glitch Blast',   skillColor: '#00ffff', skillAtkMult: 1.8, ultName: '★ BULLET HELL!',     ultColor: '#ff00ff', ultAtkMult: 3.3, ultFlashColor: '#aa00ff' },
+  boss_neon_bone_hydra:     { skillName: '◆ Hydra Strike',   skillColor: '#ff44ff', skillAtkMult: 1.8, ultName: '★ NEON SURGE!',      ultColor: '#ff00ff', ultAtkMult: 3.2, ultFlashColor: '#aa00ff' },
+  boss_moon_vault:          { skillName: '◆ Moonbeam',       skillColor: '#aaeeff', skillAtkMult: 1.7, ultName: '★ VAULT LOCK!',      ultColor: '#ffffff', ultAtkMult: 3.1, ultFlashColor: '#0088ff' },
+}
+
 // Mount stat bonuses applied once at run start
 const MOUNT_BONUSES: Record<string, { atkMult?: number; hpMult?: number; goldMult?: number; critChance?: number }> = {
   mount_iron_tortoise: { hpMult: 0.15 },
@@ -234,6 +264,7 @@ export function createInitialRiftState(
     runGearBonuses?: RunGearBonuses
     equippedPetId?: string
     equippedMountId?: string
+    zoneId?: string
   },
 ): { state: RiftRunState; timeline: TimelineEvent[] } {
   const squadIds = heroIds.slice(0, 3)
@@ -285,6 +316,7 @@ export function createInitialRiftState(
     petCooldownMs: getPetInitialCd(options?.equippedPetId ?? 'pet_coin_bat'),
     petBonusLoot:  false,
     activeMountId: options?.equippedMountId ?? '',
+    activeZoneId:  options?.zoneId ?? 'candy_cavern_rift',
   }
 
   for (const id of (options?.startBoosts ?? [])) {
@@ -320,7 +352,7 @@ export function createInitialRiftState(
     state.petBonusLoot = true
   }
 
-  return { state, timeline: cloneTimeline() }
+  return { state, timeline: getTimelineForZone(state.activeZoneId) }
 }
 
 export type SpawnPattern = 'ring' | 'scatter' | 'burst_top' | 'burst_bottom' | 'burst_sides'
@@ -332,7 +364,7 @@ const SPAWN_INTERVAL_MS  = 50
 const MAX_ALIVE_ENEMIES  = 60
 
 export function spawnWave(state: RiftRunState, wave: number, count: number, pattern: SpawnPattern = 'ring'): void {
-  const pool    = getEnemyPoolForWave(wave)
+  const pool    = getEnemyPoolForWaveInZone(wave, state.activeZoneId)
   const diff    = state.difficultyMult ?? 1
   const hpMult  = WAVE_HP_SCALE[Math.max(0, Math.min(wave - 1, WAVE_HP_SCALE.length - 1))]
   const pending: PendingSpawn[] = []
@@ -639,7 +671,7 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
   }
 
   // Enemies attack heroes
-  for (const enemy of [...aliveEnemies, ...(bossAlive ? [state.boss!] : [])]) {
+  for (const enemy of aliveEnemies) {
     if (!enemy.alive || enemy.hitstunMs > 0) continue
     const heroTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)]
     if (!heroTarget) continue
@@ -665,10 +697,82 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       heroTarget.deathAnimMs = 500
     }
 
-    enemy.hitstunMs = enemy.role === 'boss'
-      ? (enemy.enraged ? Math.round(BOSS_ATK_CD * 0.6) : BOSS_ATK_CD)
-      : enemy.rarity === 'rare' ? ELITE_ATK_CD
-      : ENEMY_ATK_CD
+    enemy.hitstunMs = enemy.rarity === 'rare' ? ELITE_ATK_CD : ENEMY_ATK_CD
+  }
+
+  // Boss attacks heroes — basic, skill, and ultimate abilities
+  if (bossAlive && state.boss!.alive) {
+    const boss = state.boss!
+    boss.skillCdMs    = Math.max(0, boss.skillCdMs    - dtMs)
+    boss.ultimateCdMs = Math.max(0, boss.ultimateCdMs - dtMs)
+
+    if (boss.hitstunMs <= 0 && aliveHeroes.length > 0) {
+      const cfg         = BOSS_ABILITY_CFG[boss.id] ?? BOSS_ABILITY_CFG['boss_mushroom_matriarch']
+      const enrageScale = boss.enraged ? 0.65 : 1
+
+      if (boss.ultimateCdMs <= 0) {
+        // ULTIMATE — heavy AoE on all heroes
+        for (const hero of aliveHeroes) {
+          const dmg = Math.max(1, Math.round(boss.atk * cfg.ultAtkMult - hero.def * state.defMult * 0.2))
+          hero.hp -= dmg
+          hero.flashMs = 400
+          state.totalDamageReceived += dmg
+          if (hero.hp <= 0) { hero.alive = false; hero.deathAnimMs = 500 }
+          state.damageNumbers.push({
+            id: _dmgId++, x: hero.x + (Math.random() * 24 - 12), y: hero.y - 20,
+            value: dmg, isCrit: true, color: cfg.ultColor, lifeMs: 900, maxLifeMs: 900, label: '★',
+          })
+        }
+        if (cfg.ultHeals) {
+          boss.hp = Math.min(boss.maxHp, boss.hp + Math.round(boss.maxHp * 0.05))
+        }
+        boss.ultimateCdMs = Math.round(BOSS_ULT_CD * enrageScale)
+        boss.hitstunMs    = Math.round(BOSS_ATK_CD * (boss.enraged ? 0.5 : 1.5))
+        state.impactFlashMs    = 350
+        state.impactFlashColor = cfg.ultFlashColor
+        state.abilityAnnounces.push({
+          x: boss.x, y: boss.y - 30,
+          text: cfg.ultName, color: cfg.ultColor, lifeMs: 1800, maxLifeMs: 1800,
+        })
+        triggerShake('bossDeath')
+        triggerHitstop(180)
+        playSound('combat_boss_death_boom')
+      } else if (boss.skillCdMs <= 0) {
+        // SKILL — medium AoE on all heroes
+        for (const hero of aliveHeroes) {
+          const dmg = Math.max(1, Math.round(boss.atk * cfg.skillAtkMult - hero.def * state.defMult * 0.35))
+          hero.hp -= dmg
+          hero.flashMs = 250
+          state.totalDamageReceived += dmg
+          if (hero.hp <= 0) { hero.alive = false; hero.deathAnimMs = 500 }
+          state.damageNumbers.push({
+            id: _dmgId++, x: hero.x + (Math.random() * 24 - 12), y: hero.y - 16,
+            value: dmg, isCrit: false, color: cfg.skillColor, lifeMs: 700, maxLifeMs: 700,
+          })
+        }
+        boss.skillCdMs = Math.round(BOSS_SKILL_CD * enrageScale)
+        boss.hitstunMs = boss.enraged ? Math.round(BOSS_ATK_CD * 0.55) : BOSS_ATK_CD
+        state.abilityAnnounces.push({
+          x: boss.x, y: boss.y - 20,
+          text: cfg.skillName, color: cfg.skillColor, lifeMs: 1200, maxLifeMs: 1200,
+        })
+        triggerShake('heavySkill')
+        playSound('combat_poison_bubble')
+      } else {
+        // BASIC — single random hero
+        const heroTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)]
+        const dmg = Math.max(1, Math.round(boss.atk - heroTarget.def * state.defMult * 0.5))
+        heroTarget.hp -= dmg
+        heroTarget.flashMs = 180
+        state.totalDamageReceived += dmg
+        if (heroTarget.hp <= 0) { heroTarget.alive = false; heroTarget.deathAnimMs = 500 }
+        state.damageNumbers.push({
+          id: _dmgId++, x: heroTarget.x + (Math.random() * 24 - 12), y: heroTarget.y - 14,
+          value: dmg, isCrit: false, color: '#ff4444', lifeMs: 600, maxLifeMs: 600,
+        })
+        boss.hitstunMs = boss.enraged ? Math.round(BOSS_ATK_CD * 0.6) : BOSS_ATK_CD
+      }
+    }
   }
 
   // Wipe detection — all heroes died this tick

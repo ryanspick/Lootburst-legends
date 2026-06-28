@@ -186,6 +186,9 @@ export interface RiftRunState {
 
   // Equipped mount — bonus applied once at run start
   activeMountId: string
+
+  // Active zone id — drives enemy pool selection per wave
+  activeZoneId: string
 }
 
 export interface TimelineEvent {

@@ -1,49 +1,142 @@
 import type { TimelineEvent } from './riftTypes'
 
-export const RIFT_DURATION_MS = 120_000
-
-// Each wave_spawn event goes into a QUEUE — actual spawn fires when:
-//   (a) previous wave enemies reach 0, AND
-//   (b) WAVE_CLEAR_DELAY_MS rest has elapsed (or first wave spawns immediately)
-// If enemies linger, the event stays queued until cleared, then rest starts.
+export const RIFT_DURATION_MS  = 165_000   // longest zone duration; HUD timer max
 export const WAVE_CLEAR_DELAY_MS = 6_000
 
-export const TIMELINE: TimelineEvent[] = [
-  // Waves 1-3 all queue at t=0 so they chain on completion (no waiting for time-gated events).
-  // The waveQueue is FIFO — each wave waits for the previous to clear before spawning.
-  { atMs: 0,       type: 'wave_spawn',    data: { wave: 1, count: 18, pattern: 'ring' },         fired: false },
-  { atMs: 0,       type: 'wave_spawn',    data: { wave: 2, count: 22, pattern: 'scatter' },      fired: false },
-  { atMs: 0,       type: 'wave_spawn',    data: { wave: 3, count: 30, pattern: 'burst_sides' },  fired: false },
+const DEFAULT_ZONE_ID = 'candy_cavern_rift'
 
-  // Upgrade break + mid-boss (still time-gated so they fire after enough run time)
-  { atMs: 56_000,  type: 'upgrade_choice', data: {},                                              fired: false },
-  { atMs: 62_000,  type: 'boss_warning',   data: { bossId: 'boss_mushroom_matriarch' },           fired: false },
-  { atMs: 65_000,  type: 'mid_boss',       data: { bossId: 'boss_mushroom_matriarch' },           fired: false },
+// Enemy pools per zone × wave — escalating threat, zone-themed elements
+const ZONE_ENEMY_POOLS: Record<string, Record<number, string[]>> = {
+  candy_cavern_rift: {
+    1: ['enemy_slime', 'enemy_bat', 'enemy_goblin'],
+    2: ['enemy_slime', 'enemy_mushroom', 'enemy_skull', 'enemy_goblin'],
+    3: ['enemy_mushroom', 'enemy_skull', 'enemy_ghost'],
+    4: ['enemy_gear_bug', 'enemy_ghost', 'enemy_flame_imp'],
+    5: ['enemy_ghost', 'enemy_void_wisp', 'enemy_elite_crystal_golem'],
+    6: ['enemy_void_wisp', 'enemy_elite_crystal_golem', 'enemy_elite_gold_mimic'],
+    7: ['enemy_elite_crystal_golem', 'enemy_elite_gold_mimic', 'enemy_elite_shadow_reaper'],
+  },
+  goblin_glitter_mines: {
+    1: ['enemy_goblin', 'enemy_gear_bug', 'enemy_gold_beetle'],
+    2: ['enemy_goblin', 'enemy_gear_bug', 'enemy_bat'],
+    3: ['enemy_gear_bug', 'enemy_gold_beetle', 'enemy_skull'],
+    4: ['enemy_goblin', 'enemy_gold_beetle', 'enemy_flame_imp'],
+    5: ['enemy_flame_imp', 'enemy_gold_beetle', 'enemy_elite_crystal_golem'],
+    6: ['enemy_elite_crystal_golem', 'enemy_elite_gold_mimic', 'enemy_gold_beetle'],
+    7: ['enemy_elite_gold_mimic', 'enemy_elite_shadow_reaper', 'enemy_flame_imp'],
+  },
+  void_arcade: {
+    1: ['enemy_gear_bug', 'enemy_bat', 'enemy_goblin'],
+    2: ['enemy_gear_bug', 'enemy_skull', 'enemy_flame_imp'],
+    3: ['enemy_ghost', 'enemy_void_wisp', 'enemy_ice_sprite'],
+    4: ['enemy_void_wisp', 'enemy_ice_sprite', 'enemy_elite_crystal_golem'],
+    5: ['enemy_void_wisp', 'enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper'],
+    6: ['enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper', 'enemy_void_wisp'],
+    7: ['enemy_elite_shadow_reaper', 'enemy_elite_gold_mimic', 'enemy_void_wisp'],
+  },
+  moon_vault: {
+    1: ['enemy_skull', 'enemy_ghost', 'enemy_bat'],
+    2: ['enemy_ghost', 'enemy_ice_sprite', 'enemy_skull'],
+    3: ['enemy_ghost', 'enemy_void_wisp', 'enemy_ice_sprite'],
+    4: ['enemy_void_wisp', 'enemy_ice_sprite', 'enemy_elite_crystal_golem'],
+    5: ['enemy_void_wisp', 'enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper'],
+    6: ['enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper', 'enemy_void_wisp'],
+    7: ['enemy_elite_shadow_reaper', 'enemy_elite_crystal_golem', 'enemy_void_wisp'],
+  },
+}
 
-  // Waves 4-5 also chain: both queue at the same time after the mid-boss window
-  { atMs: 76_000,  type: 'wave_spawn',    data: { wave: 4, count: 25, pattern: 'ring' },         fired: false },
-  { atMs: 76_000,  type: 'wave_spawn',    data: { wave: 5, count: 35, pattern: 'burst_top' },    fired: false },
+function ev(atMs: number, type: TimelineEvent['type'], data?: Record<string, unknown>): TimelineEvent {
+  return { atMs, type, data, fired: false }
+}
 
-  // Final upgrade + boss
-  { atMs: 103_000, type: 'upgrade_choice', data: {},                                              fired: false },
-  { atMs: 108_000, type: 'boss_warning',   data: { bossId: 'boss_king_slime_pop' },              fired: false },
-  { atMs: 112_000, type: 'final_boss',     data: { bossId: 'boss_king_slime_pop' },              fired: false },
-  { atMs: 120_000, type: 'end_run',        data: {},                                              fired: false },
-]
+// Per-zone timelines — 7 waves, 3 upgrade breaks, zone-matched mid+final bosses.
+// Waves at atMs=0 queue immediately and chain on completion (FIFO waveQueue).
+// Time-gated events fire based on elapsed run time regardless of wave state.
+const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
+  candy_cavern_rift: [
+    ev(0,        'wave_spawn',    { wave: 1, count: 22, pattern: 'ring' }),
+    ev(0,        'wave_spawn',    { wave: 2, count: 28, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',    { wave: 3, count: 32, pattern: 'burst_sides' }),
+    ev(52_000,   'upgrade_choice'),
+    ev(55_000,   'wave_spawn',    { wave: 4, count: 38, pattern: 'burst_top' }),
+    ev(55_000,   'wave_spawn',    { wave: 5, count: 42, pattern: 'ring' }),
+    ev(84_000,   'boss_warning',  { bossId: 'boss_mushroom_matriarch' }),
+    ev(88_000,   'mid_boss',      { bossId: 'boss_mushroom_matriarch' }),
+    ev(102_000,  'wave_spawn',    { wave: 6, count: 40, pattern: 'burst_sides' }),
+    ev(102_000,  'wave_spawn',    { wave: 7, count: 48, pattern: 'scatter' }),
+    ev(120_000,  'upgrade_choice'),
+    ev(126_000,  'boss_warning',  { bossId: 'boss_king_slime_pop' }),
+    ev(130_000,  'final_boss',    { bossId: 'boss_king_slime_pop' }),
+    ev(145_000,  'end_run'),
+  ],
+  goblin_glitter_mines: [
+    ev(0,        'wave_spawn',    { wave: 1, count: 25, pattern: 'ring' }),
+    ev(0,        'wave_spawn',    { wave: 2, count: 30, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',    { wave: 3, count: 36, pattern: 'burst_sides' }),
+    ev(56_000,   'upgrade_choice'),
+    ev(59_000,   'wave_spawn',    { wave: 4, count: 40, pattern: 'burst_top' }),
+    ev(59_000,   'wave_spawn',    { wave: 5, count: 44, pattern: 'ring' }),
+    ev(92_000,   'upgrade_choice'),
+    ev(96_000,   'boss_warning',  { bossId: 'boss_goblin_minecart_ace' }),
+    ev(100_000,  'mid_boss',      { bossId: 'boss_goblin_minecart_ace' }),
+    ev(114_000,  'wave_spawn',    { wave: 6, count: 42, pattern: 'burst_sides' }),
+    ev(114_000,  'wave_spawn',    { wave: 7, count: 50, pattern: 'scatter' }),
+    ev(132_000,  'upgrade_choice'),
+    ev(138_000,  'boss_warning',  { bossId: 'boss_tax_collector_mimic' }),
+    ev(142_000,  'final_boss',    { bossId: 'boss_tax_collector_mimic' }),
+    ev(157_000,  'end_run'),
+  ],
+  void_arcade: [
+    ev(0,        'wave_spawn',    { wave: 1, count: 27, pattern: 'ring' }),
+    ev(0,        'wave_spawn',    { wave: 2, count: 33, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',    { wave: 3, count: 38, pattern: 'burst_sides' }),
+    ev(58_000,   'upgrade_choice'),
+    ev(61_000,   'wave_spawn',    { wave: 4, count: 42, pattern: 'burst_top' }),
+    ev(61_000,   'wave_spawn',    { wave: 5, count: 46, pattern: 'ring' }),
+    ev(94_000,   'upgrade_choice'),
+    ev(98_000,   'boss_warning',  { bossId: 'boss_pumpkin_gearlord' }),
+    ev(102_000,  'mid_boss',      { bossId: 'boss_pumpkin_gearlord' }),
+    ev(116_000,  'wave_spawn',    { wave: 6, count: 44, pattern: 'burst_sides' }),
+    ev(116_000,  'wave_spawn',    { wave: 7, count: 52, pattern: 'scatter' }),
+    ev(136_000,  'upgrade_choice'),
+    ev(142_000,  'boss_warning',  { bossId: 'boss_void_arcade_dragon' }),
+    ev(146_000,  'final_boss',    { bossId: 'boss_void_arcade_dragon' }),
+    ev(162_000,  'end_run'),
+  ],
+  moon_vault: [
+    ev(0,        'wave_spawn',    { wave: 1, count: 28, pattern: 'ring' }),
+    ev(0,        'wave_spawn',    { wave: 2, count: 34, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',    { wave: 3, count: 40, pattern: 'burst_sides' }),
+    ev(60_000,   'upgrade_choice'),
+    ev(63_000,   'wave_spawn',    { wave: 4, count: 44, pattern: 'burst_top' }),
+    ev(63_000,   'wave_spawn',    { wave: 5, count: 48, pattern: 'ring' }),
+    ev(96_000,   'upgrade_choice'),
+    ev(100_000,  'boss_warning',  { bossId: 'boss_neon_bone_hydra' }),
+    ev(104_000,  'mid_boss',      { bossId: 'boss_neon_bone_hydra' }),
+    ev(118_000,  'wave_spawn',    { wave: 6, count: 46, pattern: 'burst_sides' }),
+    ev(118_000,  'wave_spawn',    { wave: 7, count: 54, pattern: 'scatter' }),
+    ev(140_000,  'upgrade_choice'),
+    ev(146_000,  'boss_warning',  { bossId: 'boss_moon_vault' }),
+    ev(150_000,  'final_boss',    { bossId: 'boss_moon_vault' }),
+    ev(165_000,  'end_run'),
+  ],
+}
 
-// Enemy pool by wave — escalating threat
-const WAVE_ENEMY_POOLS: Record<number, string[]> = {
-  1: ['enemy_slime', 'enemy_bat', 'enemy_goblin'],
-  2: ['enemy_slime', 'enemy_mushroom', 'enemy_skull'],
-  3: ['enemy_goblin', 'enemy_gear_bug', 'enemy_ghost'],
-  4: ['enemy_ghost', 'enemy_skull', 'enemy_elite_crystal_golem'],
-  5: ['enemy_elite_crystal_golem', 'enemy_elite_gold_mimic'],
+export function getEnemyPoolForWaveInZone(wave: number, zoneId: string): string[] {
+  const pools = ZONE_ENEMY_POOLS[zoneId] ?? ZONE_ENEMY_POOLS[DEFAULT_ZONE_ID]
+  const maxWave = Math.max(...Object.keys(pools).map(Number))
+  return pools[Math.min(wave, maxWave)] ?? pools[1] ?? ['enemy_slime']
 }
 
 export function getEnemyPoolForWave(wave: number): string[] {
-  return WAVE_ENEMY_POOLS[wave] ?? WAVE_ENEMY_POOLS[1]
+  return getEnemyPoolForWaveInZone(wave, DEFAULT_ZONE_ID)
+}
+
+export function getTimelineForZone(zoneId: string): TimelineEvent[] {
+  const src = ZONE_TIMELINES[zoneId] ?? ZONE_TIMELINES[DEFAULT_ZONE_ID]
+  return src.map(e => ({ ...e, data: e.data ? { ...e.data } : undefined, fired: false }))
 }
 
 export function cloneTimeline(): TimelineEvent[] {
-  return TIMELINE.map(e => ({ ...e, data: e.data ? { ...e.data } : undefined, fired: false }))
+  return getTimelineForZone(DEFAULT_ZONE_ID)
 }
