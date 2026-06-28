@@ -27,8 +27,8 @@ let _projId = 0
 const BASIC_CD      = 1100   // slightly faster basics = more responsive feel
 const SKILL_CD      = 4500
 const ULTIMATE_CD   = 11000
-const ENEMY_ATK_CD  = 3000   // normal enemies — slow enough that packs don't burst-kill
-const ELITE_ATK_CD  = 4800   // elites hit very slow; each hit is punishing but rare
+const ENEMY_ATK_CD  = 2600   // normal enemies — moderate pace once in melee range
+const ELITE_ATK_CD  = 3800   // elites hit slow; punishing but in range only
 const BOSS_ATK_CD   = 1800   // bosses attack frequently but for moderate damage
 const BOSS_SKILL_CD = 9_000  // boss skill cooldown (resets after each use)
 const BOSS_ULT_CD   = 22_000 // boss ultimate cooldown (resets after each use)
@@ -95,7 +95,7 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
     displayName: def.displayName,
     hp: base,
     maxHp: base,
-    atk: isElite ? Math.round(26 * atkScale) : Math.round(9 * atkScale),
+    atk: isElite ? Math.round(30 * atkScale) : Math.round(10 * atkScale),
     def: isElite ? 8 : 2,
     spd: 0.8,
     x,
@@ -106,8 +106,8 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
     assetId: enemyId,
     spriteDataUrl: getGeneratedSprite(enemyId),
     alive: true,
-    // Wide stagger so a full pack doesn't burst-attack simultaneously; first hit no earlier than 1.5s
-    hitstunMs: 1500 + Math.random() * 4000,
+    // Stagger initial attack within a pack already in range; walk-in time gates distant enemies naturally
+    hitstunMs: 600 + Math.random() * 2200,
     flashMs: 0,
     deathAnimMs: 0,
     basicCdMs: 0,
@@ -670,9 +670,12 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
     }
   }
 
-  // Enemies attack heroes
+  // Enemies attack heroes — only when in melee range (within engage radius)
+  const ATTACK_RADIUS_SQ = (ENEMY_ENGAGE_RADIUS + 28) ** 2
   for (const enemy of aliveEnemies) {
     if (!enemy.alive || enemy.hitstunMs > 0) continue
+    const edx = enemy.x - CENTER_X, edy = enemy.y - CENTER_Y
+    if (edx * edx + edy * edy > ATTACK_RADIUS_SQ) continue  // still marching in, can't attack yet
     const heroTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)]
     if (!heroTarget) continue
 
