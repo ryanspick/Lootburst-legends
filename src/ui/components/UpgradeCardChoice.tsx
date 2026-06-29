@@ -29,8 +29,8 @@ export default function UpgradeCardChoice({ choice, onPick }: Props) {
   return (
     <div className={styles.overlay}>
       <div className={styles.header}>
-        <span className={styles.title}>CHOOSE UPGRADE</span>
-        <span className={styles.sub}>Pick one to power up your squad</span>
+        <span className={styles.title}>ROUND CLEAR</span>
+        <span className={styles.sub}>Pick a build upgrade</span>
       </div>
       <div className={styles.cards}>
         {choice.cards.map(card => (
@@ -44,7 +44,9 @@ export default function UpgradeCardChoice({ choice, onPick }: Props) {
               <div className={styles.cardIcon}>{card.icon}</div>
             </RarityFrame>
             <div className={styles.cardTitle} data-rarity={card.rarity}>{card.title}</div>
+            <div className={styles.buildTag}>{card.build}</div>
             <div className={styles.cardDesc}>{card.description}</div>
+            {card.synergy && <div className={styles.synergy}>{card.synergy}</div>}
             <div className={styles.cardRarity} data-rarity={card.rarity}>{card.rarity.toUpperCase()}</div>
           </button>
         ))}

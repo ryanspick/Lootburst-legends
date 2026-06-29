@@ -306,6 +306,13 @@ export function createInitialRiftState(
     goldMult: 1,
     lifeSteal: 0,
     aoeChance: 0,
+    basicDamageMult: 1,
+    basicCooldownMult: 1,
+    skillDamageMult: 1,
+    skillCooldownMult: 1,
+    ultimateDamageMult: 1,
+    ultimateCooldownMult: 1,
+    aoeSplashMult: 0.22,
     difficultyMult: options?.difficultyMult ?? 1,
     reviveUsed: false,
     hasReviveToken: false,
@@ -599,25 +606,25 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
 
       if (hero.ultimateCdMs <= 0) {
         abilityType = 'ultimate'
-        dmgMult = 2.0           // nerfed from 3.0 — still impactful, won't nuke full waves
+        dmgMult = 2.0 * state.ultimateDamageMult
         travelMs = 650          // slightly slower — easier to read, more telegraphed
         aoe = true              // always AOE, but splash % reduced in applyProjectileHit
         isCrit = true           // ultimates always display as crits
-        hero.ultimateCdMs = ULTIMATE_CD / state.spdMult
+        hero.ultimateCdMs = (ULTIMATE_CD * state.ultimateCooldownMult) / state.spdMult
       } else if (hero.skillCdMs <= 0) {
         abilityType = 'skill'
-        dmgMult = 1.6           // nerfed from 1.8
+        dmgMult = 1.6 * state.skillDamageMult
         travelMs = 430
         aoe = Math.random() < state.aoeChance
         isCrit = Math.random() < (state.critChance + 0.1)  // slightly higher crit on skill
-        hero.skillCdMs = SKILL_CD / state.spdMult
+        hero.skillCdMs = (SKILL_CD * state.skillCooldownMult) / state.spdMult
       } else if (hero.basicCdMs <= 0) {
         abilityType = 'basic'
-        dmgMult = 1
+        dmgMult = state.basicDamageMult
         travelMs = 260
         aoe = Math.random() < state.aoeChance
         isCrit = Math.random() < state.critChance
-        hero.basicCdMs = BASIC_CD / state.spdMult
+        hero.basicCdMs = (BASIC_CD * state.basicCooldownMult) / state.spdMult
       } else {
         continue  // nothing ready
       }
@@ -850,7 +857,9 @@ function applyProjectileHit(
 
   for (const t of hitList) {
     // AOE splash is weaker — ultimates feel powerful on primary without clearing full waves
-    const finalDmg = (isAoe && t !== mainTarget) ? Math.max(1, Math.round(p.dmg * 0.22)) : p.dmg
+    const finalDmg = (isAoe && t !== mainTarget)
+      ? Math.max(1, Math.round(p.dmg * state.aoeSplashMult))
+      : p.dmg
     t.hp -= finalDmg
     t.flashMs = p.abilityType === 'ultimate' ? 220
       : p.abilityType === 'skill' ? 150
@@ -1031,10 +1040,12 @@ export function reviveHeroes(state: RiftRunState): void {
   state.phase = 'combat'
 }
 
-export function triggerUpgradeChoice(state: RiftRunState): void {
-  const cards = rollUpgradeCards(3, state.appliedUpgrades)
+export function triggerUpgradeChoice(state: RiftRunState, count = 4): boolean {
+  const cards = rollUpgradeCards(count, state.appliedUpgrades)
+  if (cards.length === 0) return false
   state.upgradeChoice = { cards, pickedId: null }
   state.phase = 'upgrade_choice'
+  return true
 }
 
 export function applyUpgradeCard(state: RiftRunState, cardId: string): void {

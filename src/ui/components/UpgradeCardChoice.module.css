@@ -34,10 +34,11 @@
 
 .cards {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
   width: 100%;
+  max-width: 620px;
 }
 
 .card {
@@ -47,12 +48,12 @@
   gap: 8px;
   background: var(--panel-bg);
   border: 2px solid var(--panel-border);
-  border-radius: 10px;
-  padding: 12px 10px;
+  border-radius: 8px;
+  padding: 10px 9px;
   cursor: pointer;
-  min-width: 96px;
+  min-width: 116px;
   flex: 1;
-  max-width: 120px;
+  max-width: 145px;
   transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
   animation: bounce-in 0.35s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
@@ -60,6 +61,7 @@
 .card:nth-child(1) { animation-delay: 0.05s; }
 .card:nth-child(2) { animation-delay: 0.12s; }
 .card:nth-child(3) { animation-delay: 0.19s; }
+.card:nth-child(4) { animation-delay: 0.26s; }
 
 .card:not(:disabled):hover {
   transform: translateY(-4px) scale(1.03);
@@ -110,6 +112,26 @@
   line-height: 1.4;
 }
 
+.buildTag {
+  padding: 3px 7px;
+  border: 1px solid #4488ff55;
+  border-radius: 999px;
+  color: #88ccff;
+  background: rgba(68, 136, 255, 0.08);
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.synergy {
+  min-height: 24px;
+  color: #b8c6ff;
+  font-size: 8px;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .cardRarity {
   font-size: 9px;
   font-weight: bold;
@@ -130,3 +152,21 @@
 [data-rarity="rare"].cardRarity { color: #4488ff; }
 [data-rarity="epic"].cardRarity { color: #cc44ff; }
 [data-rarity="legendary"].cardRarity { color: #ffd700; }
+
+@media (max-width: 480px) {
+  .overlay {
+    gap: 10px;
+    padding: 16px 8px;
+  }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .card {
+    min-width: 0;
+    max-width: none;
+  }
+}

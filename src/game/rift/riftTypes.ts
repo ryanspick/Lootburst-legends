@@ -1,5 +1,17 @@
 import type { Rarity } from '@/constants/palette'
 
+export type UpgradeBuild =
+  | 'Barrage'
+  | 'Skill'
+  | 'Ultimate'
+  | 'Crit'
+  | 'AoE'
+  | 'Guard'
+  | 'Drain'
+  | 'Economy'
+  | 'Power'
+  | 'Rainbow'
+
 export type RiftPhase =
   | 'idle'
   | 'countdown'
@@ -93,6 +105,8 @@ export interface UpgradeCard {
   description: string
   icon: string
   rarity: Rarity
+  build: UpgradeBuild
+  synergy?: string
   apply: (state: RiftRunState) => void
 }
 
@@ -162,6 +176,13 @@ export interface RiftRunState {
   goldMult: number
   lifeSteal: number
   aoeChance: number
+  basicDamageMult: number
+  basicCooldownMult: number
+  skillDamageMult: number
+  skillCooldownMult: number
+  ultimateDamageMult: number
+  ultimateCooldownMult: number
+  aoeSplashMult: number
 
   // Meta-progression / run options
   difficultyMult: number

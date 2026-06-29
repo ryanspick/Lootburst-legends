@@ -112,6 +112,27 @@ describe('Upgrade cards — field mutations', () => {
     expect(s.spdMult).toBeCloseTo(spdMult * 1.20, 4)
     expect(s.critChance).toBeCloseTo(critChance + 0.15, 4)
   })
+
+  it('skill and ultimate build cards mutate ability-specific lanes', () => {
+    const s = freshState()
+    applyUpgradeCard(s, 'spell_echo')
+    expect(s.skillDamageMult).toBeGreaterThan(1)
+    expect(s.skillCooldownMult).toBeLessThan(1)
+
+    applyUpgradeCard(s, 'ultimate_reactor')
+    expect(s.ultimateDamageMult).toBeGreaterThan(1)
+    expect(s.ultimateCooldownMult).toBeLessThan(1)
+  })
+
+  it('aoe splash cards increase splash damage multiplier within cap', () => {
+    const s = freshState()
+    const before = s.aoeSplashMult
+    applyUpgradeCard(s, 'splash_math')
+    applyUpgradeCard(s, 'shrapnel_galaxy')
+    applyUpgradeCard(s, 'singularity_bloom')
+    expect(s.aoeSplashMult).toBeGreaterThan(before)
+    expect(s.aoeSplashMult).toBeLessThanOrEqual(0.72)
+  })
 })
 
 describe('Upgrade cards — power balance bounds', () => {
@@ -145,6 +166,7 @@ describe('Upgrade cards — power balance bounds', () => {
       expect(card.title).toBeTruthy()
       expect(card.description).toBeTruthy()
       expect(card.icon).toBeTruthy()
+      expect(card.build).toBeTruthy()
       expect(['common','uncommon','rare','epic','legendary','mythic']).toContain(card.rarity)
       expect(typeof card.apply).toBe('function')
     }
@@ -174,6 +196,12 @@ describe('Upgrade cards — power balance bounds', () => {
 })
 
 describe('Upgrade cards — rollUpgradeCards', () => {
+  it('defaults to 4 choices for more player agency', async () => {
+    const { rollUpgradeCards } = await import('@/game/rift/upgradeCards')
+    const cards = rollUpgradeCards()
+    expect(cards).toHaveLength(4)
+  })
+
   it('returns requested count of distinct cards', async () => {
     const { rollUpgradeCards } = await import('@/game/rift/upgradeCards')
     const cards = rollUpgradeCards(3, [])
@@ -199,5 +227,12 @@ describe('Upgrade cards — rollUpgradeCards', () => {
     const exclude = allIds.filter(id => !keep.includes(id))
     const cards = rollUpgradeCards(3, exclude)
     expect(cards.length).toBe(2)
+  })
+
+  it('prefers distinct build lanes in one offer when possible', async () => {
+    const { rollUpgradeCards } = await import('@/game/rift/upgradeCards')
+    const cards = rollUpgradeCards(4, [])
+    const builds = new Set(cards.map(card => card.build))
+    expect(builds.size).toBeGreaterThanOrEqual(3)
   })
 })

@@ -60,6 +60,7 @@ const CANVAS_W = 360
 const CANVAS_H = 780
 const PRE_BOSS_WAVE_COUNT = 5
 const SCRIPTED_WAVE_COUNT = 7
+const ROUND_UPGRADE_CHOICES = 4
 
 type WaveQueueEntry = { wave: number; count: number; pattern: SpawnPattern }
 type WavePhase = 'idle' | 'wave_active' | 'boss_active' | 'resting'
@@ -129,6 +130,7 @@ export default function RiftRunScreen({ onExit }: Props) {
   const activeBossKindRef = useRef<'mid' | 'final' | null>(null)
   const bossDeathPendingRef = useRef(false)
   const lastWaveShownRef = useRef(-1)
+  const upgradeOfferedWavesRef = useRef(new Set<number>())
   const [nextWaveIn, setNextWaveIn] = useState<number | null>(null)
   const endlessModeRef = useRef(false)
   const endlessPromptRef = useRef(false)
@@ -191,6 +193,7 @@ export default function RiftRunScreen({ onExit }: Props) {
     activeBossKindRef.current = null
     bossDeathPendingRef.current = false
     lastWaveShownRef.current = -1
+    upgradeOfferedWavesRef.current.clear()
     endlessModeRef.current = false
     endlessPromptRef.current = false
     endlessWaveRef.current = 0
@@ -199,7 +202,9 @@ export default function RiftRunScreen({ onExit }: Props) {
     setEndlessWave(0)
 
     stateRef.current = state
-    timelineRef.current = timeline.filter(event => event.type !== 'wave_spawn')
+    timelineRef.current = timeline.filter(event =>
+      event.type !== 'wave_spawn' && event.type !== 'upgrade_choice'
+    )
     clearCombatEmitCache()
 
     // Countdown 3→2→1→GO
@@ -228,6 +233,20 @@ export default function RiftRunScreen({ onExit }: Props) {
     setUpgradeChoice(null)
     setPhase('combat')
   }, [])
+
+  const offerUpgradeChoice = useCallback((state: RiftRunState) => {
+    if (!triggerUpgradeChoice(state, ROUND_UPGRADE_CHOICES)) return false
+    setUpgradeChoice({ cards: state.upgradeChoice!.cards, pickedId: null })
+    setPhase('upgrade_choice')
+    setNextWaveIn(null)
+
+    if (isFirstRift && !shownHintsRef.current.has('cards')) {
+      shownHintsRef.current.add('cards')
+      setCombatHint({ msg: 'Pick a build card after each wave clear.', icon: 'CARD' })
+    }
+
+    return true
+  }, [isFirstRift])
 
   const handleReviveAccept = useCallback(() => {
     if (!stateRef.current) return
@@ -433,13 +452,7 @@ export default function RiftRunScreen({ onExit }: Props) {
               break
             }
             case 'upgrade_choice':
-              triggerUpgradeChoice(state)
-              setUpgradeChoice({ cards: state.upgradeChoice!.cards, pickedId: null })
-              setPhase('upgrade_choice')
-              if (isFirstRift && !shownHintsRef.current.has('cards')) {
-                shownHintsRef.current.add('cards')
-                setCombatHint({ msg: 'Pick an upgrade — cards power up your squad!', icon: '✨' })
-              }
+              offerUpgradeChoice(state)
               break
             case 'boss_warning': {
               const bId = event.data?.bossId as string
@@ -542,6 +555,7 @@ export default function RiftRunScreen({ onExit }: Props) {
               !bossAlive && !waveMobsRemaining) {
             const completedPhase = wavePhaseRef.current
             const completedBossKind = activeBossKindRef.current
+            const completedWave = state.waveIndex
 
             wavePhaseRef.current = 'resting'
             waveClearTimerRef.current = completedPhase === 'boss_active'
@@ -557,6 +571,13 @@ export default function RiftRunScreen({ onExit }: Props) {
               activeBossKindRef.current = null
             } else if (endlessModeRef.current) {
               queueEndlessWave(state)
+            }
+
+            if (completedPhase === 'wave_active' &&
+                completedWave > 0 &&
+                !upgradeOfferedWavesRef.current.has(completedWave)) {
+              upgradeOfferedWavesRef.current.add(completedWave)
+              offerUpgradeChoice(state)
             }
           }
 
