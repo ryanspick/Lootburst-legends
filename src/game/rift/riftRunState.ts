@@ -469,6 +469,14 @@ export function hasWaveMobsRemaining(state: RiftRunState): boolean {
   return state.pendingSpawns.length > 0 || countAliveEnemies(state) > 0
 }
 
+export function hasPendingHeroRevive(state: RiftRunState): boolean {
+  return state.heroes.some(h => !h.alive && (h.reviveMs ?? 0) > 0)
+}
+
+export function isSquadAutoReviving(state: RiftRunState): boolean {
+  return state.heroes.length > 0 && state.heroes.every(h => !h.alive) && hasPendingHeroRevive(state)
+}
+
 export function spawnBoss(state: RiftRunState, bossId: string): void {
   state.boss = makeBossEntity(bossId, state.difficultyMult ?? 1)
   // Animate remaining enemies out rather than hard-clearing (avoids visual pop/despawn)
@@ -859,7 +867,7 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       state.reviveUsed = true
       return
     }
-    if (state.heroes.some(h => (h.reviveMs ?? 0) > 0)) return
+    if (hasPendingHeroRevive(state)) return
     buildPostRunReward(state, true)
     return
   }

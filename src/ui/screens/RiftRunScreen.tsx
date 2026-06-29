@@ -11,6 +11,8 @@ import {
   reviveHeroes,
   countAliveEnemies,
   hasWaveMobsRemaining,
+  hasPendingHeroRevive,
+  isSquadAutoReviving,
   type SpawnPattern,
 } from '@/game/rift/riftRunState'
 import { renderRiftFrame, clearCombatEmitCache } from '@/game/rift/combatLoop'
@@ -401,6 +403,13 @@ export default function RiftRunScreen({ onExit }: Props) {
         // Hero wipe detected inside tickCombat — check for revive before ending run.
         // Read via ref to escape TypeScript's control-flow narrowing of state.phase.
         if (stateRef.current!.phase === 'post_run') {
+          if (hasPendingHeroRevive(state)) {
+            state.phase = 'combat'
+            state.postRun = null
+            setPhase('combat')
+            rafRef.current = requestAnimationFrame(loop)
+            return
+          }
           const wasWipe = state.postRun?.wasWipe
           const canRevive = wasWipe && !state.reviveUsed &&
             useGameStore.getState().gems >= REVIVE_COST
@@ -516,6 +525,7 @@ export default function RiftRunScreen({ onExit }: Props) {
                   wavePhaseRef.current === 'wave_active' ||
                   wavePhaseRef.current === 'boss_active' ||
                   hasWaveMobsRemaining(state) ||
+                  hasPendingHeroRevive(state) ||
                   !!state.boss?.alive ||
                   bossDeathPendingRef.current) {
                 event.fired = false
@@ -594,10 +604,10 @@ export default function RiftRunScreen({ onExit }: Props) {
           const canSpawnNext = !bossAlive && waveQueueRef.current.length > 0 && (
             wavePhaseRef.current === 'idle' ||
             (wavePhaseRef.current === 'resting' && waveClearTimerRef.current <= 0)
-          )
+          ) && !isSquadAutoReviving(state)
           if (canSpawnNext) {
             startNextWave()
-          } else if (wavePhaseRef.current === 'wave_active' && !bossAlive && waveQueueRef.current.length > 0) {
+          } else if (wavePhaseRef.current === 'wave_active' && !bossAlive && waveQueueRef.current.length > 0 && !isSquadAutoReviving(state)) {
             const waveElapsedMs = state.elapsedMs - activeWaveStartedAtMsRef.current
             const nextWaveMs = Math.max(0, WAVE_AUTO_ADVANCE_MS - waveElapsedMs)
             setNextWaveIn(nextWaveMs > 0 ? Math.ceil(nextWaveMs / 1000) : null)
@@ -765,11 +775,11 @@ export default function RiftRunScreen({ onExit }: Props) {
                 <div className={styles.heroHpTop}>
                   <div className={styles.heroHpName}>{h.displayName.split(' ')[0]}</div>
                   {reviveRemaining > 0 && (
-                    <div
-                      className={styles.heroReviveChip}
-                      style={{ background: `conic-gradient(#44ffbb ${revivePct * 360}deg, #172033 0deg)` }}
-                    >
-                      {Math.ceil(reviveRemaining / 1000)}
+                    <div className={styles.heroReviveChip}>
+                      <span>{Math.ceil(reviveRemaining / 1000)}s</span>
+                      <div className={styles.heroReviveMeter}>
+                        <div style={{ width: `${(revivePct * 100).toFixed(1)}%` }} />
+                      </div>
                     </div>
                   )}
                 </div>

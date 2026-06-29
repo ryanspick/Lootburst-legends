@@ -68,12 +68,26 @@ describe('Wave spawning regressions', () => {
   it('builds endless waves after scripted wave 7 with rising mob counts', () => {
     const first = getEndlessWaveEntry(1)
     const second = getEndlessWaveEntry(2)
+    const third = getEndlessWaveEntry(3)
     const late = getEndlessWaveEntry(99)
 
     expect(first.wave).toBe(8)
     expect(second.wave).toBe(9)
     expect(second.count).toBeGreaterThan(first.count)
+    expect(third.count - second.count).toBeGreaterThanOrEqual(second.count - first.count)
     expect(late.count).toBe(ENDLESS_MAX_COUNT)
     expect(getEndlessDifficultyMultiplier(2, 3)).toBeGreaterThan(2)
+  })
+
+  it('ramps endless difficulty with increasing compound pressure', () => {
+    const wave1 = getEndlessDifficultyMultiplier(2, 1)
+    const wave2 = getEndlessDifficultyMultiplier(wave1, 2)
+    const wave3 = getEndlessDifficultyMultiplier(wave2, 3)
+    const wave8 = Array.from({ length: 5 }, (_, i) => i + 4)
+      .reduce((diff, wave) => getEndlessDifficultyMultiplier(diff, wave), wave3)
+
+    expect(wave2 / wave1).toBeGreaterThan(wave1 / 2)
+    expect(wave3 / wave2).toBeGreaterThan(wave2 / wave1)
+    expect(wave8).toBeGreaterThan(2 * 5)
   })
 })

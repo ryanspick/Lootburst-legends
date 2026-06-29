@@ -214,29 +214,42 @@
 }
 
 .heroReviveChip {
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  border: 1px solid #44ffbb;
-  color: #ddfff4;
+  width: 34px;
+  height: 14px;
+  flex: 0 0 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(134, 245, 221, 0.42);
+  background: rgba(7, 16, 26, 0.78);
+  color: #c6fff2;
   font-size: 8px;
-  font-weight: 900;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  box-shadow: 0 0 8px rgba(68, 255, 187, 0.34);
   position: relative;
-  isolation: isolate;
+  overflow: hidden;
 }
 
-.heroReviveChip::before {
-  content: '';
+.heroReviveChip span {
+  position: relative;
+  z-index: 1;
+}
+
+.heroReviveMeter {
   position: absolute;
-  inset: 3px;
-  border-radius: 50%;
-  background: #07101a;
-  z-index: -1;
+  left: 2px;
+  right: 2px;
+  bottom: 2px;
+  height: 2px;
+  background: rgba(40, 60, 80, 0.7);
+  border-radius: 2px;
+}
+
+.heroReviveMeter div {
+  height: 100%;
+  background: #86f5dd;
+  border-radius: inherit;
 }
 
 .heroHpTrack {

@@ -8,7 +8,7 @@ export const ENDLESS_FIRST_WAVE = 8
 export const ENDLESS_BASE_COUNT = 34
 export const ENDLESS_COUNT_STEP = 7
 export const ENDLESS_MAX_COUNT = 140
-export const ENDLESS_MAX_DIFFICULTY_MULT = 15
+export const ENDLESS_MAX_DIFFICULTY_MULT = 60
 
 export type WaveSpawnPattern = 'ring' | 'scatter' | 'burst_top' | 'burst_bottom' | 'burst_sides'
 
@@ -182,16 +182,23 @@ export function getEnemyPoolForWave(wave: number): string[] {
 
 export function getEndlessWaveEntry(endlessWave: number): WaveSpawnEntry {
   const normalizedWave = Math.max(1, Math.floor(endlessWave))
+  const extraPressure = Math.floor(Math.max(0, normalizedWave - 1) ** 1.45 * 2.5)
   return {
     wave: ENDLESS_FIRST_WAVE + normalizedWave - 1,
-    count: Math.min(ENDLESS_MAX_COUNT, ENDLESS_BASE_COUNT + (normalizedWave - 1) * ENDLESS_COUNT_STEP),
+    count: Math.min(
+      ENDLESS_MAX_COUNT,
+      ENDLESS_BASE_COUNT + (normalizedWave - 1) * ENDLESS_COUNT_STEP + extraPressure,
+    ),
     pattern: ENDLESS_PATTERNS[(normalizedWave - 1) % ENDLESS_PATTERNS.length],
   }
 }
 
 export function getEndlessDifficultyMultiplier(currentDifficulty: number, endlessWave: number): number {
   const normalizedWave = Math.max(1, Math.floor(endlessWave))
-  const step = Math.min(1.12, 1.055 + normalizedWave * 0.005)
+  const step = Math.min(
+    1.45,
+    1.13 + normalizedWave * 0.018 + normalizedWave ** 1.25 * 0.003,
+  )
   return Math.min(ENDLESS_MAX_DIFFICULTY_MULT, Math.max(1, currentDifficulty) * step)
 }
 

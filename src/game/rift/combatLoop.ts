@@ -169,47 +169,41 @@ function drawHeroReviveCircle(ctx: CanvasRenderingContext2D, hero: CombatEntity,
   const total = Math.max(1, hero.reviveTotalMs ?? 30_000)
   const progress = Math.max(0, Math.min(1, 1 - remaining / total))
   const seconds = Math.ceil(remaining / 1000)
-  const pulse = getReducedMotion() ? 1 : 0.85 + Math.abs(Math.sin(timeMs / 260)) * 0.15
-  const r = 29
+  const pulse = getReducedMotion() ? 1 : 0.94 + Math.abs(Math.sin(timeMs / 700)) * 0.06
+  const r = 23
 
   ctx.save()
   ctx.translate(hero.x, hero.y)
 
-  ctx.globalAlpha = 0.7
-  ctx.strokeStyle = '#101624'
-  ctx.lineWidth = 5
+  ctx.globalAlpha = 0.42
+  ctx.strokeStyle = '#142033'
+  ctx.lineWidth = 3
   ctx.beginPath()
   ctx.arc(0, 0, r, 0, Math.PI * 2)
   ctx.stroke()
 
-  ctx.globalAlpha = pulse
-  ctx.strokeStyle = '#44ffbb'
-  ctx.lineWidth = 4
-  ctx.shadowColor = '#44ffbb'
-  ctx.shadowBlur = 12
+  ctx.globalAlpha = 0.74 * pulse
+  ctx.strokeStyle = '#86f5dd'
+  ctx.lineWidth = 3
   ctx.beginPath()
   ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress)
   ctx.stroke()
 
   ctx.shadowBlur = 0
-  ctx.globalAlpha = 0.95
-  ctx.fillStyle = '#061018'
-  ctx.strokeStyle = '#44ffbb'
+  ctx.globalAlpha = 0.82
+  ctx.fillStyle = '#061018cc'
+  ctx.strokeStyle = '#86f5dd88'
   ctx.lineWidth = 1
   ctx.beginPath()
-  ctx.roundRect(-15, -8, 30, 16, 4)
+  ctx.roundRect(-13, -7, 26, 14, 4)
   ctx.fill()
   ctx.stroke()
 
-  ctx.font = 'bold 9px monospace'
+  ctx.font = 'bold 8px monospace'
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
-  ctx.fillStyle = '#ccfff0'
+  ctx.fillStyle = '#c6fff2'
   ctx.fillText(`${seconds}s`, 0, 0)
-
-  ctx.font = 'bold 6px monospace'
-  ctx.fillStyle = '#44ffbb'
-  ctx.fillText('REVIVE', 0, 13)
   ctx.restore()
   ctx.shadowBlur = 0
 }

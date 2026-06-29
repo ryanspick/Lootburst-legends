@@ -74,4 +74,34 @@ describe('Hero auto-revive', () => {
     expect(hero.reviveMs).toBe(0)
     expect(state.postRun).toBeNull()
   })
+
+  it('does not end the run while the full squad is auto-reviving', () => {
+    const { state } = createInitialRiftState([
+      'hero_copper_knight',
+      'hero_mushroom_medic',
+      'hero_goblin_sparkshot',
+    ])
+    state.phase = 'combat'
+
+    for (const hero of state.heroes) {
+      hero.alive = false
+      hero.hp = 0
+      hero.deathAnimMs = 0
+      hero.reviveMs = HERO_REVIVE_MS
+      hero.reviveTotalMs = HERO_REVIVE_MS
+    }
+
+    tickCombat(state, 5_000)
+
+    expect(state.phase).toBe('combat')
+    expect(state.postRun).toBeNull()
+    expect(state.heroes.every(h => !h.alive)).toBe(true)
+    expect(state.heroes.every(h => (h.reviveMs ?? 0) > 0)).toBe(true)
+
+    tickCombat(state, HERO_REVIVE_MS - 5_000)
+
+    expect(state.phase).toBe('combat')
+    expect(state.postRun).toBeNull()
+    expect(state.heroes.every(h => h.alive)).toBe(true)
+  })
 })
