@@ -164,6 +164,56 @@ function drawEntityShadow(ctx: CanvasRenderingContext2D, x: number, y: number, w
 
 // ─── Entity ───────────────────────────────────────────────────────────────────
 
+function drawHeroReviveCircle(ctx: CanvasRenderingContext2D, hero: CombatEntity, timeMs: number) {
+  const remaining = Math.max(0, hero.reviveMs ?? 0)
+  const total = Math.max(1, hero.reviveTotalMs ?? 30_000)
+  const progress = Math.max(0, Math.min(1, 1 - remaining / total))
+  const seconds = Math.ceil(remaining / 1000)
+  const pulse = getReducedMotion() ? 1 : 0.85 + Math.abs(Math.sin(timeMs / 260)) * 0.15
+  const r = 29
+
+  ctx.save()
+  ctx.translate(hero.x, hero.y)
+
+  ctx.globalAlpha = 0.7
+  ctx.strokeStyle = '#101624'
+  ctx.lineWidth = 5
+  ctx.beginPath()
+  ctx.arc(0, 0, r, 0, Math.PI * 2)
+  ctx.stroke()
+
+  ctx.globalAlpha = pulse
+  ctx.strokeStyle = '#44ffbb'
+  ctx.lineWidth = 4
+  ctx.shadowColor = '#44ffbb'
+  ctx.shadowBlur = 12
+  ctx.beginPath()
+  ctx.arc(0, 0, r, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * progress)
+  ctx.stroke()
+
+  ctx.shadowBlur = 0
+  ctx.globalAlpha = 0.95
+  ctx.fillStyle = '#061018'
+  ctx.strokeStyle = '#44ffbb'
+  ctx.lineWidth = 1
+  ctx.beginPath()
+  ctx.roundRect(-15, -8, 30, 16, 4)
+  ctx.fill()
+  ctx.stroke()
+
+  ctx.font = 'bold 9px monospace'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.fillStyle = '#ccfff0'
+  ctx.fillText(`${seconds}s`, 0, 0)
+
+  ctx.font = 'bold 6px monospace'
+  ctx.fillStyle = '#44ffbb'
+  ctx.fillText('REVIVE', 0, 13)
+  ctx.restore()
+  ctx.shadowBlur = 0
+}
+
 function drawEntity(
   ctx: CanvasRenderingContext2D,
   entity: CombatEntity,
@@ -175,7 +225,29 @@ function drawEntity(
   const cy = entity.y
 
   if (!entity.alive) {
-    if (entity.deathAnimMs <= 0) return
+    const revivingHero = entity.role === 'hero' && (entity.reviveMs ?? 0) > 0
+    if (entity.deathAnimMs <= 0) {
+      if (!revivingHero) return
+
+      const img = entity.spriteDataUrl ? getImg(entity.spriteDataUrl) : null
+      ctx.save()
+      ctx.globalAlpha = 0.38
+      ctx.translate(cx, cy + 7)
+      ctx.rotate(-0.35)
+      ctx.scale(1.08, 0.72)
+      ctx.filter = 'grayscale(1) brightness(0.55)'
+      if (img) {
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(img, -w / 2, -h / 2, w, h)
+      } else {
+        ctx.fillStyle = '#667788'
+        ctx.fillRect(-w / 2, -h / 2, w, h)
+      }
+      ctx.restore()
+      ctx.filter = 'none'
+      drawHeroReviveCircle(ctx, entity, timeMs)
+      return
+    }
 
     // First-frame death burst
     if (!_deadEmitted.has(entity.id)) {
@@ -231,6 +303,7 @@ function drawEntity(
     ctx.restore()
     ctx.filter = 'none'
     ctx.shadowBlur = 0
+    if (revivingHero) drawHeroReviveCircle(ctx, entity, timeMs)
     return
   }
 
@@ -685,7 +758,9 @@ export function renderRiftFrame(
 
   // Ground shadows drawn first (under all sprites)
   for (const [ent, w] of entityList) {
-    if (ent.alive || ent.deathAnimMs > 0) drawEntityShadow(ctx, ent.x, ent.y, w)
+    if (ent.alive || ent.deathAnimMs > 0 || (ent.role === 'hero' && (ent.reviveMs ?? 0) > 0)) {
+      drawEntityShadow(ctx, ent.x, ent.y, w)
+    }
   }
 
   // Charge rings + sprites in depth order

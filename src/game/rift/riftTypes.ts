@@ -47,6 +47,8 @@ export interface CombatEntity {
   hitstunMs: number      // enemies use this as attack cooldown
   flashMs: number
   deathAnimMs: number
+  reviveMs?: number      // hero-only: remaining auto-revive charge time
+  reviveTotalMs?: number // hero-only: total auto-revive charge time
   // Hero ability cooldowns (0 on enemies/boss)
   basicCdMs: number
   skillCdMs: number

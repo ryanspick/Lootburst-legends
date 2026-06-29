@@ -185,6 +185,19 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
+}
+
+.heroHpEntry[data-dead='true'] {
+  opacity: 0.82;
+}
+
+.heroHpTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  min-height: 14px;
 }
 
 .heroHpName {
@@ -193,6 +206,37 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.heroHpEntry[data-dead='true'] .heroHpName {
+  color: #ff8f9c;
+}
+
+.heroReviveChip {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid #44ffbb;
+  color: #ddfff4;
+  font-size: 8px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 0 8px rgba(68, 255, 187, 0.34);
+  position: relative;
+  isolation: isolate;
+}
+
+.heroReviveChip::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: #07101a;
+  z-index: -1;
 }
 
 .heroHpTrack {

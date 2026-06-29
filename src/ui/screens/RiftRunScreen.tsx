@@ -756,17 +756,32 @@ export default function RiftRunScreen({ onExit }: Props) {
       {/* Hero HP bars */}
       {stateRef.current && (
         <div className={styles.heroHpRow}>
-          {stateRef.current.heroes.map(h => (
-            <div key={h.id} className={styles.heroHpEntry}>
-              <div className={styles.heroHpName}>{h.displayName.split(' ')[0]}</div>
-              <div className={styles.heroHpTrack}>
-                <div
-                  className={styles.heroHpFill}
-                  style={{ width: `${Math.max(0, (h.hp / h.maxHp) * 100).toFixed(1)}%` }}
-                />
+          {stateRef.current.heroes.map(h => {
+            const reviveRemaining = !h.alive ? (h.reviveMs ?? 0) : 0
+            const reviveTotal = Math.max(1, h.reviveTotalMs ?? 30_000)
+            const revivePct = Math.max(0, Math.min(1, 1 - reviveRemaining / reviveTotal))
+            return (
+              <div key={h.id} className={styles.heroHpEntry} data-dead={!h.alive ? 'true' : undefined}>
+                <div className={styles.heroHpTop}>
+                  <div className={styles.heroHpName}>{h.displayName.split(' ')[0]}</div>
+                  {reviveRemaining > 0 && (
+                    <div
+                      className={styles.heroReviveChip}
+                      style={{ background: `conic-gradient(#44ffbb ${revivePct * 360}deg, #172033 0deg)` }}
+                    >
+                      {Math.ceil(reviveRemaining / 1000)}
+                    </div>
+                  )}
+                </div>
+                <div className={styles.heroHpTrack}>
+                  <div
+                    className={styles.heroHpFill}
+                    style={{ width: `${Math.max(0, (h.hp / h.maxHp) * 100).toFixed(1)}%` }}
+                  />
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 

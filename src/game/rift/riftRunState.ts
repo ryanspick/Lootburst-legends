@@ -32,6 +32,8 @@ const ELITE_ATK_CD  = 3800   // elites hit slow; punishing but in range only
 const BOSS_ATK_CD   = 1800   // bosses attack frequently but for moderate damage
 const BOSS_SKILL_CD = 9_000  // boss skill cooldown (resets after each use)
 const BOSS_ULT_CD   = 22_000 // boss ultimate cooldown (resets after each use)
+export const HERO_REVIVE_MS = 30_000
+const HERO_REVIVE_HP_PCT = 0.5
 
 // Stagger per hero slot so they don't all fire simultaneously
 const BASIC_STAGGER = 400
@@ -73,9 +75,52 @@ function makeHeroEntity(
     hitstunMs: 0,
     flashMs: 0,
     deathAnimMs: 0,
+    reviveMs: 0,
+    reviveTotalMs: HERO_REVIVE_MS,
     basicCdMs: 400 + slotIndex * BASIC_STAGGER,
     skillCdMs: 5000 + slotIndex * SKILL_STAGGER,
     ultimateCdMs: 12000 + slotIndex * ULT_STAGGER,
+  }
+}
+
+function downHero(hero: CombatEntity): void {
+  if (hero.role !== 'hero' || !hero.alive) return
+  hero.alive = false
+  hero.hp = 0
+  hero.deathAnimMs = 500
+  hero.reviveMs = HERO_REVIVE_MS
+  hero.reviveTotalMs = HERO_REVIVE_MS
+}
+
+function reviveHero(hero: CombatEntity, hpPct = HERO_REVIVE_HP_PCT): void {
+  hero.alive = true
+  hero.hp = Math.max(1, Math.round(hero.maxHp * hpPct))
+  hero.flashMs = 350
+  hero.deathAnimMs = 0
+  hero.reviveMs = 0
+  hero.reviveTotalMs = HERO_REVIVE_MS
+  hero.basicCdMs = Math.max(hero.basicCdMs, 450)
+  hero.skillCdMs = Math.max(hero.skillCdMs, 1500)
+  hero.ultimateCdMs = Math.max(hero.ultimateCdMs, 3500)
+}
+
+function tickHeroRevives(state: RiftRunState, dtMs: number): void {
+  for (const hero of state.heroes) {
+    if (hero.alive || (hero.reviveMs ?? 0) <= 0) continue
+    hero.reviveMs = Math.max(0, (hero.reviveMs ?? HERO_REVIVE_MS) - dtMs)
+    if (hero.reviveMs > 0) continue
+
+    reviveHero(hero)
+    state.abilityAnnounces.push({
+      x: hero.x,
+      y: hero.y - 36,
+      text: 'REVIVED',
+      color: '#44ffbb',
+      lifeMs: 1000,
+      maxLifeMs: 1000,
+    })
+    emitGoldBeam({ x: hero.x, y: hero.y }, hero.rarity)
+    playSound('reward_level_up_flourish', { volume: 0.35 })
   }
 }
 
@@ -551,6 +596,8 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
     }
   }
 
+  tickHeroRevives(state, dtMs)
+
   const aliveHeroes = state.heroes.filter(h => h.alive)
   const aliveEnemies = state.enemies.filter(e => e.alive)
   const bossAlive = state.boss?.alive
@@ -695,7 +742,8 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
     if (!enemy.alive || enemy.hitstunMs > 0) continue
     const edx = enemy.x - CENTER_X, edy = enemy.y - CENTER_Y
     if (edx * edx + edy * edy > ATTACK_RADIUS_SQ) continue  // still marching in, can't attack yet
-    const heroTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)]
+    const heroTargets = aliveHeroes.filter(h => h.alive)
+    const heroTarget = heroTargets[Math.floor(Math.random() * heroTargets.length)]
     if (!heroTarget) continue
 
     const dmg = Math.max(1, Math.round(enemy.atk - heroTarget.def * state.defMult * 0.5))
@@ -715,8 +763,7 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
     })
 
     if (heroTarget.hp <= 0) {
-      heroTarget.alive = false
-      heroTarget.deathAnimMs = 500
+      downHero(heroTarget)
     }
 
     enemy.hitstunMs = enemy.rarity === 'rare' ? ELITE_ATK_CD : ENEMY_ATK_CD
@@ -735,11 +782,12 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       if (boss.ultimateCdMs <= 0) {
         // ULTIMATE — heavy AoE on all heroes
         for (const hero of aliveHeroes) {
+          if (!hero.alive) continue
           const dmg = Math.max(1, Math.round(boss.atk * cfg.ultAtkMult - hero.def * state.defMult * 0.2))
           hero.hp -= dmg
           hero.flashMs = 400
           state.totalDamageReceived += dmg
-          if (hero.hp <= 0) { hero.alive = false; hero.deathAnimMs = 500 }
+          if (hero.hp <= 0) downHero(hero)
           state.damageNumbers.push({
             id: _dmgId++, x: hero.x + (Math.random() * 24 - 12), y: hero.y - 20,
             value: dmg, isCrit: true, color: cfg.ultColor, lifeMs: 900, maxLifeMs: 900, label: '★',
@@ -762,11 +810,12 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       } else if (boss.skillCdMs <= 0) {
         // SKILL — medium AoE on all heroes
         for (const hero of aliveHeroes) {
+          if (!hero.alive) continue
           const dmg = Math.max(1, Math.round(boss.atk * cfg.skillAtkMult - hero.def * state.defMult * 0.35))
           hero.hp -= dmg
           hero.flashMs = 250
           state.totalDamageReceived += dmg
-          if (hero.hp <= 0) { hero.alive = false; hero.deathAnimMs = 500 }
+          if (hero.hp <= 0) downHero(hero)
           state.damageNumbers.push({
             id: _dmgId++, x: hero.x + (Math.random() * 24 - 12), y: hero.y - 16,
             value: dmg, isCrit: false, color: cfg.skillColor, lifeMs: 700, maxLifeMs: 700,
@@ -782,16 +831,19 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
         playSound('combat_poison_bubble')
       } else {
         // BASIC — single random hero
-        const heroTarget = aliveHeroes[Math.floor(Math.random() * aliveHeroes.length)]
-        const dmg = Math.max(1, Math.round(boss.atk - heroTarget.def * state.defMult * 0.5))
-        heroTarget.hp -= dmg
-        heroTarget.flashMs = 180
-        state.totalDamageReceived += dmg
-        if (heroTarget.hp <= 0) { heroTarget.alive = false; heroTarget.deathAnimMs = 500 }
-        state.damageNumbers.push({
-          id: _dmgId++, x: heroTarget.x + (Math.random() * 24 - 12), y: heroTarget.y - 14,
-          value: dmg, isCrit: false, color: '#ff4444', lifeMs: 600, maxLifeMs: 600,
-        })
+        const heroTargets = aliveHeroes.filter(h => h.alive)
+        const heroTarget = heroTargets[Math.floor(Math.random() * heroTargets.length)]
+        if (heroTarget) {
+          const dmg = Math.max(1, Math.round(boss.atk - heroTarget.def * state.defMult * 0.5))
+          heroTarget.hp -= dmg
+          heroTarget.flashMs = 180
+          state.totalDamageReceived += dmg
+          if (heroTarget.hp <= 0) downHero(heroTarget)
+          state.damageNumbers.push({
+            id: _dmgId++, x: heroTarget.x + (Math.random() * 24 - 12), y: heroTarget.y - 14,
+            value: dmg, isCrit: false, color: '#ff4444', lifeMs: 600, maxLifeMs: 600,
+          })
+        }
         boss.hitstunMs = boss.enraged ? Math.round(BOSS_ATK_CD * 0.6) : BOSS_ATK_CD
       }
     }
@@ -800,13 +852,14 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
   // Wipe detection — all heroes died this tick
   if (state.heroes.every(h => !h.alive)) {
     if (state.hasReviveToken && !state.reviveUsed) {
-      state.heroes.forEach(h => { h.alive = true; h.hp = Math.round(h.maxHp * 0.5) })
+      state.heroes.forEach(h => reviveHero(h))
       state.enemies = state.enemies.slice(0, 2)
       state.projectiles = []
       state.hasReviveToken = false
       state.reviveUsed = true
       return
     }
+    if (state.heroes.some(h => (h.reviveMs ?? 0) > 0)) return
     buildPostRunReward(state, true)
     return
   }
@@ -1032,7 +1085,7 @@ export function buildPostRunReward(state: RiftRunState, wasWipe = false): void {
 }
 
 export function reviveHeroes(state: RiftRunState): void {
-  state.heroes.forEach(h => { h.alive = true; h.hp = Math.round(h.maxHp * 0.5) })
+  state.heroes.forEach(h => reviveHero(h))
   state.enemies = state.enemies.slice(0, 2)
   state.projectiles = []
   state.reviveUsed = true
