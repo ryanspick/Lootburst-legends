@@ -125,22 +125,22 @@ function tickHeroRevives(state: RiftRunState, dtMs: number): void {
 }
 
 // HP scales per wave — each successive wave spawns tankier enemies for a smooth ramp
-const WAVE_HP_SCALE = [1.0, 1.20, 1.42, 1.68, 2.32, 2.70, 3.10] as const
+const WAVE_HP_SCALE = [0.9, 1.08, 1.30, 1.56, 2.12, 2.52, 2.95] as const
 
 function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, diffMult = 1, hpMult = 1): CombatEntity {
   const def = enemiesData.enemies.find(e => e.id === enemyId)
   if (!def) throw new Error(`Unknown enemy: ${enemyId}`)
   const isElite = def.tier === 'elite'
   const base = isElite
-    ? Math.round(350 * diffMult * hpMult)
-    : Math.round(56  * diffMult * hpMult)
-  const atkScale = 1 + (diffMult - 1) * 0.65
+    ? Math.round(325 * diffMult * hpMult)
+    : Math.round(50  * diffMult * hpMult)
+  const atkScale = 1 + (diffMult - 1) * 0.58
   return {
     id: `${enemyId}_${index}_${Date.now()}`,
     displayName: def.displayName,
     hp: base,
     maxHp: base,
-    atk: isElite ? Math.round(50 * atkScale) : Math.round(10 * atkScale),
+    atk: isElite ? Math.round(44 * atkScale) : Math.round(8 * atkScale),
     def: isElite ? 8 : 2,
     spd: 0.8,
     x,
@@ -165,7 +165,7 @@ function makeBossEntity(bossId: string, diffMult = 1): CombatEntity {
   const def    = bossesData.bosses.find(b => b.id === bossId)
   if (!def) throw new Error(`Unknown boss: ${bossId}`)
   const stats    = BOSS_STAT_CONFIG[bossId] ?? { hp: 9_000, atk: 32, def: 22, isFinal: false }
-  const atkScale = 1 + (diffMult - 1) * 0.65
+  const atkScale = 1 + (diffMult - 1) * 0.58
   return {
     id: bossId,
     displayName: def.displayName,
@@ -195,16 +195,16 @@ function makeBossEntity(bossId: string, diffMult = 1): CombatEntity {
 function buildTierLoot(tierLevel: number, kills: number, bonusItem = false): Array<{ id: string; rarity: Rarity; name: string }> {
   type Item = { id: string; rarity: Rarity; name: string }
   const tables: Record<number, { minKills: number; items: Item[] }> = {
-    1: { minKills: 8,  items: [
+    1: { minKills: 5,  items: [
       { id: 'gear_lucky_frog_coin',     rarity: 'uncommon',  name: 'Lucky Frog Coin'    },
       { id: 'gear_glitter_boots',       rarity: 'uncommon',  name: 'Glitter Boots'      },
     ]},
-    2: { minKills: 6,  items: [
+    2: { minKills: 5,  items: [
       { id: 'gear_crystal_spike',       rarity: 'rare',      name: 'Crystal Spike'      },
       { id: 'gear_storm_band',          rarity: 'rare',      name: 'Storm Band'         },
       { id: 'gear_meteor_lunchbox',     rarity: 'rare',      name: 'Meteor Lunchbox'    },
     ]},
-    3: { minKills: 5,  items: [
+    3: { minKills: 4,  items: [
       { id: 'gear_bubblegum_shield',    rarity: 'rare',      name: 'Bubblegum Shield'   },
       { id: 'gear_tiny_dragon_plush',   rarity: 'rare',      name: 'Tiny Dragon Plush'  },
       { id: 'gear_boss_tooth_necklace', rarity: 'epic',      name: 'Boss Tooth Necklace'},
@@ -357,7 +357,7 @@ export function createInitialRiftState(
     skillCooldownMult: 1,
     ultimateDamageMult: 1,
     ultimateCooldownMult: 1,
-    aoeSplashMult: 0.22,
+    aoeSplashMult: 0.16,
     difficultyMult: options?.difficultyMult ?? 1,
     reviveUsed: false,
     hasReviveToken: false,
@@ -1028,7 +1028,7 @@ function killEnemy(state: RiftRunState, enemy: CombatEntity): void {
   enemy.alive = false
   enemy.deathAnimMs = 450
   state.killCount++
-  const goldAmt = Math.round((20 + Math.random() * 15) * state.goldMult)
+  const goldAmt = Math.round((24 + Math.random() * 18) * state.goldMult)
   spawnLoot(state, enemy.x, enemy.y, 'coin', goldAmt)
   playSound('combat_coin_ping')
   emitExplosion({ x: enemy.x, y: enemy.y }, 20, enemy.element)

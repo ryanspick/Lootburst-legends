@@ -220,7 +220,7 @@
 /* ── Zone Tier Cards ───────────────────────────────────────────── */
 .zoneTierRow {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   z-index: 1;
   flex-shrink: 0;
@@ -250,6 +250,12 @@
 .zoneTierCard:not(:disabled):hover { transform: translateY(-2px); }
 .zoneTierCard:disabled { opacity: 0.4; cursor: not-allowed; }
 
+.zoneTierCard[data-mystery='true'] {
+  opacity: 0.72;
+  border-color: rgba(136, 247, 255, 0.28);
+  box-shadow: inset 0 0 14px rgba(136, 247, 255, 0.10);
+}
+
 .zoneTierCanvas {
   position: relative;
   width: 100%;
@@ -263,6 +269,21 @@
   height: 44px !important;
   object-fit: cover;
   display: block;
+}
+
+.zoneTierMystery {
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #88f7ff;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  line-height: 1;
+  background:
+    linear-gradient(0deg, rgba(136, 247, 255, 0.08), rgba(136, 247, 255, 0.02)),
+    repeating-linear-gradient(90deg, #080d19 0 6px, #0d1730 6px 12px);
+  text-shadow: 0 0 10px rgba(136, 247, 255, 0.85);
 }
 
 .zoneTierLockOverlay {
@@ -285,10 +306,14 @@
 }
 
 .zoneTierName {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: bold;
   color: rgba(255,255,255,0.45);
   letter-spacing: 0.5px;
+}
+
+.zoneTierCard[data-mystery='true'] .zoneTierName {
+  color: #88f7ff;
 }
 
 .zoneTierCard[data-active] .zoneTierName {

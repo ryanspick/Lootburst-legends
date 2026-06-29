@@ -9,18 +9,20 @@ export interface DayReward {
 }
 
 export const DAILY_REWARDS: DayReward[] = [
-  { day: 1, gold: 200,  gems: 0,   keys: 1, gearId: null,                       label: '200 💰 + 1 🔑' },
-  { day: 2, gold: 350,  gems: 5,   keys: 1, gearId: null,                       label: '350 💰 + 5 💎' },
-  { day: 3, gold: 600,  gems: 10,  keys: 1, gearId: null,                       label: '600 💰 + 10 💎' },
-  { day: 4, gold: 1000, gems: 15,  keys: 2, gearId: null,                       label: '1,000 💰 + 15 💎' },
-  { day: 5, gold: 1500, gems: 25,  keys: 2, gearId: 'gear_storm_band',          label: '1,500 💰 + 25 💎 + RARE GEAR' },
-  { day: 6, gold: 2500, gems: 40,  keys: 3, gearId: null,                       label: '2,500 💰 + 40 💎' },
-  { day: 7, gold: 5000, gems: 100, keys: 3, gearId: 'gear_boss_tooth_necklace', label: '5,000 💰 + 100 💎 + EPIC GEAR', isJackpot: true },
+  { day: 1, gold: 350,  gems: 5,   keys: 2, gearId: null,                       label: '350 Gold + 5 Gems + 2 Keys' },
+  { day: 2, gold: 600,  gems: 10,  keys: 1, gearId: null,                       label: '600 Gold + 10 Gems + 1 Key' },
+  { day: 3, gold: 900,  gems: 15,  keys: 2, gearId: null,                       label: '900 Gold + 15 Gems + 2 Keys' },
+  { day: 4, gold: 1400, gems: 20,  keys: 2, gearId: null,                       label: '1,400 Gold + 20 Gems + 2 Keys' },
+  { day: 5, gold: 2200, gems: 35,  keys: 2, gearId: 'gear_storm_band',          label: '2,200 Gold + 35 Gems + Rare Gear' },
+  { day: 6, gold: 3500, gems: 55,  keys: 3, gearId: null,                       label: '3,500 Gold + 55 Gems + 3 Keys' },
+  { day: 7, gold: 6500, gems: 120, keys: 4, gearId: 'gear_boss_tooth_necklace', label: '6,500 Gold + 120 Gems + Epic Gear', isJackpot: true },
 ]
 
 export const CHEST_COOLDOWN_MS = 24 * 3_600_000
-export const STREAK_GRACE_MS   = 48 * 3_600_000  // streak breaks if unclaimed for 2 days
-export const FREE_KEY_CD_MS    =  8 * 3_600_000   // 1 free key every 8h
+export const STREAK_GRACE_MS   = 48 * 3_600_000
+export const FREE_KEY_CD_MS    =  6 * 3_600_000
+
+const POST_RUN_OFFER_EXPIRES_MS = 90_000
 
 export function getRewardForStreak(streak: number): DayReward {
   return DAILY_REWARDS[Math.max(0, (streak - 1) % DAILY_REWARDS.length)]
@@ -29,8 +31,6 @@ export function getRewardForStreak(streak: number): DayReward {
 export function getNextReward(streak: number): DayReward {
   return DAILY_REWARDS[streak % DAILY_REWARDS.length]
 }
-
-// ── Post-run offers ────────────────────────────────────────────────────────────
 
 export type OfferType = 'free' | 'paid'
 
@@ -51,59 +51,58 @@ export interface PostRunOffer {
 
 const FREE_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
   {
-    id: 'free_bonus_haul',   type: 'free', icon: '🎁',
-    title: 'BONUS HAUL!',   subtitle: 'Looted from the rift shadows',
-    items: ['250 💰 Gold', '10 💎 Gems'],
-    gold: 250, gems: 10,
+    id: 'free_bonus_haul', type: 'free', icon: '$',
+    title: 'BONUS HAUL!', subtitle: 'Extra supplies recovered from the rift',
+    items: ['420 Gold', '14 Gems'],
+    gold: 420, gems: 14,
   },
   {
-    id: 'free_lucky_drop',  type: 'free', icon: '🍀',
-    title: 'LUCKY DROP!',   subtitle: 'The Rift smiles upon you',
-    items: ['Rare Gear Fragment', '8 💎 Gems'],
-    gearId: 'gear_lucky_frog_coin', gems: 8,
+    id: 'free_lucky_drop', type: 'free', icon: '*',
+    title: 'LUCKY DROP!', subtitle: 'A clean hit shook something loose',
+    items: ['Lucky Frog Coin', '12 Gems'],
+    gearId: 'gear_lucky_frog_coin', gems: 12,
   },
   {
-    id: 'free_battle_bonus', type: 'free', icon: '⚡',
-    title: 'BATTLE BONUS!', subtitle: 'Victory spoils from deep rift',
-    items: ['300 💰 Gold', '1 🔑 Key'],
-    gold: 300, keys: 1,
+    id: 'free_battle_bonus', type: 'free', icon: '+',
+    title: 'BATTLE BONUS!', subtitle: 'Momentum reward for the next push',
+    items: ['500 Gold', '1 Key'],
+    gold: 500, keys: 1,
   },
 ]
 
 const PAID_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
   {
-    id: 'paid_run_boost',    type: 'paid', icon: '🔥',
-    title: 'RUN BOOSTER!',  subtitle: 'ONE-TIME deal — gone in seconds',
-    items: ['600 💎 Gems', '3 🔑 Keys', '+30% Gold next 5 runs'],
-    price: '$0.99',  gems: 600,
+    id: 'paid_run_boost', type: 'paid', icon: '^',
+    title: 'RUN BOOSTER!', subtitle: 'Optional supplies for your next push',
+    items: ['650 Gems', '3 Keys', '+30% Gold for 5 runs'],
+    price: '$0.99', gems: 650, keys: 3,
   },
   {
-    id: 'paid_victory_pack', type: 'paid', icon: '🏆',
-    title: 'VICTORY PACK!', subtitle: 'Claim your champion\'s reward',
-    items: ['1,200 💎 Gems', '5,000 💰 Gold', '1 Rare Gear'],
-    price: '$1.99',  gems: 1200, gold: 5000, gearId: 'gear_crystal_spike',
+    id: 'paid_victory_pack', type: 'paid', icon: '#',
+    title: 'VICTORY PACK!', subtitle: 'A compact kit for deeper rifts',
+    items: ['1,250 Gems', '7,500 Gold', '1 Rare Gear'],
+    price: '$1.99', gems: 1250, gold: 7500, gearId: 'gear_crystal_spike',
   },
   {
-    id: 'paid_power_surge',  type: 'paid', icon: '💥',
-    title: 'POWER SURGE!',  subtitle: 'Limited. Will not appear again soon.',
-    items: ['800 💎 Gems', 'Epic Gear Token'],
-    price: '$0.99',  gems: 800, gearId: 'gear_infernal_core',
+    id: 'paid_power_surge', type: 'paid', icon: '!',
+    title: 'POWER SURGE!', subtitle: 'A stronger kit for tougher rifts',
+    items: ['850 Gems', 'Epic Gear Token'],
+    price: '$0.99', gems: 850, gearId: 'gear_infernal_core',
   },
 ]
 
-// Shown once per session when a wipe occurs — high urgency, short timer
 const WIPE_OFFERS: Omit<PostRunOffer, 'expiresInMs'>[] = [
   {
-    id: 'paid_second_chance', type: 'paid', icon: '💀',
-    title: 'CLOSE CALL!',    subtitle: 'Your squad was wiped — power up for next run',
-    items: ['500 💎 Gems', 'Revive Token', '+20% ATK this run'],
-    price: '$0.99',  gems: 500,
+    id: 'paid_second_chance', type: 'paid', icon: '+',
+    title: 'CLOSE CALL!', subtitle: 'Optional recovery supplies for the next run',
+    items: ['550 Gems', 'Revive Token', '+20% ATK boost'],
+    price: '$0.99', gems: 550,
   },
   {
-    id: 'paid_power_up_now', type: 'paid', icon: '⚡',
-    title: 'NEED MORE POWER?', subtitle: 'Struggled? These upgrades will help',
-    items: ['1,000 💎 Gems', 'Epic Gear', '2 🔑 Keys'],
-    price: '$1.99',  gems: 1000, gearId: 'gear_void_shard',
+    id: 'paid_power_up_now', type: 'paid', icon: '^',
+    title: 'REGROUP KIT', subtitle: 'Gear and keys for a stronger rematch',
+    items: ['1,100 Gems', 'Epic Gear', '2 Keys'],
+    price: '$1.99', gems: 1100, keys: 2, gearId: 'gear_void_shard',
   },
 ]
 
@@ -112,33 +111,32 @@ export interface PostRunOfferOptions {
   riftsBeat?: number
 }
 
+function withExpiry(base: Omit<PostRunOffer, 'expiresInMs'>): PostRunOffer {
+  return { ...base, expiresInMs: POST_RUN_OFFER_EXPIRES_MS }
+}
+
 export function rollPostRunOffer(runKills: number, opts: PostRunOfferOptions = {}): PostRunOffer | null {
   const { heroesDied = false, riftsBeat = 0 } = opts
 
-  // Wipe: 85% chance of showing a paid offer to convert frustration into purchase
   if (heroesDied) {
-    if (Math.random() < 0.85) {
-      const base = WIPE_OFFERS[Math.floor(Math.random() * WIPE_OFFERS.length)]
-      return { ...base, expiresInMs: 45_000 }
+    const earlyGame = riftsBeat < 5
+    const chance = earlyGame ? 0.80 : 0.55
+    if (Math.random() >= chance) return null
+    const pool = earlyGame ? FREE_OFFERS : WIPE_OFFERS
+    return withExpiry(pool[Math.floor(Math.random() * pool.length)])
+  }
+
+  if (riftsBeat < 5) {
+    if (Math.random() < 0.80) {
+      return withExpiry(FREE_OFFERS[Math.floor(Math.random() * FREE_OFFERS.length)])
     }
     return null
   }
 
-  // First 8 rifts: tease free offers to build habit, then shift toward paid
-  if (riftsBeat < 3) {
-    if (Math.random() < 0.7) {
-      const base = FREE_OFFERS[Math.floor(Math.random() * FREE_OFFERS.length)]
-      return { ...base, expiresInMs: 45_000 }
-    }
-    return null
-  }
-
-  // General: chance scales with kills; mix biased toward paid to drive IAP
-  const chance = Math.min(0.65, 0.40 + runKills * 0.002)
+  const chance = Math.min(0.55, 0.32 + Math.max(0, runKills) * 0.0015)
   if (Math.random() > chance) return null
 
-  // 35% free / 65% paid after early game
-  const pool = Math.random() < 0.35 ? FREE_OFFERS : PAID_OFFERS
-  const base = pool[Math.floor(Math.random() * pool.length)]
-  return { ...base, expiresInMs: 45_000 }
+  const paidChance = Math.min(0.50, 0.35 + Math.max(0, riftsBeat - 5) * 0.01)
+  const pool = Math.random() < paidChance ? PAID_OFFERS : FREE_OFFERS
+  return withExpiry(pool[Math.floor(Math.random() * pool.length)])
 }

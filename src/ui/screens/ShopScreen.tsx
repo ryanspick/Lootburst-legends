@@ -16,22 +16,22 @@ const STARTER_PACKS = [
     icon: '🗡️',
     name: "Beginner's Blade",
     price: '$0.99',
-    items: ['350 💎 Gems', '1,500 💰 Gold', '2 🔑 Keys', 'Lucky Frog Coin gear'],
-    gems: 350, gold: 1_500, keys: 2,
+    items: ['450 Gems', '2,500 Gold', '3 Keys', 'Lucky Frog Coin gear'],
+    gems: 450, gold: 2_500, keys: 3,
     gearIds: ['gear_lucky_frog_coin'],
     highlight: false,
-    tag: '⚡ START HERE',
+    tag: 'START HERE',
   },
   {
     id: 'starter_vault',
     icon: '🏆',
     name: "Founder's Vault",
     price: '$1.99',
-    items: ['950 💎 Gems', '8,000 💰 Gold', '5 🔑 Keys', 'Storm Band + Crystal Spike'],
-    gems: 950, gold: 8_000, keys: 5,
+    items: ['1,200 Gems', '12,000 Gold', '6 Keys', 'Storm Band + Crystal Spike'],
+    gems: 1200, gold: 12_000, keys: 6,
     gearIds: ['gear_storm_band', 'gear_crystal_spike'],
     highlight: true,
-    tag: '💎 BEST VALUE',
+    tag: 'BEST VALUE',
   },
 ] as const
 
@@ -130,10 +130,10 @@ export default function ShopScreen({ onClose }: ShopProps) {
   }
 
   function handleBuyWelcome() {
-    buyStarterPack('welcome_offer', 500, 5_000, 3, ['gear_crystal_spike', 'gear_storm_band'])
+    buyStarterPack('welcome_offer', 650, 8_000, 4, ['gear_crystal_spike', 'gear_storm_band'])
     flash('welcome_offer')
     emitCoinBurst({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 35)
-    emitGemScatter({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 500)
+    emitGemScatter({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 650)
     if (!prevUnlocked.current) {
       setJustUnlocked(true)
       prevUnlocked.current = true
@@ -192,16 +192,16 @@ export default function ShopScreen({ onClose }: ShopProps) {
             <div className={`${styles.starterCard} ${styles.starterWelcome}`}
               data-flash={flashId === 'welcome_offer' ? 'true' : undefined}
             >
-              <div className={styles.starterTag}>🎉 90% OFF — NEW PLAYER</div>
+              <div className={styles.starterTag}>WELCOME VALUE</div>
               <div className={styles.starterRow}>
                 <span className={styles.starterIcon}>🎁</span>
                 <div className={styles.starterInfo}>
                   <div className={styles.starterName}>Welcome Bundle</div>
                   <div className={styles.starterItems}>
-                    500 💎 · 5,000 💰 · 3 🔑 · 2× Rare Gear
+                    650 Gems - 8,000 Gold - 4 Keys - 2x Rare Gear
                   </div>
                   <div className={styles.welcomeTimer}>
-                    ⏱ Expires in <strong>{fmt(offerMsLeft)}</strong>
+                    Available for <strong>{fmt(offerMsLeft)}</strong>
                   </div>
                 </div>
                 <div className={styles.starterPriceCol}>
@@ -210,7 +210,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
                 </div>
               </div>
               <button className={styles.starterBuyBtn} onClick={handleBuyWelcome}>
-                {shopUnlocked ? 'PURCHASED ✓' : 'CLAIM & UNLOCK SHOP'}
+                {shopUnlocked ? 'BUY - $0.99' : 'CLAIM & UNLOCK SHOP'}
               </button>
             </div>
           )}

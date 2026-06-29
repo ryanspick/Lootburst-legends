@@ -472,17 +472,17 @@ describe('Difficulty progression — mid game (hard)', () => {
   it('elites deal more incoming damage than basics over the same window', () => {
     setRandom(0.5)
     const heroes = ['hero_copper_knight', 'hero_mushroom_medic', 'hero_goblin_sparkshot']
-    const WINDOW = 8_000
+    const WINDOW = 12_000
 
     // Baseline: 3 basic slimes from wave 1
-    const { state: basicState } = createInitialRiftState(heroes)
+    const { state: basicState } = createInitialRiftState(heroes, { difficultyMult: 1.6 })
     basicState.phase = 'combat'
     spawnWave(basicState, 1, 3)
     simulate(basicState, WINDOW)
     const basicIncoming = basicState.totalDamageReceived
 
     // Mid game: 3 enemies from wave 4 (includes elite_crystal_golem)
-    const { state: eliteState } = createInitialRiftState(heroes)
+    const { state: eliteState } = createInitialRiftState(heroes, { difficultyMult: 1.6 })
     eliteState.phase = 'combat'
     spawnWave(eliteState, 4, 3)
     simulate(eliteState, WINDOW)

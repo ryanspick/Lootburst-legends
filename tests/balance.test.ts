@@ -1,7 +1,7 @@
 /**
  * Balance curve regression tests.
  * Ensure the early-game feel stays easy/progressive and late game requires
- * cash-shop or skill investment to survive.
+ * smart upgrades, gear, and squad growth to survive.
  *
  * These tests lock in the tuned values so future code changes don't silently
  * break the engagement curve.
@@ -33,7 +33,7 @@ import {
   spawnBoss,
 } from '@/game/rift/riftRunState'
 import type { RiftRunState } from '@/game/rift/riftTypes'
-import { RIFT_TIERS } from '@/game/rift/riftTiers'
+import { RIFT_TIERS, getPlayableRiftTiers } from '@/game/rift/riftTiers'
 import { rollPostRunOffer } from '@/game/progression/dailyRewards'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -97,14 +97,14 @@ describe('Early-game feel — Tier 1 (rifts 0–15)', () => {
     const ttk5 = (() => {
       const { state } = createInitialRiftState(THREE_HEROES, { difficultyMult: 1 })
       state.phase = 'combat'
-      spawnWave(state, 5, 1) // wave 5 hpMult = 2.35
+      spawnWave(state, 5, 1)
       simulate(state, 100)
       return simulateUntil(state, allEnemiesDead, 30_000)
     })()
 
     expect(ttk1).toBeGreaterThan(0)
     expect(ttk5).toBeGreaterThan(0)
-    expect(ttk5).toBeGreaterThan(ttk1 * 2.5)
+    expect(ttk5).toBeGreaterThan(ttk1 * 2)
   })
 
   it('heroes survive ≥ 15 seconds vs wave 1 at Tier 1 (all alive)', () => {
@@ -181,32 +181,43 @@ describe('Late-game feel — Tier 3+ (diffMult ≥ 2.8)', () => {
     spawnWave(state, 4, 6)
     simulate(state, 15_000)
     const minHpPct = Math.min(...state.heroes.map(h => h.alive ? h.hp / h.maxHp : 0))
-    expect(minHpPct).toBeLessThan(0.5)
+    expect(minHpPct).toBeLessThan(0.7)
   })
 })
 
 // ── Tier unlock thresholds ────────────────────────────────────────────────────
 
 describe('Tier unlock thresholds — engagement ramp', () => {
-  it('Tier 2 unlocks at ≥ 10 rifts (not too soon)', () => {
+  it('Tier 2 unlocks during the first few sessions', () => {
     const t2 = RIFT_TIERS.find(t => t.level === 2)!
-    expect(t2.unlockAfterRifts).toBeGreaterThanOrEqual(10)
+    expect(t2.unlockAfterRifts).toBeGreaterThanOrEqual(3)
+    expect(t2.unlockAfterRifts).toBeLessThanOrEqual(5)
   })
 
-  it('Tier 3 unlocks at ≥ 30 rifts (requires real investment)', () => {
+  it('Tier 3 unlocks while mid-game motivation is still warm', () => {
     const t3 = RIFT_TIERS.find(t => t.level === 3)!
-    expect(t3.unlockAfterRifts).toBeGreaterThanOrEqual(30)
+    expect(t3.unlockAfterRifts).toBeGreaterThanOrEqual(12)
+    expect(t3.unlockAfterRifts).toBeLessThanOrEqual(20)
   })
 
-  it('Tier 5 unlocks at ≥ 100 rifts (end-game only)', () => {
+  it('Tier 5 remains a long-term goal without waiting hundreds of runs', () => {
     const t5 = RIFT_TIERS.find(t => t.level === 5)!
-    expect(t5.unlockAfterRifts).toBeGreaterThanOrEqual(100)
+    expect(t5.unlockAfterRifts).toBeGreaterThanOrEqual(65)
+    expect(t5.unlockAfterRifts).toBeLessThanOrEqual(90)
+  })
+
+  it('shows a locked mystery tier after playable tier V', () => {
+    const mystery = RIFT_TIERS.at(-1)!
+    expect(mystery.label).toBe('???')
+    expect(mystery.mystery).toBe(true)
+    expect(getPlayableRiftTiers().some(t => t.level === mystery.level)).toBe(false)
   })
 
   it('all tiers have super-linear reward multipliers (rewardMult grows faster than enemyMult)', () => {
-    for (let i = 1; i < RIFT_TIERS.length; i++) {
-      const prev = RIFT_TIERS[i - 1]
-      const curr = RIFT_TIERS[i]
+    const playableTiers = getPlayableRiftTiers()
+    for (let i = 1; i < playableTiers.length; i++) {
+      const prev = playableTiers[i - 1]
+      const curr = playableTiers[i]
       const enemyRatio  = curr.enemyMult  / prev.enemyMult
       const rewardRatio = curr.rewardMult / prev.rewardMult
       expect(rewardRatio).toBeGreaterThan(enemyRatio)
@@ -216,31 +227,31 @@ describe('Tier unlock thresholds — engagement ramp', () => {
 
 // ── Post-run offer system ─────────────────────────────────────────────────────
 
-describe('Post-run offer system — IAP hooks', () => {
-  it('wipe triggers offer 85%+ of the time', () => {
+describe('Post-run offer system', () => {
+  it('wipe triggers recovery offers at a healthy rate', () => {
     let offerCount = 0
     for (let i = 0; i < 200; i++) {
       Math.random = () => (i % 2 === 0 ? 0.1 : 0.5) // alternating to hit both branches
       const offer = rollPostRunOffer(30, { heroesDied: true })
       if (offer) offerCount++
     }
-    // Should be at least 70% (deterministic random can't perfectly replicate 85%, but should be high)
+    // Deterministic random alternates below the early recovery threshold.
     expect(offerCount / 200).toBeGreaterThan(0.5)
   })
 
   it('wipe offer is always paid type', () => {
-    Math.random = () => 0.05  // always below 0.85 threshold
+    Math.random = () => 0.05
     for (let i = 0; i < 20; i++) {
-      const offer = rollPostRunOffer(50, { heroesDied: true })
+      const offer = rollPostRunOffer(50, { heroesDied: true, riftsBeat: 10 })
       if (offer) {
         expect(offer.type).toBe('paid')
-        expect(offer.expiresInMs).toBe(45_000)
+        expect(offer.expiresInMs).toBe(90_000)
       }
     }
   })
 
   it('first 3 rifts show mostly free offers (habit building)', () => {
-    Math.random = () => 0.1  // always below 0.7 threshold → always shows offer
+    Math.random = () => 0.1
     let freeCount = 0
     let totalOffers = 0
     for (let i = 0; i < 50; i++) {
@@ -254,13 +265,13 @@ describe('Post-run offer system — IAP hooks', () => {
     expect(freeCount / totalOffers).toBe(1) // all free in early game
   })
 
-  it('after rift 3 paid offers appear (IAP conversion phase)', () => {
-    // 0.4: above 0.35 threshold → picks PAID pool; below ~0.48 chance → shows offer
-    Math.random = () => 0.4
+  it('after the early game paid offers can appear', () => {
+    // 0.39 is under the show threshold and under the paid-pool threshold at rift 10.
+    Math.random = () => 0.39
     let paidCount = 0
     let totalOffers = 0
     for (let i = 0; i < 100; i++) {
-      const offer = rollPostRunOffer(40, { heroesDied: false, riftsBeat: 10 })
+      const offer = rollPostRunOffer(100, { heroesDied: false, riftsBeat: 10 })
       if (offer) {
         totalOffers++
         if (offer.type === 'paid') paidCount++
@@ -270,10 +281,10 @@ describe('Post-run offer system — IAP hooks', () => {
     expect(paidCount / totalOffers).toBeGreaterThan(0.5)
   })
 
-  it('offer expires in 45 seconds', () => {
+  it('offer stays available for 90 seconds', () => {
     Math.random = () => 0.1
     const offer = rollPostRunOffer(100, { heroesDied: true })
-    expect(offer?.expiresInMs).toBe(45_000)
+    expect(offer?.expiresInMs).toBe(90_000)
   })
 })
 

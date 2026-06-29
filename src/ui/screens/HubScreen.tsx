@@ -17,7 +17,8 @@ import {
 import { generateChestSprite, generateCapsuleSprite } from '@/art/generated'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot } from '@/store/gameStore'
-import { getUnlockedTiers, getRiftTier } from '@/game/rift/riftTiers'
+import { getUnlockedTiers, getRiftTier, getVisibleRiftTiers } from '@/game/rift/riftTiers'
+import { RIFT_DURATION_MS } from '@/game/rift/waveDirector'
 import { ZONES } from '@/game/rift/zoneBackgrounds'
 import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine, computeSquadPower } from '@/game/gear/gearStats'
 import {
@@ -84,6 +85,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
   const addGold = useGameStore(s => s.addGold)
   const addGems = useGameStore(s => s.addGems)
+  const addKeys = useGameStore(s => s.addKeys)
   const selectedRiftTier = useGameStore(s => s.selectedRiftTier)
   const setRiftTier = useGameStore(s => s.setRiftTier)
   const totalRifts = useGameStore(s => s.totalRifts)
@@ -127,6 +129,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const questsClaimable = activeQuests.filter(q => q.progress >= q.target && !q.claimed).length
 
   const unlockedTiers = getUnlockedTiers(totalRifts)
+  const visibleTiers = getVisibleRiftTiers()
   const activeTierData = getRiftTier(selectedRiftTier)
 
   const squadHeroes = squadHeroIds
@@ -211,6 +214,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
     const cx = window.innerWidth / 2, cy = window.innerHeight / 2
     if (offer.gold)   addGold(offer.gold)
     if (offer.gems)   addGems(offer.gems)
+    if (offer.keys)   addKeys(offer.keys)
     if (offer.gearId) addGear(offer.gearId)
     emitCoinBurst({ x: cx, y: cy }, offer.type === 'paid' ? 50 : 20)
     if (offer.gems) emitGemScatter({ x: cx, y: cy }, offer.gems)
@@ -352,27 +356,34 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
 
       {/* ── Zone Tier Cards (replaces old tier picker) ────────── */}
       <div className={styles.zoneTierRow}>
-        {ZONES.map((zone, i) => {
-          const tier = i + 1
-          const unlocked = unlockedTiers.some(t => t.level === tier)
-          const active = selectedRiftTier === tier
-          const tData = getRiftTier(tier)
+        {visibleTiers.map((tData, i) => {
+          const tier = tData.level
+          const mystery = !!tData.mystery
+          const unlocked = !mystery && unlockedTiers.some(t => t.level === tier)
+          const active = !mystery && selectedRiftTier === tier
+          const zoneIndex = Math.min(i, ZONES.length - 1)
           return (
             <button key={tier}
               className={styles.zoneTierCard}
               data-active={active ? 'true' : undefined}
-              disabled={!unlocked}
+              data-mystery={mystery ? 'true' : undefined}
+              disabled={!unlocked || mystery}
               onClick={() => unlocked && setRiftTier(tier)}
-              title={unlocked ? `${tData.name} · ×${tData.rewardMult} rewards` : `${tData.unlockAfterRifts} rifts to unlock`}
-              style={active ? { '--card-color': ZONE_COLORS[i] } as React.CSSProperties : undefined}
+              title={mystery ? (tData.teaser ?? 'Unknown rift signal') : unlocked ? `${tData.name} x${tData.rewardMult} rewards` : `${tData.unlockAfterRifts} rifts to unlock`}
+              style={active ? { '--card-color': ZONE_COLORS[zoneIndex] } as React.CSSProperties : undefined}
             >
               <div className={styles.zoneTierCanvas}>
-                <ZoneBackground zoneIndex={i} width={64} height={48} />
+                {mystery ? (
+                  <div className={styles.zoneTierMystery}>???</div>
+                ) : (
+                  <ZoneBackground zoneIndex={zoneIndex} width={64} height={48} />
+                )}
                 {!unlocked && <div className={styles.zoneTierLockOverlay}>🔒</div>}
-                {active && <div className={styles.zoneTierActiveBar} style={{ background: ZONE_COLORS[i] }} />}
+                {mystery && <div className={styles.zoneTierLockOverlay}>???</div>}
+                {active && <div className={styles.zoneTierActiveBar} style={{ background: ZONE_COLORS[zoneIndex] }} />}
               </div>
               <span className={styles.zoneTierName}
-                style={active ? { color: ZONE_COLORS[i] } : undefined}
+                style={active ? { color: ZONE_COLORS[zoneIndex] } : undefined}
               >
                 {tData.label}
               </span>
@@ -431,7 +442,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             <span className={styles.notifIcon}>🔑</span>
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>FREE KEY READY!</span>
-              <span className={styles.notifDetail}>Tap to collect • renews in 8h</span>
+              <span className={styles.notifDetail}>Tap to collect - renews in 6h</span>
             </div>
             <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimFreeKey() }}>CLAIM</button>
           </div>
@@ -442,7 +453,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             <span className={styles.notifIcon}>🔑</span>
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>FREE KEY IN</span>
-              <span className={styles.notifDetail}>8h free key • tap capsule tab to use</span>
+              <span className={styles.notifDetail}>6h free key - tap capsule tab to use</span>
             </div>
             <span className={styles.notifTimer}>{fmtMs(nextKeyMs)}</span>
             <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('free_key_cd')) }}>✕</button>
@@ -463,7 +474,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
               ))}
             </div>
             <div className={styles.offerCountdown}>
-              ⏳ Expires in <strong>{Math.ceil(offerTimeLeft / 1000)}s</strong>
+              Available for <strong>{Math.ceil(offerTimeLeft / 1000)}s</strong>
             </div>
             {postRunOffer.type === 'free' ? (
               <button className={styles.postRunFreeBtn} onClick={() => handleClaimOffer(postRunOffer)}>
@@ -635,7 +646,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             size="lg"
             onClick={handleEnterRift}
           >
-            ⚔️ ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>120s Run</span>
+            ⚔️ ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>{Math.round(RIFT_DURATION_MS / 1000)}s Run</span>
           </PixelButton>
         </div>
         <span className={styles.riftSubtext}>Squad Power: {squadPower.toLocaleString()}</span>

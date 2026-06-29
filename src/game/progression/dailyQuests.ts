@@ -15,19 +15,19 @@ export interface ActiveQuest extends QuestDef {
 }
 
 const QUEST_POOL: QuestDef[] = [
-  { id: 'q_kills_20',    type: 'kills',      label: 'Defeat 20 enemies',           target: 20,     rewardGold: 300,   rewardGems: 0  },
-  { id: 'q_kills_50',    type: 'kills',      label: 'Defeat 50 enemies',           target: 50,     rewardGold: 600,   rewardGems: 5  },
-  { id: 'q_kills_100',   type: 'kills',      label: 'Defeat 100 enemies',          target: 100,    rewardGold: 0,     rewardGems: 15 },
-  { id: 'q_kills_200',   type: 'kills',      label: 'Slay 200 enemies',            target: 200,    rewardGold: 1000,  rewardGems: 20 },
-  { id: 'q_rifts_1',     type: 'rifts',      label: 'Complete 1 rift run',         target: 1,      rewardGold: 200,   rewardGems: 5  },
-  { id: 'q_rifts_3',     type: 'rifts',      label: 'Complete 3 rift runs',        target: 3,      rewardGold: 500,   rewardGems: 10 },
-  { id: 'q_rifts_5',     type: 'rifts',      label: 'Complete 5 rift runs',        target: 5,      rewardGold: 0,     rewardGems: 25 },
-  { id: 'q_pulls_1',     type: 'pulls',      label: 'Open 1 capsule',              target: 1,      rewardGold: 150,   rewardGems: 0  },
-  { id: 'q_pulls_3',     type: 'pulls',      label: 'Open 3 capsules',             target: 3,      rewardGold: 300,   rewardGems: 10 },
+  { id: 'q_kills_15',    type: 'kills',      label: 'Defeat 15 enemies',           target: 15,     rewardGold: 350,   rewardGems: 5  },
+  { id: 'q_kills_40',    type: 'kills',      label: 'Defeat 40 enemies',           target: 40,     rewardGold: 700,   rewardGems: 8  },
+  { id: 'q_kills_90',    type: 'kills',      label: 'Defeat 90 enemies',           target: 90,     rewardGold: 400,   rewardGems: 18 },
+  { id: 'q_kills_180',   type: 'kills',      label: 'Slay 180 enemies',            target: 180,    rewardGold: 1300,  rewardGems: 24 },
+  { id: 'q_rifts_1',     type: 'rifts',      label: 'Complete 1 rift run',         target: 1,      rewardGold: 350,   rewardGems: 8  },
+  { id: 'q_rifts_3',     type: 'rifts',      label: 'Complete 3 rift runs',        target: 3,      rewardGold: 700,   rewardGems: 14 },
+  { id: 'q_rifts_5',     type: 'rifts',      label: 'Complete 5 rift runs',        target: 5,      rewardGold: 500,   rewardGems: 30 },
+  { id: 'q_pulls_1',     type: 'pulls',      label: 'Open 1 capsule',              target: 1,      rewardGold: 250,   rewardGems: 5  },
+  { id: 'q_pulls_3',     type: 'pulls',      label: 'Open 3 capsules',             target: 3,      rewardGold: 400,   rewardGems: 12 },
   { id: 'q_pulls_10',    type: 'pulls',      label: 'Open 10 capsules',            target: 10,     rewardGold: 0,     rewardGems: 30 },
-  { id: 'q_gold_1k',     type: 'gold_earned',label: 'Earn 1,000 gold in rifts',    target: 1000,   rewardGold: 0,     rewardGems: 8  },
-  { id: 'q_gold_5k',     type: 'gold_earned',label: 'Earn 5,000 gold in rifts',    target: 5000,   rewardGold: 0,     rewardGems: 20 },
-  { id: 'q_gold_10k',    type: 'gold_earned',label: 'Earn 10,000 gold today',      target: 10000,  rewardGold: 500,   rewardGems: 30 },
+  { id: 'q_gold_800',    type: 'gold_earned',label: 'Earn 800 gold in rifts',      target: 800,    rewardGold: 200,   rewardGems: 8  },
+  { id: 'q_gold_4k',     type: 'gold_earned',label: 'Earn 4,000 gold in rifts',    target: 4000,   rewardGold: 300,   rewardGems: 22 },
+  { id: 'q_gold_9k',     type: 'gold_earned',label: 'Earn 9,000 gold today',       target: 9000,   rewardGold: 700,   rewardGems: 34 },
 ]
 
 function seededRandom(seed: number): () => number {

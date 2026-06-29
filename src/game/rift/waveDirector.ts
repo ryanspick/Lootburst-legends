@@ -1,13 +1,13 @@
 import type { TimelineEvent } from './riftTypes'
 
-export const RIFT_DURATION_MS    = 110_000   // longest zone end_run; HUD timer max
+export const RIFT_DURATION_MS    = 100_000   // longest zone end_run; HUD timer max
 export const NORMAL_WAVE_CLEAR_DELAY_MS = 250
 export const WAVE_CLEAR_DELAY_MS = 1_500     // delay after boss death before post-boss waves spawn
-export const WAVE_AUTO_ADVANCE_MS = 10_000   // max time before the next queued wave starts
+export const WAVE_AUTO_ADVANCE_MS = 8_000    // max time before the next queued wave starts
 export const ENDLESS_FIRST_WAVE = 8
-export const ENDLESS_BASE_COUNT = 42
-export const ENDLESS_COUNT_STEP = 8
-export const ENDLESS_MAX_COUNT = 160
+export const ENDLESS_BASE_COUNT = 34
+export const ENDLESS_COUNT_STEP = 7
+export const ENDLESS_MAX_COUNT = 140
 export const ENDLESS_MAX_DIFFICULTY_MULT = 15
 
 export type WaveSpawnPattern = 'ring' | 'scatter' | 'burst_top' | 'burst_bottom' | 'burst_sides'
@@ -79,16 +79,16 @@ function ev(atMs: number, type: TimelineEvent['type'], data?: Record<string, unk
 // timeline timestamps no longer decide when normal waves begin.
 const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
   candy_cavern_rift: [
-    ev(0,        'wave_spawn',   { wave: 1, count: 22, pattern: 'ring' }),
-    ev(0,        'wave_spawn',   { wave: 2, count: 28, pattern: 'scatter' }),
-    ev(0,        'wave_spawn',   { wave: 3, count: 32, pattern: 'burst_sides' }),
-    ev(0,        'wave_spawn',   { wave: 4, count: 38, pattern: 'burst_top' }),
-    ev(0,        'wave_spawn',   { wave: 5, count: 42, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 1, count: 16, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 2, count: 22, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',   { wave: 3, count: 27, pattern: 'burst_sides' }),
+    ev(0,        'wave_spawn',   { wave: 4, count: 32, pattern: 'burst_top' }),
+    ev(0,        'wave_spawn',   { wave: 5, count: 36, pattern: 'ring' }),
     ev(15_000,   'upgrade_choice'),
     ev(30_000,   'upgrade_choice'),
     ev(44_000,   'upgrade_choice'),
-    ev(45_000,   'wave_spawn',   { wave: 6, count: 28, pattern: 'burst_sides' }),
-    ev(45_000,   'wave_spawn',   { wave: 7, count: 34, pattern: 'scatter' }),
+    ev(45_000,   'wave_spawn',   { wave: 6, count: 24, pattern: 'burst_sides' }),
+    ev(45_000,   'wave_spawn',   { wave: 7, count: 30, pattern: 'scatter' }),
     ev(47_000,   'boss_warning', { bossId: 'boss_mushroom_matriarch' }),
     ev(50_000,   'mid_boss',     { bossId: 'boss_mushroom_matriarch' }),
     ev(68_000,   'upgrade_choice'),
@@ -97,16 +97,16 @@ const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
     ev(91_000,   'end_run'),
   ],
   goblin_glitter_mines: [
-    ev(0,        'wave_spawn',   { wave: 1, count: 25, pattern: 'ring' }),
-    ev(0,        'wave_spawn',   { wave: 2, count: 30, pattern: 'scatter' }),
-    ev(0,        'wave_spawn',   { wave: 3, count: 36, pattern: 'burst_sides' }),
-    ev(0,        'wave_spawn',   { wave: 4, count: 40, pattern: 'burst_top' }),
-    ev(0,        'wave_spawn',   { wave: 5, count: 44, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 1, count: 18, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 2, count: 24, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',   { wave: 3, count: 30, pattern: 'burst_sides' }),
+    ev(0,        'wave_spawn',   { wave: 4, count: 34, pattern: 'burst_top' }),
+    ev(0,        'wave_spawn',   { wave: 5, count: 38, pattern: 'ring' }),
     ev(17_000,   'upgrade_choice'),
     ev(34_000,   'upgrade_choice'),
     ev(48_000,   'upgrade_choice'),
-    ev(49_000,   'wave_spawn',   { wave: 6, count: 30, pattern: 'burst_sides' }),
-    ev(49_000,   'wave_spawn',   { wave: 7, count: 36, pattern: 'scatter' }),
+    ev(49_000,   'wave_spawn',   { wave: 6, count: 26, pattern: 'burst_sides' }),
+    ev(49_000,   'wave_spawn',   { wave: 7, count: 32, pattern: 'scatter' }),
     ev(51_000,   'boss_warning', { bossId: 'boss_goblin_minecart_ace' }),
     ev(54_000,   'mid_boss',     { bossId: 'boss_goblin_minecart_ace' }),
     ev(73_000,   'upgrade_choice'),
@@ -115,16 +115,16 @@ const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
     ev(97_000,   'end_run'),
   ],
   void_arcade: [
-    ev(0,        'wave_spawn',   { wave: 1, count: 27, pattern: 'ring' }),
-    ev(0,        'wave_spawn',   { wave: 2, count: 33, pattern: 'scatter' }),
-    ev(0,        'wave_spawn',   { wave: 3, count: 38, pattern: 'burst_sides' }),
-    ev(0,        'wave_spawn',   { wave: 4, count: 42, pattern: 'burst_top' }),
-    ev(0,        'wave_spawn',   { wave: 5, count: 46, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 1, count: 20, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 2, count: 26, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',   { wave: 3, count: 32, pattern: 'burst_sides' }),
+    ev(0,        'wave_spawn',   { wave: 4, count: 36, pattern: 'burst_top' }),
+    ev(0,        'wave_spawn',   { wave: 5, count: 40, pattern: 'ring' }),
     ev(19_000,   'upgrade_choice'),
     ev(38_000,   'upgrade_choice'),
     ev(52_000,   'upgrade_choice'),
-    ev(53_000,   'wave_spawn',   { wave: 6, count: 30, pattern: 'burst_sides' }),
-    ev(53_000,   'wave_spawn',   { wave: 7, count: 36, pattern: 'scatter' }),
+    ev(53_000,   'wave_spawn',   { wave: 6, count: 28, pattern: 'burst_sides' }),
+    ev(53_000,   'wave_spawn',   { wave: 7, count: 34, pattern: 'scatter' }),
     ev(55_000,   'boss_warning', { bossId: 'boss_pumpkin_gearlord' }),
     ev(58_000,   'mid_boss',     { bossId: 'boss_pumpkin_gearlord' }),
     ev(77_000,   'upgrade_choice'),
@@ -133,40 +133,40 @@ const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
     ev(101_000,  'end_run'),
   ],
   moon_vault: [
-    ev(0,        'wave_spawn',   { wave: 1, count: 28, pattern: 'ring' }),
-    ev(0,        'wave_spawn',   { wave: 2, count: 34, pattern: 'scatter' }),
-    ev(0,        'wave_spawn',   { wave: 3, count: 40, pattern: 'burst_sides' }),
-    ev(0,        'wave_spawn',   { wave: 4, count: 44, pattern: 'burst_top' }),
-    ev(0,        'wave_spawn',   { wave: 5, count: 48, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 1, count: 22, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 2, count: 28, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',   { wave: 3, count: 34, pattern: 'burst_sides' }),
+    ev(0,        'wave_spawn',   { wave: 4, count: 38, pattern: 'burst_top' }),
+    ev(0,        'wave_spawn',   { wave: 5, count: 42, pattern: 'ring' }),
     ev(21_000,   'upgrade_choice'),
     ev(42_000,   'upgrade_choice'),
     ev(56_000,   'upgrade_choice'),
-    ev(57_000,   'wave_spawn',   { wave: 6, count: 32, pattern: 'burst_sides' }),
-    ev(57_000,   'wave_spawn',   { wave: 7, count: 38, pattern: 'scatter' }),
+    ev(57_000,   'wave_spawn',   { wave: 6, count: 30, pattern: 'burst_sides' }),
+    ev(57_000,   'wave_spawn',   { wave: 7, count: 36, pattern: 'scatter' }),
     ev(59_000,   'boss_warning', { bossId: 'boss_neon_bone_hydra' }),
     ev(62_000,   'mid_boss',     { bossId: 'boss_neon_bone_hydra' }),
     ev(81_000,   'upgrade_choice'),
     ev(86_000,   'boss_warning', { bossId: 'boss_moon_vault' }),
     ev(89_000,   'final_boss',   { bossId: 'boss_moon_vault' }),
-    ev(105_000,  'end_run'),
+    ev(100_000,  'end_run'),
   ],
   starforge_nursery: [
-    ev(0,        'wave_spawn',   { wave: 1, count: 30, pattern: 'ring' }),
-    ev(0,        'wave_spawn',   { wave: 2, count: 36, pattern: 'scatter' }),
-    ev(0,        'wave_spawn',   { wave: 3, count: 42, pattern: 'burst_sides' }),
-    ev(0,        'wave_spawn',   { wave: 4, count: 46, pattern: 'burst_top' }),
-    ev(0,        'wave_spawn',   { wave: 5, count: 50, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 1, count: 24, pattern: 'ring' }),
+    ev(0,        'wave_spawn',   { wave: 2, count: 30, pattern: 'scatter' }),
+    ev(0,        'wave_spawn',   { wave: 3, count: 36, pattern: 'burst_sides' }),
+    ev(0,        'wave_spawn',   { wave: 4, count: 40, pattern: 'burst_top' }),
+    ev(0,        'wave_spawn',   { wave: 5, count: 44, pattern: 'ring' }),
     ev(23_000,   'upgrade_choice'),
     ev(46_000,   'upgrade_choice'),
     ev(60_000,   'upgrade_choice'),
-    ev(61_000,   'wave_spawn',   { wave: 6, count: 34, pattern: 'burst_sides' }),
-    ev(61_000,   'wave_spawn',   { wave: 7, count: 40, pattern: 'scatter' }),
+    ev(61_000,   'wave_spawn',   { wave: 6, count: 32, pattern: 'burst_sides' }),
+    ev(61_000,   'wave_spawn',   { wave: 7, count: 38, pattern: 'scatter' }),
     ev(63_000,   'boss_warning', { bossId: 'boss_moon_vault' }),
     ev(66_000,   'mid_boss',     { bossId: 'boss_moon_vault' }),
     ev(86_000,   'upgrade_choice'),
     ev(91_000,   'boss_warning', { bossId: 'boss_star_eater_cherub' }),
     ev(94_000,   'final_boss',   { bossId: 'boss_star_eater_cherub' }),
-    ev(110_000,  'end_run'),
+    ev(100_000,  'end_run'),
   ],
 }
 

@@ -16,10 +16,10 @@ export interface OfflineLootItem {
   type: 'gear' | 'shard' | 'gem'
 }
 
-const GOLD_PER_HOUR = 800
-const GEM_PER_4H = 4
-const SHARD_PER_6H = 2
-const MAX_OFFLINE_HOURS = 8
+const GOLD_PER_HOUR = 1_150
+const GEM_PER_4H = 6
+const SHARD_PER_6H = 3
+const MAX_OFFLINE_HOURS = 10
 
 const OFFLINE_LOOT_TABLE: Array<{ weight: number; rarity: Rarity; name: string; type: OfflineLootItem['type'] }> = [
   { weight: 40, rarity: 'common',   name: 'Iron Shard',    type: 'shard' },
@@ -65,8 +65,8 @@ export function calculateOfflineRewards(lastSeenTimestamp: number): OfflineRewar
   const gemsEarned = Math.floor((hours / 4) * GEM_PER_4H)
   const shardEarned = Math.floor((hours / 6) * SHARD_PER_6H)
 
-  // 0–1 loot items per 2 hours offline
-  const lootCount = Math.min(3, Math.floor(hours / 2))
+  // 0-1 loot items per 1.5 hours offline
+  const lootCount = Math.min(4, Math.floor(hours / 1.5))
   const lootItems = rollOfflineLoot(lootCount)
 
   return {

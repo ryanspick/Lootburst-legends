@@ -145,7 +145,7 @@ export default function RiftRunScreen({ onExit }: Props) {
       ? squadHeroIds.filter(Boolean)
       : FALLBACK_HERO_IDS
     const tierData = getRiftTier(selectedRiftTier)
-    const runDiff = Math.min(1 + totalRifts * 0.025, 2.5)
+    const runDiff = Math.min(1 + totalRifts * 0.018, 2.15)
     const difficultyMult = runDiff * tierData.enemyMult
     const startBoosts = consumeBoosts()
 

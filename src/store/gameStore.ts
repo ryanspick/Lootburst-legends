@@ -11,6 +11,7 @@ import {
 import { FREE_COSMETIC_IDS, getCosmeticById } from '@/data/cosmeticsData'
 import type { CosmeticType } from '@/data/cosmeticsData'
 import { ACHIEVEMENTS } from '@/data/achievementsData'
+import { MAX_PLAYABLE_RIFT_TIER } from '@/game/rift/riftTiers'
 
 export interface RunRecord {
   kills: number
@@ -116,6 +117,7 @@ interface GameState {
 
   // Actions
   addGold: (amount: number) => void
+  addKeys: (amount: number) => void
   spendGold: (amount: number) => boolean
   setRiftTier: (tier: number) => void
   buyBoost: (id: string, cost: number) => boolean
@@ -190,11 +192,11 @@ export function transferEquippedGearLoadout(
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      gold: 48_220,
-      gems: 340,
-      keys: 2,
-      shards: 12,
-      pityCount: 34,
+      gold: 1_500,
+      gems: 120,
+      keys: 3,
+      shards: 0,
+      pityCount: 0,
       selectedRiftTier: 1,
       runBoosts: [],
       ownedHeroes: [
@@ -215,12 +217,12 @@ export const useGameStore = create<GameState>()(
         { id: 'gear_crystal_spike',       instanceId: 'g_start_4', equipped: false },
         { id: 'gear_storm_band',          instanceId: 'g_start_5', equipped: false },
       ],
-      totalRifts: 42,
-      totalKills: 1840,
-      totalGoldEarned: 284_220,
-      totalCapsulePulls: 67,
-      highestPower: 6400,
-      lastSeenAt: Date.now() - 2 * 3_600_000,
+      totalRifts: 0,
+      totalKills: 0,
+      totalGoldEarned: 0,
+      totalCapsulePulls: 0,
+      highestPower: 0,
+      lastSeenAt: Date.now(),
       gemOfferExpiresAt: 0,
       starterPacksBought: [],
       lastDailyChestAt: 0,
@@ -243,12 +245,13 @@ export const useGameStore = create<GameState>()(
       runHistory: [],
 
       addGold: (amount) => set(s => ({ gold: s.gold + amount, totalGoldEarned: s.totalGoldEarned + amount })),
+      addKeys: (amount) => set(s => ({ keys: s.keys + amount })),
       spendGold: (amount) => {
         if (get().gold < amount) return false
         set(s => ({ gold: s.gold - amount }))
         return true
       },
-      setRiftTier: (tier) => set({ selectedRiftTier: Math.max(1, Math.min(5, tier)) }),
+      setRiftTier: (tier) => set({ selectedRiftTier: Math.max(1, Math.min(MAX_PLAYABLE_RIFT_TIER, tier)) }),
       buyBoost: (id, cost) => {
         if (get().gold < cost) return false
         set(s => ({ gold: s.gold - cost, runBoosts: [...s.runBoosts, id] }))
