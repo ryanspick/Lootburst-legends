@@ -86,7 +86,7 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
         {/* Rewards */}
         {phase === 'reveal' && (
           <div className={styles.rewards}>
-            <div className={styles.rewardRow}>
+            <div className={styles.rewardRow} style={{ color: '#ffd700' }}>
               <img src={generateRewardIcon('gold', 'uncommon')} alt="" className={styles.rewardIcon} aria-hidden="true" />
               <span className={styles.rewardLabel}>Gold</span>
               <strong className={styles.rewardValue} style={{ color: '#ffd700' }}>
@@ -94,7 +94,7 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
               </strong>
             </div>
             {reward.gemsEarned > 0 && (
-              <div className={styles.rewardRow}>
+              <div className={styles.rewardRow} style={{ color: RARITY_COLOURS.rare.primary }}>
                 <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.rewardIcon} aria-hidden="true" />
                 <span className={styles.rewardLabel}>Gems</span>
                 <strong className={styles.rewardValue} style={{ color: '#aa44ff' }}>
@@ -103,7 +103,7 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
               </div>
             )}
             {reward.shardEarned > 0 && (
-              <div className={styles.rewardRow}>
+              <div className={styles.rewardRow} style={{ color: RARITY_COLOURS.epic.primary }}>
                 <img src={generateRewardIcon('shard', 'epic')} alt="" className={styles.rewardIcon} aria-hidden="true" />
                 <span className={styles.rewardLabel}>Shards</span>
                 <strong className={styles.rewardValue} style={{ color: '#44aaff' }}>
@@ -119,7 +119,10 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
                   <div
                     key={i}
                     className={styles.lootItem}
-                    style={{ borderColor: RARITY_COLOURS[item.rarity]?.primary ?? '#555' }}
+                    style={{
+                      borderColor: RARITY_COLOURS[item.rarity]?.primary ?? '#555',
+                      color: RARITY_COLOURS[item.rarity]?.primary ?? '#88ccff',
+                    }}
                   >
                     <img
                       src={generateRewardIcon(item.type === 'gem' ? 'gem' : 'loot', item.rarity)}

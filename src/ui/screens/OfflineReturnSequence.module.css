@@ -82,22 +82,39 @@
 }
 
 .rewardRow {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: rgba(255,255,255,0.04);
+  background:
+    radial-gradient(circle at 10% 50%, currentColor 0%, transparent 34%),
+    rgba(255,255,255,0.04);
+  border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
   border-radius: 6px;
   padding: 8px 12px;
+  overflow: hidden;
+}
+
+.rewardRow::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 5px;
+  background: linear-gradient(110deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  opacity: 0.75;
+  pointer-events: none;
 }
 
 .rewardIcon {
+  position: relative;
+  z-index: 1;
   width: 24px;
   height: 24px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 5px #ffffff55);
+  filter: drop-shadow(0 0 5px currentColor) drop-shadow(0 0 10px currentColor);
 }
-.rewardLabel { flex: 1; text-align: left; font-size: 13px; color: var(--text-muted, #889); }
-.rewardValue { font-size: 15px; font-weight: 700; }
+.rewardLabel { position: relative; z-index: 1; flex: 1; text-align: left; font-size: 13px; color: var(--text-muted, #889); }
+.rewardValue { position: relative; z-index: 1; font-size: 15px; font-weight: 700; }
 
 .lootSection {
   border-top: 1px solid #334;
@@ -115,16 +132,22 @@
 }
 
 .lootItem {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 6px 10px;
   border-radius: 5px;
   border: 1px solid #334;
-  background: rgba(255,255,255,0.03);
+  background:
+    radial-gradient(circle at 12% 50%, currentColor 0%, transparent 36%),
+    rgba(255,255,255,0.03);
+  overflow: hidden;
 }
 
 .lootRarity {
+  position: relative;
+  z-index: 1;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -132,13 +155,17 @@
 }
 
 .lootIcon {
+  position: relative;
+  z-index: 1;
   width: 28px;
   height: 28px;
   image-rendering: pixelated;
-  filter: drop-shadow(0 0 6px currentColor);
+  filter: drop-shadow(0 0 6px currentColor) drop-shadow(0 0 12px currentColor);
 }
 
 .lootName {
+  position: relative;
+  z-index: 1;
   font-size: 12px;
   color: #ccc;
 }

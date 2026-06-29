@@ -6,7 +6,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 16px;
+  gap: 10px;
   z-index: 80;
   padding: 20px 12px;
   backdrop-filter: blur(2px);
@@ -30,6 +30,59 @@
 .sub {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.buildSummary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 5px 10px;
+  background: rgba(6, 8, 16, 0.82);
+  border: 1px solid rgba(136, 204, 255, 0.22);
+  border-radius: 999px;
+}
+
+.buildSummary span,
+.buildSummary small,
+.laneHint {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.buildSummary span,
+.buildSummary small {
+  color: var(--text-muted);
+}
+
+.buildSummary strong {
+  color: #88ccff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.buildLanes {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  max-width: min(620px, 100%);
+}
+
+.buildLane {
+  padding: 3px 6px;
+  color: #d6f7ff;
+  background: rgba(68, 136, 255, 0.08);
+  border: 1px solid rgba(68, 136, 255, 0.22);
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .cards {
@@ -122,6 +175,16 @@
   font-weight: 900;
   letter-spacing: 1px;
   text-transform: uppercase;
+}
+
+.laneHint {
+  margin-top: -3px;
+  color: #6677b8;
+}
+
+.laneHint[data-hot='true'] {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.55);
 }
 
 .synergy {

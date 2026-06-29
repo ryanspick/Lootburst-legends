@@ -1,8 +1,10 @@
 import type { Rarity } from '@/constants/palette'
 import { RARITY_COLOURS } from '@/constants/palette'
-import { createPC, darken, glow, lighten, o, p, r, toDataURL } from './pixelCanvas'
+import { addSpriteShading, createPC, darken, glow, lighten, p, r, tmpl, toDataURL } from './pixelCanvas'
 
 export type RewardIconKind = 'gold' | 'gem' | 'shard' | 'xp' | 'loot'
+
+type PixelContext = ReturnType<typeof createPC>['pc']
 
 const cache = new Map<string, string>()
 
@@ -11,10 +13,10 @@ export function generateRewardIcon(kind: RewardIconKind, rarity: Rarity = 'rare'
   const cached = cache.get(key)
   if (cached) return cached
 
-  const { canvas, pc } = createPC(16, 16)
+  const { canvas, pc } = createPC(24, 24)
   const rc = RARITY_COLOURS[rarity]
 
-  glow(pc, 2, 2, 12, 12, rc.glow, rarity === 'common' ? 3 : 8)
+  drawRewardAura(pc, rc.primary, rc.glow, rarity)
 
   switch (kind) {
     case 'gold':
@@ -27,125 +29,243 @@ export function generateRewardIcon(kind: RewardIconKind, rarity: Rarity = 'rare'
       drawShard(pc, rarity)
       break
     case 'xp':
-      drawXp(pc)
+      drawXp(pc, rarity)
       break
     case 'loot':
       drawLoot(pc, rarity)
       break
   }
 
-  if (rarity === 'legendary' || rarity === 'mythic') {
-    sparkle(pc, 1, 2, rc.primary)
-    sparkle(pc, 13, 3, '#ffffff')
-    sparkle(pc, 2, 13, rc.primary)
-  } else {
-    p(pc, 2, 2, '#ffffff', 0.5)
-    p(pc, 13, 12, rc.primary, 0.45)
-  }
+  drawPrizeGlints(pc, rc.primary, rarity)
+  addSpriteShading(pc, kindAccent(kind, rarity))
 
   const url = toDataURL(canvas)
   cache.set(key, url)
   return url
 }
 
-function sparkle(pc: ReturnType<typeof createPC>['pc'], x: number, y: number, color: string) {
-  p(pc, x, y - 1, color, 0.75)
-  p(pc, x - 1, y, color, 0.75)
+function kindAccent(kind: RewardIconKind, rarity: Rarity): string {
+  if (kind === 'gold') return '#ffd700'
+  if (kind === 'gem') return RARITY_COLOURS[rarity].primary
+  if (kind === 'shard') return '#d8b4fe'
+  if (kind === 'xp') return '#44ccff'
+  return RARITY_COLOURS[rarity].primary
+}
+
+function drawRewardAura(pc: PixelContext, primary: string, glowColor: string, rarity: Rarity) {
+  const strength = rarity === 'common' ? 3 : rarity === 'uncommon' ? 5 : rarity === 'rare' ? 7 : 10
+  glow(pc, 4, 4, 16, 16, glowColor, strength)
+  r(pc, 11, 1, 2, 22, primary, 0.12)
+  r(pc, 1, 11, 22, 2, primary, 0.12)
+
+  for (let i = 0; i < 8; i++) {
+    p(pc, 4 + i, 4 + i, glowColor, 0.11)
+    p(pc, 19 - i, 4 + i, glowColor, 0.11)
+  }
+
+  if (rarity === 'legendary' || rarity === 'mythic') {
+    r(pc, 3, 3, 18, 18, glowColor, 0.06)
+    r(pc, 5, 5, 14, 14, primary, 0.08)
+  }
+}
+
+function drawPrizeGlints(pc: PixelContext, primary: string, rarity: Rarity) {
+  sparkle(pc, 3, 4, '#ffffff')
+  sparkle(pc, 20, 5, primary)
+  sparkle(pc, 4, 20, primary)
+  p(pc, 18, 18, '#ffffff', 0.85)
+  p(pc, 21, 15, primary, 0.7)
+
+  if (rarity === 'mythic') {
+    const cols = ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#00ffff', '#4488ff', '#ff00ff']
+    for (let i = 0; i < 7; i++) {
+      p(pc, 7 + i, 22, cols[i], 0.9)
+      p(pc, 22, 7 + i, cols[(i + 2) % cols.length], 0.75)
+      p(pc, 1, 7 + i, cols[(i + 4) % cols.length], 0.55)
+    }
+  }
+}
+
+function sparkle(pc: PixelContext, x: number, y: number, color: string) {
+  p(pc, x, y - 2, color, 0.55)
+  p(pc, x - 1, y - 1, color, 0.75)
+  p(pc, x, y - 1, '#ffffff')
+  p(pc, x + 1, y - 1, color, 0.75)
+  p(pc, x - 2, y, color, 0.55)
+  p(pc, x - 1, y, '#ffffff')
   p(pc, x, y, '#ffffff')
-  p(pc, x + 1, y, color, 0.75)
-  p(pc, x, y + 1, color, 0.75)
+  p(pc, x + 1, y, '#ffffff')
+  p(pc, x + 2, y, color, 0.55)
+  p(pc, x - 1, y + 1, color, 0.75)
+  p(pc, x, y + 1, '#ffffff')
+  p(pc, x + 1, y + 1, color, 0.75)
+  p(pc, x, y + 2, color, 0.55)
 }
 
-function drawGold(pc: ReturnType<typeof createPC>['pc']) {
+function drawGold(pc: PixelContext) {
+  const edge = '#4b2600'
+  const amber = '#d97706'
   const gold = '#ffd34a'
-  const hot = '#fff2a8'
-  const amber = '#ff9f1c'
-  const edge = '#5a3100'
+  const hot = '#fff4a8'
 
-  r(pc, 3, 8, 10, 5, amber)
-  o(pc, 3, 8, 10, 5, edge)
-  r(pc, 4, 7, 10, 5, gold)
-  o(pc, 4, 7, 10, 5, edge)
-  r(pc, 2, 5, 10, 5, gold)
-  o(pc, 2, 5, 10, 5, edge)
-  r(pc, 4, 6, 5, 1, hot)
-  p(pc, 7, 8, hot, 0.9)
-  p(pc, 8, 7, hot, 0.8)
-  sparkle(pc, 12, 4, '#fff6aa')
+  tmpl(pc, [
+    '....KKKKKKK.....',
+    '..KKAAAAAAAK....',
+    '.KAAAGGGGAAK...',
+    '.KAAGHHHHGAK...',
+    '.KAAGHGGHGAK...',
+    '.KAAAGGGGAAK...',
+    '..KKAAAAAKK....',
+    '....KKKKK......',
+  ], { K: edge, A: amber, G: gold, H: hot }, 4, 3)
+
+  r(pc, 5, 14, 14, 4, amber)
+  r(pc, 4, 13, 16, 1, edge)
+  r(pc, 4, 17, 16, 1, edge)
+  r(pc, 5, 12, 14, 4, gold)
+  r(pc, 4, 12, 1, 4, edge)
+  r(pc, 19, 12, 1, 4, edge)
+  r(pc, 7, 13, 5, 1, hot)
+
+  r(pc, 8, 18, 11, 3, amber)
+  r(pc, 7, 18, 13, 1, edge)
+  r(pc, 7, 20, 13, 1, edge)
+  r(pc, 9, 17, 10, 3, gold)
+  r(pc, 10, 18, 4, 1, hot)
 }
 
-function drawGem(pc: ReturnType<typeof createPC>['pc'], rarity: Rarity) {
+function drawGem(pc: PixelContext, rarity: Rarity) {
   const rc = RARITY_COLOURS[rarity]
   const body = rarity === 'common' ? '#cfe8ff' : rc.primary
-  const hi = lighten(body, 70)
-  const low = darken(body, 45)
-  const edge = '#111122'
+  const edge = '#101026'
+  const hi = lighten(body, 76)
+  const mid = lighten(body, 24)
+  const low = darken(body, 44)
+  const deep = darken(body, 70)
 
-  r(pc, 5, 2, 6, 2, hi)
-  r(pc, 3, 4, 10, 2, body)
-  r(pc, 4, 6, 8, 2, body)
-  r(pc, 5, 8, 6, 2, low)
-  r(pc, 6, 10, 4, 2, low)
-  r(pc, 7, 12, 2, 1, darken(low, 30))
-  p(pc, 4, 3, edge); p(pc, 11, 3, edge)
-  p(pc, 3, 4, edge); p(pc, 12, 4, edge)
-  p(pc, 4, 8, edge); p(pc, 11, 8, edge)
-  p(pc, 5, 10, edge); p(pc, 10, 10, edge)
-  p(pc, 7, 13, edge); p(pc, 8, 13, edge)
-  r(pc, 6, 4, 2, 6, '#ffffff', 0.30)
-  p(pc, 5, 3, '#ffffff', 0.85)
+  tmpl(pc, [
+    '......KKKK......',
+    '....KKHHHHKK....',
+    '...KHHMMMMHHK...',
+    '..KMMBBBBMMMK..',
+    '.KMMBBBBBBBBK.',
+    '.KBBBBBBBBBBK.',
+    '..KBBBBBBBBK..',
+    '...KBBBBBBK...',
+    '....KLLLLK....',
+    '.....KLLK.....',
+    '......KK......',
+  ], { K: edge, H: hi, M: mid, B: body, L: low }, 4, 4)
+
+  r(pc, 10, 7, 2, 8, '#ffffff', 0.28)
+  r(pc, 13, 7, 1, 7, deep, 0.5)
+  p(pc, 9, 5, '#ffffff', 0.9)
+  p(pc, 8, 6, '#ffffff', 0.6)
 }
 
-function drawShard(pc: ReturnType<typeof createPC>['pc'], rarity: Rarity) {
+function drawShard(pc: PixelContext, rarity: Rarity) {
   const rc = RARITY_COLOURS[rarity]
   const core = rarity === 'common' ? '#68d8ff' : rc.primary
   const edge = '#14142e'
+  const hi = lighten(core, 76)
+  const mid = lighten(core, 18)
+  const low = darken(core, 42)
 
-  r(pc, 7, 1, 3, 12, core)
-  r(pc, 5, 4, 3, 9, darken(core, 28))
-  r(pc, 9, 5, 3, 7, lighten(core, 22))
-  p(pc, 8, 0, lighten(core, 72))
-  p(pc, 6, 2, edge); p(pc, 10, 2, edge)
-  p(pc, 5, 4, edge); p(pc, 12, 5, edge)
-  p(pc, 4, 10, edge); p(pc, 11, 12, edge)
-  r(pc, 3, 12, 10, 2, '#000000', 0.22)
-  r(pc, 7, 4, 1, 7, '#ffffff', 0.35)
-  sparkle(pc, 12, 3, lighten(core, 70))
+  tmpl(pc, [
+    '......KK........',
+    '.....KHHK.......',
+    '.....KHHK.......',
+    '....KHHMMK......',
+    '....KHHMMK......',
+    '...KHHMMBBK.....',
+    '...KHHMMBBK.....',
+    '..KHHMMBBBBK....',
+    '..KHHMMBBBBK....',
+    '.KHHMMBBBBLLK...',
+    '.KHHMMBBBBLLK...',
+    '..KKMMBBBBLK....',
+    '....KBBBBLK.....',
+    '.....KBBLK......',
+    '......KKK.......',
+  ], { K: edge, H: hi, M: mid, B: core, L: low }, 4, 3)
+
+  r(pc, 5, 12, 3, 7, darken(core, 30))
+  r(pc, 4, 13, 1, 5, edge)
+  r(pc, 7, 12, 1, 6, edge)
+  p(pc, 6, 11, hi)
+  r(pc, 17, 10, 3, 8, mid)
+  r(pc, 16, 11, 1, 6, edge)
+  r(pc, 20, 12, 1, 5, edge)
+  p(pc, 18, 9, hi)
+  r(pc, 5, 20, 14, 2, '#000000', 0.22)
 }
 
-function drawXp(pc: ReturnType<typeof createPC>['pc']) {
-  const cyan = '#4de8ff'
+function drawXp(pc: PixelContext, rarity: Rarity) {
+  const rc = RARITY_COLOURS[rarity]
+  const cyan = '#45e8ff'
   const blue = '#2276ff'
   const white = '#ffffff'
-  const edge = '#08152d'
+  const edge = '#07152c'
+  const gold = '#ffe66d'
 
-  p(pc, 8, 1, white); p(pc, 8, 2, cyan)
-  p(pc, 7, 3, cyan); p(pc, 9, 3, cyan)
-  r(pc, 6, 4, 5, 2, white)
-  r(pc, 4, 6, 9, 2, cyan)
-  r(pc, 6, 8, 5, 2, blue)
-  p(pc, 5, 9, blue); p(pc, 11, 9, blue)
-  p(pc, 4, 10, blue); p(pc, 12, 10, blue)
-  p(pc, 8, 10, cyan)
-  p(pc, 8, 11, white)
-  p(pc, 2, 7, edge); p(pc, 13, 7, edge); p(pc, 8, 13, edge)
-  sparkle(pc, 3, 3, '#ffee66')
-  sparkle(pc, 13, 4, '#9ff7ff')
+  tmpl(pc, [
+    '........KK........',
+    '.......KHHK.......',
+    '......KHHHHK......',
+    '...KKKHHHHHHKKK...',
+    '..KHHHHWWWWHHHHK..',
+    '...KHHWWWWWWHHK...',
+    '....KWWCCCCWWK....',
+    '...KWWCCCCCCWWK...',
+    '..KWWCCBBBBCCWWK..',
+    '...KCCBBBBBBCCK...',
+    '....KBBBBBBBBK....',
+    '.....KBBBBBBK.....',
+    '......KBBBBK......',
+    '.......KKKK.......',
+  ], { K: edge, H: gold, W: white, C: cyan, B: blue }, 3, 2)
+
+  r(pc, 7, 14, 3, 1, white)
+  r(pc, 8, 15, 2, 1, cyan)
+  r(pc, 9, 16, 3, 1, white)
+  r(pc, 7, 17, 3, 1, cyan)
+  r(pc, 7, 18, 3, 1, white)
+
+  r(pc, 14, 14, 4, 1, white)
+  r(pc, 14, 15, 1, 4, cyan)
+  r(pc, 15, 16, 3, 1, white)
+  r(pc, 18, 15, 1, 1, cyan)
+  r(pc, 18, 17, 1, 1, cyan)
 }
 
-function drawLoot(pc: ReturnType<typeof createPC>['pc'], rarity: Rarity) {
+function drawLoot(pc: PixelContext, rarity: Rarity) {
   const rc = RARITY_COLOURS[rarity]
+  const edge = '#2a1600'
   const wood = '#9b6234'
-  const dark = '#432404'
+  const lightWood = '#c98745'
+  const darkWood = '#5a320e'
+  const metal = rc.primary
+  const shine = lighten(rc.primary, 72)
 
-  r(pc, 3, 6, 10, 7, wood)
-  o(pc, 3, 6, 10, 7, dark)
-  r(pc, 2, 4, 12, 4, lighten(wood, 28))
-  o(pc, 2, 4, 12, 4, dark)
-  r(pc, 4, 7, 8, 2, rc.primary, 0.82)
-  r(pc, 7, 4, 2, 9, rc.primary)
-  r(pc, 6, 7, 4, 3, '#fff2aa', 0.45)
-  r(pc, 4, 3, 8, 2, rc.glow, 0.45)
-  sparkle(pc, 5, 2, rc.primary)
-  sparkle(pc, 11, 3, '#ffffff')
+  r(pc, 6, 7, 12, 5, lightWood)
+  r(pc, 5, 8, 14, 1, edge)
+  r(pc, 5, 11, 14, 1, edge)
+  r(pc, 4, 11, 16, 8, wood)
+  r(pc, 4, 11, 1, 8, edge)
+  r(pc, 19, 11, 1, 8, edge)
+  r(pc, 5, 18, 14, 1, edge)
+  r(pc, 5, 12, 14, 2, darkWood, 0.45)
+
+  r(pc, 11, 6, 2, 13, metal)
+  r(pc, 8, 12, 8, 4, metal)
+  r(pc, 9, 13, 6, 2, shine, 0.48)
+  r(pc, 10, 9, 4, 2, shine, 0.35)
+
+  r(pc, 8, 5, 2, 4, '#ffd34a')
+  r(pc, 14, 5, 2, 4, '#45e8ff')
+  p(pc, 7, 4, '#fff4a8')
+  p(pc, 16, 4, '#ffffff')
+
+  r(pc, 4, 19, 16, 2, '#000000', 0.22)
+  sparkle(pc, 18, 7, shine)
 }

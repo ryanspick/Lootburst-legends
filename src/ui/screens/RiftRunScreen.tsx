@@ -895,7 +895,11 @@ export default function RiftRunScreen({ onExit }: Props) {
 
       {/* Upgrade choice */}
       {phase === 'upgrade_choice' && upgradeChoice && (
-        <UpgradeCardChoice choice={upgradeChoice} onPick={handleUpgradePick} />
+        <UpgradeCardChoice
+          choice={upgradeChoice}
+          onPick={handleUpgradePick}
+          appliedUpgradeIds={stateRef.current?.appliedUpgrades ?? []}
+        />
       )}
 
       {/* Post-run: loot burst first, then summary */}

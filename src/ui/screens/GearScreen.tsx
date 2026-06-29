@@ -74,6 +74,13 @@ function getEquippedGear(ownedGear: OwnedGear[], heroId: string, slot: GearSlot)
   return ownedGear.find(g => g.equipped && g.equippedHeroId === heroId && g.equippedSlot === slot)
 }
 
+function compareGearForInventory(a: OwnedGear, b: OwnedGear): number {
+  const rarityDiff = RARITY_ORDER[getGearRarity(a.id)] - RARITY_ORDER[getGearRarity(b.id)]
+  if (rarityDiff !== 0) return rarityDiff
+  if (a.equipped !== b.equipped) return a.equipped ? 1 : -1
+  return (getGearVisual(a.id)?.displayName ?? a.id).localeCompare(getGearVisual(b.id)?.displayName ?? b.id)
+}
+
 function formatRarity(rarity: Rarity | 'all') {
   return rarity === 'all' ? 'All Rarity' : rarity.toUpperCase()
 }
@@ -143,6 +150,8 @@ export default function GearScreen() {
   const selectedGearSlot = selectedGear ? getGearSlot(selectedGear.id) : selectedSlot
   const selectedRarity = selectedGear ? getGearRarity(selectedGear.id) : 'common'
   const selectedStatLine = selectedGear ? getGearStatLine(selectedGear.id) : ''
+  const targetEquipped = selectedHeroId ? getEquippedGear(ownedGear, selectedHeroId, selectedSlot) : null
+  const selectedTargetLabel = selectedHeroId ? `${shortHeroName(selectedHeroId)} / ${SLOT_LABELS[selectedSlot]}` : 'No target'
   const activeEquippedCount = ownedGear.filter(g =>
     g.equipped && g.equippedHeroId && activeSquad.includes(g.equippedHeroId)
   ).length
@@ -161,20 +170,20 @@ export default function GearScreen() {
         if (q && !(visual?.displayName.toLowerCase().includes(q) || gear.id.toLowerCase().includes(q))) return false
         return true
       })
-      .sort((a, b) => {
-        const rarityDiff = RARITY_ORDER[getGearRarity(a.id)] - RARITY_ORDER[getGearRarity(b.id)]
-        if (rarityDiff !== 0) return rarityDiff
-        if (a.equipped !== b.equipped) return a.equipped ? 1 : -1
-        return (getGearVisual(a.id)?.displayName ?? a.id).localeCompare(getGearVisual(b.id)?.displayName ?? b.id)
-      })
+      .sort(compareGearForInventory)
   }, [equipFilter, ownedGear, rarityFilter, searchText, slotFilter])
 
   function selectHeroSlot(heroId: string, slot: GearSlot) {
     const equipped = getEquippedGear(ownedGear, heroId, slot)
+    const candidate = ownedGear
+      .filter(gear => !gear.equipped && getGearSlot(gear.id) === slot)
+      .sort(compareGearForInventory)[0]
     setSelectedHeroId(heroId)
     setSelectedSlot(slot)
     setSlotFilter(slot)
-    setSelectedInstanceId(equipped?.instanceId ?? null)
+    setEquipFilter(equipped ? 'all' : 'unequipped')
+    setRarityFilter('all')
+    setSelectedInstanceId(equipped?.instanceId ?? candidate?.instanceId ?? null)
   }
 
   function selectGear(gear: OwnedGear) {
@@ -313,6 +322,19 @@ export default function GearScreen() {
         </div>
 
         <div className={styles.filters}>
+          <div className={styles.targetStrip}>
+            <div className={styles.targetMain}>
+              <span>Target</span>
+              <strong>{selectedTargetLabel}</strong>
+            </div>
+            <span className={styles.targetPill}>{targetEquipped ? 'Filled' : 'Empty'}</span>
+            {targetEquipped && (
+              <span className={styles.targetState}>
+                {getGearVisual(targetEquipped.id)?.displayName ?? targetEquipped.id}
+              </span>
+            )}
+          </div>
+
           <div className={styles.segmented} aria-label="Slot filter">
             {(['all', ...SLOTS] as SlotFilter[]).map(slot => (
               <button
@@ -370,12 +392,15 @@ export default function GearScreen() {
                 const slot = getGearSlot(gear.id)
                 const rarity = visual.rarity as Rarity
                 const isSelected = selectedInstanceId === gear.instanceId
+                const onTarget = Boolean(gear.equipped && gear.equippedHeroId === selectedHeroId && gear.equippedSlot === selectedSlot)
+                const targetName = selectedHeroId ? shortHeroName(selectedHeroId).toUpperCase() : ''
                 return (
                   <article
                     key={gear.instanceId}
                     className={styles.gearCard}
                     data-selected={isSelected ? 'true' : undefined}
                     data-equipped={gear.equipped ? 'true' : undefined}
+                    data-slot-match={slot === selectedSlot ? 'true' : undefined}
                     data-rarity={rarity}
                     onClick={() => selectGear(gear)}
                   >
@@ -407,9 +432,9 @@ export default function GearScreen() {
                         event.stopPropagation()
                         handleEquip(gear.instanceId)
                       }}
-                      disabled={!selectedHeroId}
+                      disabled={!selectedHeroId || onTarget}
                     >
-                      {gear.equipped ? 'MOVE' : 'EQUIP'}
+                      {onTarget ? 'ON' : gear.equipped ? 'MOVE' : targetName ? `TO ${targetName}` : 'EQUIP'}
                     </button>
                   </article>
                 )
@@ -440,6 +465,9 @@ export default function GearScreen() {
                       <span className={styles.detailEquipped}>
                         Equipped by {getHeroName(selectedGear.equippedHeroId)}
                       </span>
+                    )}
+                    {!selectedGear.equipped && selectedHeroId && (
+                      <span className={styles.detailTarget}>Target {selectedTargetLabel}</span>
                     )}
                   </div>
                 </div>

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { UpgradeChoice } from '@/game/rift/riftTypes'
+import { getUpgradeBuildCounts, getUpgradeBuildSummary } from '@/game/rift/upgradeCards'
 import RarityFrame from './RarityFrame'
 import { playSound } from '@/audio/soundEvents'
 import styles from './UpgradeCardChoice.module.css'
@@ -7,11 +8,14 @@ import styles from './UpgradeCardChoice.module.css'
 interface Props {
   choice: UpgradeChoice
   onPick: (cardId: string) => void
+  appliedUpgradeIds?: string[]
 }
 
-export default function UpgradeCardChoice({ choice, onPick }: Props) {
+export default function UpgradeCardChoice({ choice, onPick, appliedUpgradeIds = [] }: Props) {
   const [picked, setPicked] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const buildSummary = useMemo(() => getUpgradeBuildSummary(appliedUpgradeIds), [appliedUpgradeIds])
+  const buildCounts = useMemo(() => getUpgradeBuildCounts(appliedUpgradeIds), [appliedUpgradeIds])
 
   useEffect(() => {
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
@@ -32,24 +36,44 @@ export default function UpgradeCardChoice({ choice, onPick }: Props) {
         <span className={styles.title}>ROUND CLEAR</span>
         <span className={styles.sub}>Pick a build upgrade</span>
       </div>
+      <div className={styles.buildSummary}>
+        <span>BUILD</span>
+        <strong>{buildSummary.primaryBuild ?? 'OPEN'}</strong>
+        <small>{buildSummary.total} picks</small>
+      </div>
+      {buildSummary.activeBuilds.length > 0 && (
+        <div className={styles.buildLanes}>
+          {buildSummary.activeBuilds.slice(0, 4).map(build => (
+            <span key={build} className={styles.buildLane}>
+              {build} {buildCounts[build]}
+            </span>
+          ))}
+        </div>
+      )}
       <div className={styles.cards}>
-        {choice.cards.map(card => (
-          <button
-            key={card.id}
-            className={`${styles.card} ${picked === card.id ? styles.picked : ''} ${picked && picked !== card.id ? styles.dimmed : ''}`}
-            onClick={() => handlePick(card.id)}
-            disabled={!!picked}
-          >
-            <RarityFrame rarity={card.rarity} size={56} animate={!picked}>
-              <div className={styles.cardIcon}>{card.icon}</div>
-            </RarityFrame>
-            <div className={styles.cardTitle} data-rarity={card.rarity}>{card.title}</div>
-            <div className={styles.buildTag}>{card.build}</div>
-            <div className={styles.cardDesc}>{card.description}</div>
-            {card.synergy && <div className={styles.synergy}>{card.synergy}</div>}
-            <div className={styles.cardRarity} data-rarity={card.rarity}>{card.rarity.toUpperCase()}</div>
-          </button>
-        ))}
+        {choice.cards.map(card => {
+          const laneCount = buildCounts[card.build] ?? 0
+          return (
+            <button
+              key={card.id}
+              className={`${styles.card} ${picked === card.id ? styles.picked : ''} ${picked && picked !== card.id ? styles.dimmed : ''}`}
+              onClick={() => handlePick(card.id)}
+              disabled={!!picked}
+            >
+              <RarityFrame rarity={card.rarity} size={56} animate={!picked}>
+                <div className={styles.cardIcon}>{card.icon}</div>
+              </RarityFrame>
+              <div className={styles.cardTitle} data-rarity={card.rarity}>{card.title}</div>
+              <div className={styles.buildTag}>{card.build}</div>
+              <div className={styles.laneHint} data-hot={laneCount > 0 ? 'true' : undefined}>
+                {laneCount > 0 ? `LANE ${laneCount + 1}` : 'NEW LANE'}
+              </div>
+              <div className={styles.cardDesc}>{card.description}</div>
+              {card.synergy && <div className={styles.synergy}>{card.synergy}</div>}
+              <div className={styles.cardRarity} data-rarity={card.rarity}>{card.rarity.toUpperCase()}</div>
+            </button>
+          )
+        })}
       </div>
     </div>
   )

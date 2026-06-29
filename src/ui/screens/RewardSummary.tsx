@@ -173,7 +173,7 @@ export default function RewardSummary({ reward, killCount, totalDamage, elapsedM
                 <div
                   key={item.id}
                   className={styles.lootCard}
-                  style={{ borderColor: irc.primary, animationDelay: `${i * 0.06}s` }}
+                  style={{ borderColor: irc.primary, color: irc.primary, animationDelay: `${i * 0.06}s` }}
                   data-rarity={item.rarity}
                 >
                   <img

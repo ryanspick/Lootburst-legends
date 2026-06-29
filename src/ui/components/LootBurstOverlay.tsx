@@ -157,6 +157,7 @@ export default function LootBurstOverlay({ items, gold = 0, xp = 0, onClaim }: P
                   className={styles.itemCard}
                   style={{
                     borderColor: irc.primary,
+                    color: irc.primary,
                     animationDelay: `${i * 0.05}s`,
                   }}
                   data-rarity={item.rarity}

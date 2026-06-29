@@ -20,7 +20,7 @@ vi.mock('@/hooks/reducedMotion',   () => ({ getReducedMotion: vi.fn(() => false)
 beforeEach(() => { Math.random = () => 0.5 })
 
 import { createInitialRiftState, applyUpgradeCard } from '@/game/rift/riftRunState'
-import { UPGRADE_CARDS } from '@/game/rift/upgradeCards'
+import { UPGRADE_CARDS, getUpgradeBuildCounts, getUpgradeBuildSummary } from '@/game/rift/upgradeCards'
 import type { RiftRunState } from '@/game/rift/riftTypes'
 
 function freshState(): RiftRunState {
@@ -234,5 +234,22 @@ describe('Upgrade cards — rollUpgradeCards', () => {
     const cards = rollUpgradeCards(4, [])
     const builds = new Set(cards.map(card => card.build))
     expect(builds.size).toBeGreaterThanOrEqual(3)
+  })
+})
+
+describe('Upgrade cards - build summaries', () => {
+  it('counts applied upgrades by build lane and identifies the primary lane', () => {
+    const summary = getUpgradeBuildSummary(['jawbreaker_rush', 'quick_hands', 'crit_confetti'])
+    expect(summary.total).toBe(3)
+    expect(summary.counts.Barrage).toBe(2)
+    expect(summary.counts.Crit).toBe(1)
+    expect(summary.primaryBuild).toBe('Barrage')
+    expect(summary.activeBuilds[0]).toBe('Barrage')
+  })
+
+  it('ignores unknown upgrade ids in build counts', () => {
+    const counts = getUpgradeBuildCounts(['gold_fever', 'missing_upgrade'])
+    expect(counts.Economy).toBe(1)
+    expect(Object.values(counts).reduce((sum, count) => sum + count, 0)).toBe(1)
   })
 })

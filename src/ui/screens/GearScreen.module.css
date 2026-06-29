@@ -240,6 +240,61 @@
   flex: 0 0 auto;
 }
 
+.targetStrip {
+  min-height: 36px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.8fr);
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: rgba(6, 8, 16, 0.72);
+  border: 1px solid rgba(255, 215, 0, 0.22);
+  border-radius: 6px;
+}
+
+.targetMain {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.targetMain span {
+  color: var(--text-muted);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.9px;
+  text-transform: uppercase;
+}
+
+.targetMain strong,
+.targetState {
+  min-width: 0;
+  color: var(--text-primary);
+  font-size: 10px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.targetPill {
+  padding: 3px 7px;
+  color: #d6f7ff;
+  background: rgba(0, 229, 255, 0.08);
+  border: 1px solid rgba(0, 229, 255, 0.24);
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.targetState {
+  color: #44ff88;
+  text-align: right;
+}
+
 .segmented {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -353,6 +408,10 @@
   background: rgba(7, 18, 25, 0.9);
 }
 
+.gearCard[data-slot-match='true'] {
+  border-color: rgba(136, 204, 255, 0.36);
+}
+
 .gearInfo {
   min-width: 0;
   display: flex;
@@ -384,14 +443,19 @@
 }
 
 .equippedText,
-.detailEquipped {
+.detailEquipped,
+.detailTarget {
   color: #44ff88;
   font-size: 9px;
   font-weight: 800;
 }
 
+.detailTarget {
+  color: #88ccff;
+}
+
 .quickEquip {
-  min-width: 56px;
+  min-width: 64px;
   min-height: 38px;
   padding: 0 8px;
   border: 1px solid rgba(136, 204, 255, 0.4);
@@ -401,7 +465,9 @@
   font-family: inherit;
   font-size: 9px;
   font-weight: 900;
+  line-height: 1.1;
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 
 .quickEquip:disabled {
@@ -560,7 +626,7 @@
 
   .detail {
     order: -1;
-    max-height: 150px;
+    max-height: 190px;
   }
 }
 
@@ -593,5 +659,14 @@
   .quickEquip {
     grid-column: 1 / -1;
     width: 100%;
+  }
+
+  .targetStrip {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .targetState {
+    grid-column: 1 / -1;
+    text-align: left;
   }
 }

@@ -515,6 +515,57 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
   },
 ]
 
+export const UPGRADE_BUILD_ORDER: UpgradeBuild[] = [
+  'Barrage',
+  'Skill',
+  'Ultimate',
+  'Crit',
+  'AoE',
+  'Guard',
+  'Drain',
+  'Economy',
+  'Power',
+  'Rainbow',
+]
+
+export interface UpgradeBuildSummary {
+  total: number
+  primaryBuild: UpgradeBuild | null
+  counts: Record<UpgradeBuild, number>
+  activeBuilds: UpgradeBuild[]
+}
+
+function emptyBuildCounts(): Record<UpgradeBuild, number> {
+  return UPGRADE_BUILD_ORDER.reduce((counts, build) => {
+    counts[build] = 0
+    return counts
+  }, {} as Record<UpgradeBuild, number>)
+}
+
+export function getUpgradeBuildCounts(upgradeIds: string[]): Record<UpgradeBuild, number> {
+  const counts = emptyBuildCounts()
+  for (const id of upgradeIds) {
+    const card = UPGRADE_CARDS.find(c => c.id === id)
+    if (card) counts[card.build] += 1
+  }
+  return counts
+}
+
+export function getUpgradeBuildSummary(upgradeIds: string[]): UpgradeBuildSummary {
+  const counts = getUpgradeBuildCounts(upgradeIds)
+  const activeBuilds = UPGRADE_BUILD_ORDER
+    .filter(build => counts[build] > 0)
+    .sort((a, b) => counts[b] - counts[a] || UPGRADE_BUILD_ORDER.indexOf(a) - UPGRADE_BUILD_ORDER.indexOf(b))
+  const total = UPGRADE_BUILD_ORDER.reduce((sum, build) => sum + counts[build], 0)
+
+  return {
+    total,
+    primaryBuild: activeBuilds[0] ?? null,
+    counts,
+    activeBuilds,
+  }
+}
+
 const RARITY_WEIGHT: Record<string, number> = {
   uncommon: 8,
   rare: 4,
