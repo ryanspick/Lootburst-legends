@@ -37,9 +37,9 @@ export const GEAR_STATS: Record<string, GearStatBonus> = {
 }
 
 export const GEAR_SLOT_LABEL: Record<GearSlot, string> = {
-  weapon:  '⚔️ WEAPON',
-  trinket: '💫 TRINKET',
-  relic:   '🛡️ RELIC',
+  weapon:  'WEAPON',
+  trinket: 'TRINKET',
+  relic:   'RELIC',
 }
 
 export interface HeroGearBonuses { atk: number; hp: number; def: number }
@@ -107,9 +107,9 @@ export function getGearStatLine(gearId: string): string {
   if (s.hp)               parts.push(`HP +${s.hp}`)
   if (s.def)              parts.push(`DEF +${s.def}`)
   if (s.critChanceBonus)  parts.push(`CRIT +${Math.round(s.critChanceBonus * 100)}%`)
-  if (s.critMultBonus)    parts.push(`×+${s.critMultBonus.toFixed(1)} MULT`)
+  if (s.critMultBonus)    parts.push(`CRIT DMG +${Math.round(s.critMultBonus * 100)}%`)
   if (s.goldMultBonus)    parts.push(`GOLD +${Math.round(s.goldMultBonus * 100)}%`)
   if (s.spdMultBonus)     parts.push(`SPD +${Math.round(s.spdMultBonus * 100)}%`)
   if (s.lifeStealBonus)   parts.push(`LEECH +${Math.round(s.lifeStealBonus * 100)}%`)
-  return parts.join(' · ')
+  return parts.join(' | ')
 }

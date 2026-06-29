@@ -19,6 +19,8 @@ import {
   NORMAL_WAVE_CLEAR_DELAY_MS,
   WAVE_AUTO_ADVANCE_MS,
   WAVE_CLEAR_DELAY_MS,
+  getEndlessDifficultyMultiplier,
+  getEndlessWaveEntry,
 } from '@/game/rift/waveDirector'
 import { getRiftTier } from '@/game/rift/riftTiers'
 import { computeHeroGearBonuses, computeRunGearBonuses } from '@/game/gear/gearStats'
@@ -57,6 +59,7 @@ interface Props {
 const CANVAS_W = 360
 const CANVAS_H = 780
 const PRE_BOSS_WAVE_COUNT = 5
+const SCRIPTED_WAVE_COUNT = 7
 
 type WaveQueueEntry = { wave: number; count: number; pattern: SpawnPattern }
 type WavePhase = 'idle' | 'wave_active' | 'boss_active' | 'resting'
@@ -124,8 +127,15 @@ export default function RiftRunScreen({ onExit }: Props) {
   const waveClearTimerRef = useRef(0)
   const activeWaveStartedAtMsRef = useRef(0)
   const activeBossKindRef = useRef<'mid' | 'final' | null>(null)
+  const bossDeathPendingRef = useRef(false)
   const lastWaveShownRef = useRef(-1)
   const [nextWaveIn, setNextWaveIn] = useState<number | null>(null)
+  const endlessModeRef = useRef(false)
+  const endlessPromptRef = useRef(false)
+  const endlessWaveRef = useRef(0)
+  const [endlessMode, setEndlessMode] = useState(false)
+  const [showEndlessPrompt, setShowEndlessPrompt] = useState(false)
+  const [endlessWave, setEndlessWave] = useState(0)
 
   // Bootstrap state once
   useEffect(() => {
@@ -179,7 +189,14 @@ export default function RiftRunScreen({ onExit }: Props) {
     waveClearTimerRef.current = 0
     activeWaveStartedAtMsRef.current = 0
     activeBossKindRef.current = null
+    bossDeathPendingRef.current = false
     lastWaveShownRef.current = -1
+    endlessModeRef.current = false
+    endlessPromptRef.current = false
+    endlessWaveRef.current = 0
+    setEndlessMode(false)
+    setShowEndlessPrompt(false)
+    setEndlessWave(0)
 
     stateRef.current = state
     timelineRef.current = timeline.filter(event => event.type !== 'wave_spawn')
@@ -253,6 +270,78 @@ export default function RiftRunScreen({ onExit }: Props) {
     setShowLootBurst(true)
   }, [claimPostRunRewards])
 
+  const finishRun = useCallback((wasWipe = false) => {
+    const state = stateRef.current
+    if (!state || state.phase === 'post_run') return
+
+    waveQueueRef.current = []
+    postBossWaveQueueRef.current = []
+    wavePhaseRef.current = 'idle'
+    waveClearTimerRef.current = 0
+    activeBossKindRef.current = null
+    endlessPromptRef.current = false
+
+    setNextWaveIn(null)
+    setShowEndlessPrompt(false)
+    setWavePresentation(null)
+
+    buildPostRunReward(state, wasWipe)
+    setPostRun(state.postRun)
+    setPhase('post_run')
+    setShowLootBurst(true)
+    emitCoinBurst({ x: 180, y: 270 }, 30)
+    claimPostRunRewards(state.postRun, state.killCount)
+  }, [claimPostRunRewards])
+
+  const queueEndlessWave = useCallback((state: RiftRunState) => {
+    const nextEndlessWave = endlessWaveRef.current + 1
+    endlessWaveRef.current = nextEndlessWave
+    setEndlessWave(nextEndlessWave)
+
+    state.difficultyMult = getEndlessDifficultyMultiplier(state.difficultyMult, nextEndlessWave)
+    waveQueueRef.current.push(getEndlessWaveEntry(nextEndlessWave))
+  }, [])
+
+  const offerEndlessPrompt = useCallback(() => {
+    const state = stateRef.current
+    if (!state || endlessModeRef.current || endlessPromptRef.current) return
+
+    endlessPromptRef.current = true
+    setShowEndlessPrompt(true)
+    setNextWaveIn(null)
+    setWavePresentation(null)
+  }, [])
+
+  const handleStartEndless = useCallback(() => {
+    const state = stateRef.current
+    if (!state) return
+
+    waveQueueRef.current = []
+    postBossWaveQueueRef.current = []
+    wavePhaseRef.current = 'idle'
+    waveClearTimerRef.current = 0
+    activeBossKindRef.current = null
+    endlessPromptRef.current = false
+    endlessModeRef.current = true
+    endlessWaveRef.current = 0
+
+    setShowEndlessPrompt(false)
+    setEndlessMode(true)
+    setEndlessWave(0)
+    setNextWaveIn(null)
+    setPhase('combat')
+    state.phase = 'combat'
+    queueEndlessWave(state)
+  }, [queueEndlessWave])
+
+  const handleCollectRewards = useCallback(() => {
+    finishRun(false)
+  }, [finishRun])
+
+  const handleCashOut = useCallback(() => {
+    finishRun(false)
+  }, [finishRun])
+
   const handleFloatDone = useCallback((id: string) => {
     setFloatEmissions(prev => prev.filter(e => e.id !== id))
   }, [])
@@ -314,6 +403,7 @@ export default function RiftRunScreen({ onExit }: Props) {
           const isAlive = state.boss.alive
           if (wasAlive === true && !isAlive && !showBossDeath) {
             setBossDeathSnap({ boss: { ...state.boss }, killCount: state.killCount, goldCollected: state.goldCollected })
+            bossDeathPendingRef.current = true
             setShowBossDeath(true)
             playTrack('rift')
           }
@@ -407,12 +497,18 @@ export default function RiftRunScreen({ onExit }: Props) {
               break
             }
             case 'end_run':
-              buildPostRunReward(state)
-              setPostRun(state.postRun)
-              setPhase('post_run')
-              setShowLootBurst(true)
-              emitCoinBurst({ x: 180, y: 270 }, 30)
-              claimPostRunRewards(state.postRun, state.killCount)
+              if (endlessModeRef.current) break
+              if (waveQueueRef.current.length > 0 ||
+                  postBossWaveQueueRef.current.length > 0 ||
+                  wavePhaseRef.current === 'wave_active' ||
+                  wavePhaseRef.current === 'boss_active' ||
+                  hasWaveMobsRemaining(state) ||
+                  !!state.boss?.alive ||
+                  bossDeathPendingRef.current) {
+                event.fired = false
+                break
+              }
+              offerEndlessPrompt()
               break
           }
         }
@@ -459,6 +555,8 @@ export default function RiftRunScreen({ onExit }: Props) {
                 postBossWaveQueueRef.current = []
               }
               activeBossKindRef.current = null
+            } else if (endlessModeRef.current) {
+              queueEndlessWave(state)
             }
           }
 
@@ -561,6 +659,10 @@ export default function RiftRunScreen({ onExit }: Props) {
   }, [])
 
   const timeLeft = Math.max(0, Math.ceil((RIFT_DURATION_MS - stats.elapsedMs) / 1000))
+  const timerLabel = endlessMode ? 'ENDLESS' : `${timeLeft}s`
+  const waveLabel = endlessMode
+    ? `ENDLESS ${Math.max(1, endlessWave)}`
+    : `W${currentWaveNum}/${SCRIPTED_WAVE_COUNT}`
 
   return (
     <div className={styles.screen}>
@@ -589,20 +691,24 @@ export default function RiftRunScreen({ onExit }: Props) {
       {/* HUD overlay */}
       <div className={styles.hud}>
         <div className={styles.hudLeft}>
-          <span className={styles.hudStat}>⚔️ {stats.kills}</span>
-          <span ref={goldHudRef} className={styles.hudStat}>💰 {stats.gold}</span>
+          <span className={styles.hudStat}>K {stats.kills}</span>
+          <span ref={goldHudRef} className={styles.hudStat}>G {stats.gold}</span>
           {currentWaveNum > 0 && !bossSnap?.alive && (
             <span className={styles.hudStat} style={{ color: '#88ccff', fontSize: 9 }}>
-              W{currentWaveNum}/7 · {stats.enemiesLeft}▼
+              {waveLabel} | {stats.enemiesLeft} left
             </span>
           )}
-          {stats.enemiesLeft === 0 && !bossSnap?.alive && currentWaveNum > 0 && phase === 'combat' && (
-            <span className={styles.bossApproaching}>⚠ BOSS SOON</span>
+          {!endlessMode && stats.enemiesLeft === 0 && !bossSnap?.alive && currentWaveNum > 0 && phase === 'combat' && (
+            <span className={styles.bossApproaching}>BOSS SOON</span>
           )}
         </div>
         <div className={styles.hudCenter}>
-          <div className={styles.hudTimer} data-urgent={timeLeft <= 15 ? 'true' : undefined}>
-            {timeLeft}s
+          <div
+            className={styles.hudTimer}
+            data-urgent={!endlessMode && timeLeft <= 15 ? 'true' : undefined}
+            data-endless={endlessMode ? 'true' : undefined}
+          >
+            {timerLabel}
           </div>
           {selectedRiftTier > 1 && (
             <span className={styles.hudTier} data-tier={selectedRiftTier}>
@@ -611,7 +717,11 @@ export default function RiftRunScreen({ onExit }: Props) {
           )}
         </div>
         <div className={styles.hudRight}>
-          <button className={styles.exitBtn} onClick={() => onExit()}>✕</button>
+          {endlessMode && phase === 'combat' ? (
+            <button className={styles.cashOutBtn} onClick={handleCashOut}>CASH OUT</button>
+          ) : (
+            <button className={styles.exitBtn} onClick={() => onExit()}>X</button>
+          )}
         </div>
       </div>
 
@@ -651,6 +761,28 @@ export default function RiftRunScreen({ onExit }: Props) {
               </button>
               <button className={styles.reviveNo} onClick={handleReviveDecline}>
                 Give Up
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showEndlessPrompt && phase === 'combat' && (
+        <div className={styles.endlessOverlay}>
+          <div className={styles.endlessPanel}>
+            <div className={styles.endlessKicker}>RIFT CLEAR</div>
+            <div className={styles.endlessTitle}>Keep Going?</div>
+            <div className={styles.endlessStats}>
+              <span>{stats.kills} kills</span>
+              <span>{stats.gold} gold</span>
+              <span>Wave {SCRIPTED_WAVE_COUNT} clear</span>
+            </div>
+            <div className={styles.endlessBtns}>
+              <button className={styles.endlessPrimary} onClick={handleStartEndless}>
+                ENDLESS
+              </button>
+              <button className={styles.endlessSecondary} onClick={handleCollectRewards}>
+                COLLECT
               </button>
             </div>
           </div>
@@ -708,7 +840,10 @@ export default function RiftRunScreen({ onExit }: Props) {
           boss={bossDeathSnap.boss}
           killCount={bossDeathSnap.killCount}
           goldEarned={Math.round(bossDeathSnap.goldCollected)}
-          onDone={() => setShowBossDeath(false)}
+          onDone={() => {
+            bossDeathPendingRef.current = false
+            setShowBossDeath(false)
+          }}
         />
       )}
 

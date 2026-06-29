@@ -23,7 +23,12 @@ import {
   spawnWave,
   tickCombat,
 } from '@/game/rift/riftRunState'
-import { getTimelineForZone } from '@/game/rift/waveDirector'
+import {
+  ENDLESS_MAX_COUNT,
+  getEndlessDifficultyMultiplier,
+  getEndlessWaveEntry,
+  getTimelineForZone,
+} from '@/game/rift/waveDirector'
 
 const THREE_HEROES = ['hero_copper_knight', 'hero_mushroom_medic', 'hero_goblin_sparkshot']
 
@@ -58,5 +63,17 @@ describe('Wave spawning regressions', () => {
       .map(event => event.data?.wave)
 
     expect(waveNumbers).toEqual([1, 2, 3, 4, 5, 6, 7])
+  })
+
+  it('builds endless waves after scripted wave 7 with rising mob counts', () => {
+    const first = getEndlessWaveEntry(1)
+    const second = getEndlessWaveEntry(2)
+    const late = getEndlessWaveEntry(99)
+
+    expect(first.wave).toBe(8)
+    expect(second.wave).toBe(9)
+    expect(second.count).toBeGreaterThan(first.count)
+    expect(late.count).toBe(ENDLESS_MAX_COUNT)
+    expect(getEndlessDifficultyMultiplier(2, 3)).toBeGreaterThan(2)
   })
 })

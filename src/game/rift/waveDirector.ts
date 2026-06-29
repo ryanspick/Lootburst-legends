@@ -4,8 +4,22 @@ export const RIFT_DURATION_MS    = 110_000   // longest zone end_run; HUD timer 
 export const NORMAL_WAVE_CLEAR_DELAY_MS = 250
 export const WAVE_CLEAR_DELAY_MS = 1_500     // delay after boss death before post-boss waves spawn
 export const WAVE_AUTO_ADVANCE_MS = 10_000   // max time before the next queued wave starts
+export const ENDLESS_FIRST_WAVE = 8
+export const ENDLESS_BASE_COUNT = 42
+export const ENDLESS_COUNT_STEP = 8
+export const ENDLESS_MAX_COUNT = 160
+export const ENDLESS_MAX_DIFFICULTY_MULT = 15
+
+export type WaveSpawnPattern = 'ring' | 'scatter' | 'burst_top' | 'burst_bottom' | 'burst_sides'
+
+export interface WaveSpawnEntry {
+  wave: number
+  count: number
+  pattern: WaveSpawnPattern
+}
 
 const DEFAULT_ZONE_ID = 'candy_cavern_rift'
+const ENDLESS_PATTERNS: WaveSpawnPattern[] = ['ring', 'scatter', 'burst_sides', 'burst_top', 'burst_bottom']
 
 // Enemy pools per zone × wave — escalating threat, zone-themed elements
 const ZONE_ENEMY_POOLS: Record<string, Record<number, string[]>> = {
@@ -164,6 +178,21 @@ export function getEnemyPoolForWaveInZone(wave: number, zoneId: string): string[
 
 export function getEnemyPoolForWave(wave: number): string[] {
   return getEnemyPoolForWaveInZone(wave, DEFAULT_ZONE_ID)
+}
+
+export function getEndlessWaveEntry(endlessWave: number): WaveSpawnEntry {
+  const normalizedWave = Math.max(1, Math.floor(endlessWave))
+  return {
+    wave: ENDLESS_FIRST_WAVE + normalizedWave - 1,
+    count: Math.min(ENDLESS_MAX_COUNT, ENDLESS_BASE_COUNT + (normalizedWave - 1) * ENDLESS_COUNT_STEP),
+    pattern: ENDLESS_PATTERNS[(normalizedWave - 1) % ENDLESS_PATTERNS.length],
+  }
+}
+
+export function getEndlessDifficultyMultiplier(currentDifficulty: number, endlessWave: number): number {
+  const normalizedWave = Math.max(1, Math.floor(endlessWave))
+  const step = Math.min(1.12, 1.055 + normalizedWave * 0.005)
+  return Math.min(ENDLESS_MAX_DIFFICULTY_MULT, Math.max(1, currentDifficulty) * step)
 }
 
 export function getTimelineForZone(zoneId: string): TimelineEvent[] {
