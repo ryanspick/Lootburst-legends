@@ -80,7 +80,7 @@ function makeHeroEntity(
 }
 
 // HP scales per wave — each successive wave spawns tankier enemies for a smooth ramp
-const WAVE_HP_SCALE = [1.0, 1.20, 1.42, 1.68, 1.98, 2.32, 2.70] as const
+const WAVE_HP_SCALE = [1.0, 1.20, 1.42, 1.68, 2.32, 2.70, 3.10] as const
 
 function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, diffMult = 1, hpMult = 1): CombatEntity {
   const def = enemiesData.enemies.find(e => e.id === enemyId)
@@ -95,7 +95,7 @@ function makeEnemyEntity(enemyId: string, x: number, y: number, index: number, d
     displayName: def.displayName,
     hp: base,
     maxHp: base,
-    atk: isElite ? Math.round(30 * atkScale) : Math.round(10 * atkScale),
+    atk: isElite ? Math.round(50 * atkScale) : Math.round(10 * atkScale),
     def: isElite ? 8 : 2,
     spd: 0.8,
     x,
@@ -403,8 +403,18 @@ export function spawnWave(state: RiftRunState, wave: number, count: number, patt
     pending.push({ enemyId, x: ex, y: ey, diffMult: diff, hpMult })
   }
 
-  // Append to queue (don't reset timer — let existing drip continue)
+  // Queue the wave and prime the drip timer so the first batch appears on the next combat tick.
+  state.waveIndex = wave
+  state.spawnTimerMs = SPAWN_INTERVAL_MS
   state.pendingSpawns.push(...pending)
+}
+
+export function countAliveEnemies(state: RiftRunState): number {
+  return state.enemies.reduce((n, e) => n + (e.alive ? 1 : 0), 0)
+}
+
+export function hasWaveMobsRemaining(state: RiftRunState): boolean {
+  return state.pendingSpawns.length > 0 || countAliveEnemies(state) > 0
 }
 
 export function spawnBoss(state: RiftRunState, bossId: string): void {
@@ -518,9 +528,9 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
   tickPetEffect(state, dtMs)
 
   // Drain pending spawn queue at a steady drip rate (4 per 50ms = ~80/s).
-  // Wave clears when visible enemies hit 0; remaining pending are discarded by the wave director.
+  // Pending spawns count toward wave activity so the screen cannot skip a wave before it appears.
   if (state.pendingSpawns.length > 0 && !state.boss?.alive) {
-    const currentAlive = state.enemies.reduce((n, e) => n + (e.alive ? 1 : 0), 0)
+    const currentAlive = countAliveEnemies(state)
     if (currentAlive < MAX_ALIVE_ENEMIES) {
       state.spawnTimerMs += dtMs
       if (state.spawnTimerMs >= SPAWN_INTERVAL_MS) {

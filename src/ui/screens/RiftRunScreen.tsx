@@ -9,10 +9,17 @@ import {
   triggerUpgradeChoice,
   applyUpgradeCard,
   reviveHeroes,
+  countAliveEnemies,
+  hasWaveMobsRemaining,
   type SpawnPattern,
 } from '@/game/rift/riftRunState'
 import { renderRiftFrame, clearCombatEmitCache } from '@/game/rift/combatLoop'
-import { RIFT_DURATION_MS, WAVE_CLEAR_DELAY_MS } from '@/game/rift/waveDirector'
+import {
+  RIFT_DURATION_MS,
+  NORMAL_WAVE_CLEAR_DELAY_MS,
+  WAVE_AUTO_ADVANCE_MS,
+  WAVE_CLEAR_DELAY_MS,
+} from '@/game/rift/waveDirector'
 import { getRiftTier } from '@/game/rift/riftTiers'
 import { computeHeroGearBonuses, computeRunGearBonuses } from '@/game/gear/gearStats'
 import { ZONES } from '@/game/rift/zoneBackgrounds'
@@ -49,6 +56,10 @@ interface Props {
 
 const CANVAS_W = 360
 const CANVAS_H = 780
+const PRE_BOSS_WAVE_COUNT = 5
+
+type WaveQueueEntry = { wave: number; count: number; pattern: SpawnPattern }
+type WavePhase = 'idle' | 'wave_active' | 'boss_active' | 'resting'
 
 export default function RiftRunScreen({ onExit }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -106,10 +117,13 @@ export default function RiftRunScreen({ onExit }: Props) {
   const shownHintsRef = useRef(new Set<string>())
   const lastGoldFlushRef = useRef(0)
   const lastFlushedGoldRef = useRef(0)
-  // Wave queue — completion-based spawning
-  const waveQueueRef = useRef<{ wave: number; count: number; pattern: SpawnPattern }[]>([])
-  const wavePhaseRef = useRef<'idle' | 'active' | 'resting'>('idle')
+  // Wave queue — clear-or-timer based spawning
+  const waveQueueRef = useRef<WaveQueueEntry[]>([])
+  const postBossWaveQueueRef = useRef<WaveQueueEntry[]>([])
+  const wavePhaseRef = useRef<WavePhase>('idle')
   const waveClearTimerRef = useRef(0)
+  const activeWaveStartedAtMsRef = useRef(0)
+  const activeBossKindRef = useRef<'mid' | 'final' | null>(null)
   const lastWaveShownRef = useRef(-1)
   const [nextWaveIn, setNextWaveIn] = useState<number | null>(null)
 
@@ -150,8 +164,25 @@ export default function RiftRunScreen({ onExit }: Props) {
       equippedMountId: storeSnapshot.equippedMountId,
       zoneId:          ZONES[zoneIdxRef.current].id,
     })
+    const waveEntries = timeline
+      .filter(event => event.type === 'wave_spawn')
+      .map<WaveQueueEntry>(event => ({
+        wave: (event.data?.wave as number) ?? 0,
+        count: (event.data?.count as number) ?? 3,
+        pattern: (event.data?.pattern as SpawnPattern) ?? 'ring',
+      }))
+      .sort((a, b) => a.wave - b.wave)
+
+    waveQueueRef.current = waveEntries.filter(entry => entry.wave <= PRE_BOSS_WAVE_COUNT)
+    postBossWaveQueueRef.current = waveEntries.filter(entry => entry.wave > PRE_BOSS_WAVE_COUNT)
+    wavePhaseRef.current = 'idle'
+    waveClearTimerRef.current = 0
+    activeWaveStartedAtMsRef.current = 0
+    activeBossKindRef.current = null
+    lastWaveShownRef.current = -1
+
     stateRef.current = state
-    timelineRef.current = timeline
+    timelineRef.current = timeline.filter(event => event.type !== 'wave_spawn')
     clearCombatEmitCache()
 
     // Countdown 3→2→1→GO
@@ -331,9 +362,16 @@ export default function RiftRunScreen({ onExit }: Props) {
             }
             case 'mid_boss': {
               const bId = event.data?.bossId as string
+              if (waveQueueRef.current.length > 0 ||
+                  wavePhaseRef.current === 'wave_active' ||
+                  hasWaveMobsRemaining(state)) {
+                event.fired = false
+                break
+              }
               spawnBoss(state, bId)
               state.bossPhase = 1
-              wavePhaseRef.current = 'active'  // ensures WAVE_CLEAR_DELAY_MS fires on boss death
+              wavePhaseRef.current = 'boss_active'
+              activeBossKindRef.current = 'mid'
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
               setBossPhase(1)
@@ -348,9 +386,18 @@ export default function RiftRunScreen({ onExit }: Props) {
             }
             case 'final_boss': {
               const bId = event.data?.bossId as string
+              if (waveQueueRef.current.length > 0 ||
+                  postBossWaveQueueRef.current.length > 0 ||
+                  wavePhaseRef.current === 'wave_active' ||
+                  hasWaveMobsRemaining(state) ||
+                  state.boss?.alive) {
+                event.fired = false
+                break
+              }
               spawnBoss(state, bId)
               state.bossPhase = 1
-              wavePhaseRef.current = 'active'  // ensures WAVE_CLEAR_DELAY_MS fires on boss death
+              wavePhaseRef.current = 'boss_active'
+              activeBossKindRef.current = 'final'
               triggerShake('bossDeath')
               setBossEntrance(state.boss)
               setBossPhase(1)
@@ -370,25 +417,58 @@ export default function RiftRunScreen({ onExit }: Props) {
           }
         }
 
-        // Wave queue: completion-based spawning
+        // Wave queue: clear-or-timer based spawning
         {
           const bossAlive = !!state.boss?.alive
-          // Count only visible (spawned) enemies — pendingSpawns are discarded on clear so the
-          // wave ends the moment heroes kill everything on screen, not after all queued enemies drain.
-          const aliveEnemies = state.enemies.filter(e => e.alive).length
+          // Pending spawns count as active mobs so a wave cannot clear before its first batch appears.
+          const aliveEnemies = countAliveEnemies(state)
+          const waveMobsRemaining = state.pendingSpawns.length > 0 || aliveEnemies > 0
 
-          // Detect wave cleared — discard pending spawns and start brief rest
-          if (wavePhaseRef.current === 'active' && aliveEnemies === 0 && !bossAlive) {
-            state.pendingSpawns = []
-            wavePhaseRef.current = 'resting'
-            waveClearTimerRef.current = 150  // 150ms: quick transition, coins still visible
+          const startNextWave = () => {
+            const next = waveQueueRef.current.shift()
+            if (!next) return
+
+            spawnWave(state, next.wave, next.count, next.pattern)
+            wavePhaseRef.current = 'wave_active'
+            activeWaveStartedAtMsRef.current = state.elapsedMs
+            waveClearTimerRef.current = 0
             setNextWaveIn(null)
+
+            if (next.wave !== lastWaveShownRef.current) {
+              lastWaveShownRef.current = next.wave
+              setWavePresentation({ waveIndex: next.wave, enemyCount: next.count })
+              setCurrentWaveNum(next.wave)
+            }
+          }
+
+          // Detect wave or boss cleared and start a brief deterministic rest.
+          if ((wavePhaseRef.current === 'wave_active' || wavePhaseRef.current === 'boss_active') &&
+              !bossAlive && !waveMobsRemaining) {
+            const completedPhase = wavePhaseRef.current
+            const completedBossKind = activeBossKindRef.current
+
+            wavePhaseRef.current = 'resting'
+            waveClearTimerRef.current = completedPhase === 'boss_active'
+              ? WAVE_CLEAR_DELAY_MS
+              : NORMAL_WAVE_CLEAR_DELAY_MS
+            setNextWaveIn(null)
+
+            if (completedPhase === 'boss_active') {
+              if (completedBossKind === 'mid' && postBossWaveQueueRef.current.length > 0) {
+                waveQueueRef.current.push(...postBossWaveQueueRef.current)
+                postBossWaveQueueRef.current = []
+              }
+              activeBossKindRef.current = null
+            }
           }
 
           // Tick rest countdown
           if (wavePhaseRef.current === 'resting') {
             waveClearTimerRef.current = Math.max(0, waveClearTimerRef.current - dt)
             setNextWaveIn(waveClearTimerRef.current > 0 ? Math.ceil(waveClearTimerRef.current / 1000) : null)
+            if (waveClearTimerRef.current <= 0 && waveQueueRef.current.length === 0) {
+              wavePhaseRef.current = 'idle'
+            }
           }
 
           // Spawn next wave when ready (idle first wave, or resting timer done)
@@ -397,24 +477,19 @@ export default function RiftRunScreen({ onExit }: Props) {
             (wavePhaseRef.current === 'resting' && waveClearTimerRef.current <= 0)
           )
           if (canSpawnNext) {
-            const next = waveQueueRef.current.shift()!
-            spawnWave(state, next.wave, next.count, next.pattern)
-            wavePhaseRef.current = 'active'
-            waveClearTimerRef.current = 0
-            setNextWaveIn(null)
-            if (next.wave !== lastWaveShownRef.current) {
-              lastWaveShownRef.current = next.wave
-              setWavePresentation({ waveIndex: next.wave, enemyCount: next.count })
-              setCurrentWaveNum(next.wave)
+            startNextWave()
+          } else if (wavePhaseRef.current === 'wave_active' && !bossAlive && waveQueueRef.current.length > 0) {
+            const waveElapsedMs = state.elapsedMs - activeWaveStartedAtMsRef.current
+            const nextWaveMs = Math.max(0, WAVE_AUTO_ADVANCE_MS - waveElapsedMs)
+            setNextWaveIn(nextWaveMs > 0 ? Math.ceil(nextWaveMs / 1000) : null)
+
+            if (waveElapsedMs >= WAVE_AUTO_ADVANCE_MS) {
+              startNextWave()
             }
+          } else if (wavePhaseRef.current !== 'resting') {
+            setNextWaveIn(null)
           }
 
-          // Boss cleared → return to idle so post-boss waves can spawn
-          if (wavePhaseRef.current === 'active' && bossAlive === false &&
-              state.boss !== null && !state.boss.alive && aliveEnemies === 0) {
-            wavePhaseRef.current = 'resting'
-            waveClearTimerRef.current = WAVE_CLEAR_DELAY_MS
-          }
         }
 
         // Track new loot drops — gems fly immediately, gold is batched

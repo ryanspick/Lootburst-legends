@@ -1,7 +1,9 @@
 import type { TimelineEvent } from './riftTypes'
 
 export const RIFT_DURATION_MS    = 110_000   // longest zone end_run; HUD timer max
+export const NORMAL_WAVE_CLEAR_DELAY_MS = 250
 export const WAVE_CLEAR_DELAY_MS = 1_500     // delay after boss death before post-boss waves spawn
+export const WAVE_AUTO_ADVANCE_MS = 10_000   // max time before the next queued wave starts
 
 const DEFAULT_ZONE_ID = 'candy_cavern_rift'
 
@@ -11,8 +13,8 @@ const ZONE_ENEMY_POOLS: Record<string, Record<number, string[]>> = {
     1: ['enemy_slime', 'enemy_bat', 'enemy_goblin'],
     2: ['enemy_slime', 'enemy_mushroom', 'enemy_skull', 'enemy_goblin'],
     3: ['enemy_mushroom', 'enemy_skull', 'enemy_ghost'],
-    4: ['enemy_gear_bug', 'enemy_ghost', 'enemy_flame_imp'],
-    5: ['enemy_ghost', 'enemy_void_wisp', 'enemy_elite_crystal_golem'],
+    4: ['enemy_elite_crystal_golem', 'enemy_ghost', 'enemy_skull'],
+    5: ['enemy_elite_crystal_golem', 'enemy_elite_gold_mimic', 'enemy_elite_shadow_reaper'],
     6: ['enemy_void_wisp', 'enemy_ghost', 'enemy_elite_crystal_golem', 'enemy_elite_gold_mimic'],
     7: ['enemy_void_wisp', 'enemy_ghost', 'enemy_elite_crystal_golem', 'enemy_elite_shadow_reaper'],
   },
@@ -58,10 +60,9 @@ function ev(atMs: number, type: TimelineEvent['type'], data?: Record<string, unk
   return { atMs, type, data, fired: false }
 }
 
-// Per-zone timelines — 7 waves, 4 upgrade breaks, zone-matched mid+final bosses.
-// All 5 pre-boss waves queue at atMs=0; they spawn completion-based (FIFO waveQueue) so
-// there are never dead gaps between waves. Waves 6/7 queue just before mid-boss so the
-// boss-alive flag blocks them until the boss dies; then WAVE_CLEAR_DELAY_MS gives breathing room.
+// Per-zone timelines define wave rosters, upgrade breaks, and zone-matched bosses.
+// RiftRunScreen pulls wave_spawn entries into explicit queues at run start; fixed
+// timeline timestamps no longer decide when normal waves begin.
 const ZONE_TIMELINES: Record<string, TimelineEvent[]> = {
   candy_cavern_rift: [
     ev(0,        'wave_spawn',   { wave: 1, count: 22, pattern: 'ring' }),
