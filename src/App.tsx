@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { TabId } from '@/constants/ui'
 import AppShell from '@/ui/layout/AppShell'
 import BottomNav from '@/ui/layout/BottomNav'
@@ -10,11 +10,17 @@ import ProgressScreen from '@/ui/screens/ProgressScreen'
 import VisualGallery from '@/ui/screens/VisualGallery'
 import RiftRunScreen from '@/ui/screens/RiftRunScreen'
 import ShopScreen from '@/ui/screens/ShopScreen'
+import OfflineReturnSequence from '@/ui/screens/OfflineReturnSequence'
 import ParticleCanvas from '@/vfx/ParticleCanvas'
 import TutorialOverlay from '@/ui/components/TutorialOverlay'
 import SettingsModal from '@/ui/components/SettingsModal'
 import AchievementToast from '@/ui/components/AchievementToast'
 import { rollPostRunOffer, type PostRunOffer } from '@/game/progression/dailyRewards'
+import {
+  calculateOfflineRewards,
+  isOfflineRewardSignificant,
+  type OfflineReward,
+} from '@/game/offline/offlineRewardController'
 import { setMuted, setVolume } from '@/audio/soundEvents'
 import { playTrack, stopMusic, setMusicMuted } from '@/audio/musicEngine'
 import { requestNotificationPermission, restoreNotificationSchedule } from '@/notifications/pushNotifications'
@@ -30,6 +36,8 @@ export default function App() {
   const [postRunOffer, setPostRunOffer] = useState<PostRunOffer | null>(null)
   const [pendingAchievements, setPendingAchievements] = useState<string[]>([])
   const [iapToast, setIapToast] = useState<string | null>(null)
+  const [offlineReward, setOfflineReward] = useState<OfflineReward | null>(null)
+  const offlineReturnCheckedRef = useRef(false)
 
   const soundMuted        = useGameStore(s => s.soundMuted)
   const soundVolume       = useGameStore(s => s.soundVolume)
@@ -43,6 +51,8 @@ export default function App() {
   const totalRifts        = useGameStore(s => s.totalRifts)
   const addGems           = useGameStore(s => s.addGems)
   const addGold           = useGameStore(s => s.addGold)
+  const lastSeenAt        = useGameStore(s => s.lastSeenAt)
+  const setLastSeen       = useGameStore(s => s.setLastSeen)
 
   // Sync persisted settings → audio / vfx systems
   useEffect(() => { setMuted(soundMuted)            }, [soundMuted])
@@ -71,6 +81,24 @@ export default function App() {
   // Check on mount to seed already-earned achievements silently (no toast for pre-existing)
   useEffect(() => { checkAchievements() }, [])
 
+  // Offline return rewards are an app-open moment only. Screen remounts should not retrigger them.
+  useEffect(() => {
+    if (!offlineReturnCheckedRef.current) {
+      offlineReturnCheckedRef.current = true
+      const reward = calculateOfflineRewards(lastSeenAt)
+      if (isOfflineRewardSignificant(reward)) setOfflineReward(reward)
+    }
+
+    setLastSeen()
+    const markSeen = () => setLastSeen()
+    window.addEventListener('beforeunload', markSeen)
+    window.addEventListener('pagehide', markSeen)
+    return () => {
+      window.removeEventListener('beforeunload', markSeen)
+      window.removeEventListener('pagehide', markSeen)
+    }
+  }, [])
+
   // Re-check when collection / squad / power state changes
   useEffect(() => { triggerAchievementCheck() }, [ownedHeroCount, ownedGearCount, squadFull, highestPower])
 
@@ -97,6 +125,13 @@ export default function App() {
     const offer = rollPostRunOffer(kills, { heroesDied: wasWipe, riftsBeat: totalRifts })
     if (offer) setPostRunOffer(offer)
     triggerAchievementCheck()
+  }
+
+  function handleClaimOffline() {
+    if (!offlineReward) return
+    addGold(offlineReward.goldEarned)
+    addGems(offlineReward.gemsEarned)
+    setOfflineReward(null)
   }
 
   function renderMain() {
@@ -132,6 +167,12 @@ export default function App() {
         newIds={pendingAchievements}
         onConsumed={() => setPendingAchievements([])}
       />
+      {offlineReward && !inRift && !showGallery && (
+        <OfflineReturnSequence
+          reward={offlineReward}
+          onClaim={handleClaimOffline}
+        />
+      )}
 
       {/* IAP purchase success toast */}
       {iapToast && (

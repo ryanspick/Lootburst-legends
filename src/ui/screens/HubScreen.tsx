@@ -4,9 +4,6 @@ import SpriteCharacter from '@/ui/components/SpriteCharacter'
 import SparkleLayer from '@/ui/components/SparkleLayer'
 import ZoneBackground from '@/ui/components/ZoneBackground'
 import PetCompanion from '@/ui/components/PetCompanion'
-import OfflineReturnSequence from '@/ui/screens/OfflineReturnSequence'
-import { calculateOfflineRewards, isOfflineRewardSignificant } from '@/game/offline/offlineRewardController'
-import type { OfflineReward } from '@/game/offline/offlineRewardController'
 import { pulse } from '@/animation/motionPrimitives'
 import { heroIdleBob, chestPulse, iconBob } from '@/animation/idleMotion'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -65,7 +62,6 @@ interface HubProps {
 export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDismissOffer }: HubProps = {}) {
   const rafRef = useRef<number>(0)
   const [timeMs, setTimeMs] = useState(0)
-  const [offlineReward, setOfflineReward] = useState<OfflineReward | null>(null)
   const [showShop, setShowShop] = useState(false)
   const [showGear, setShowGear] = useState(false)
   const [gearHeroIdx, setGearHeroIdx] = useState(0)
@@ -86,10 +82,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
   const runBoosts = useGameStore(s => s.runBoosts)
   const buyBoost = useGameStore(s => s.buyBoost)
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
-  const lastSeenAt = useGameStore(s => s.lastSeenAt)
   const addGold = useGameStore(s => s.addGold)
   const addGems = useGameStore(s => s.addGems)
-  const setLastSeen = useGameStore(s => s.setLastSeen)
   const selectedRiftTier = useGameStore(s => s.selectedRiftTier)
   const setRiftTier = useGameStore(s => s.setRiftTier)
   const totalRifts = useGameStore(s => s.totalRifts)
@@ -192,31 +186,10 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
     return () => clearInterval(offerTimerRef.current!)
   }, [postRunOffer])
 
-  // Calculate offline reward on mount
-  useEffect(() => {
-    const reward = calculateOfflineRewards(lastSeenAt)
-    if (isOfflineRewardSignificant(reward)) {
-      setOfflineReward(reward)
-    }
-    // Mark seen now; save on unload too
-    setLastSeen()
-    const onUnload = () => setLastSeen()
-    window.addEventListener('beforeunload', onUnload)
-    return () => window.removeEventListener('beforeunload', onUnload)
-  }, [])
-
   function handleEnterRift() {
     playSound('ui_button_pop')
     emitGoldBeam({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
     onEnterRift?.()
-  }
-
-  function handleClaimOffline() {
-    if (!offlineReward) return
-    addGold(offlineReward.goldEarned)
-    addGems(offlineReward.gemsEarned)
-    emitCoinBurst({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 30)
-    setOfflineReward(null)
   }
 
   function handleClaimDailyChest() {
@@ -407,14 +380,6 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
           )
         })}
       </div>
-
-      {/* Offline reward sequence */}
-      {offlineReward && (
-        <OfflineReturnSequence
-          reward={offlineReward}
-          onClaim={handleClaimOffline}
-        />
-      )}
 
       {/* ── Notification stack ──────────────────────────────────── */}
       <div className={styles.notifStack}>
