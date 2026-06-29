@@ -222,10 +222,10 @@ export default function GearScreen() {
           <h1 className={styles.title}>Squad Gear</h1>
         </div>
         <div className={styles.rules}>
-          <span>Per hero</span>
-          <span>1 Weapon</span>
-          <span>1 Trinket</span>
-          <span>1 Relic</span>
+          <span>Slot loadout</span>
+          <span>Weapon</span>
+          <span>Trinket</span>
+          <span>Relic</span>
         </div>
       </header>
 
@@ -256,7 +256,7 @@ export default function GearScreen() {
                     <SpriteCharacter
                       assetId={heroId}
                       rarity={(hero?.rarity as Rarity | undefined) ?? 'common'}
-                      size={54}
+                      size={42}
                     />
                     <span>
                       <strong>{shortHeroName(heroId)}</strong>
@@ -285,7 +285,7 @@ export default function GearScreen() {
                                 id={equipped.id}
                                 displayName={visual.displayName}
                                 rarity={visual.rarity as Rarity}
-                                size={42}
+                                size={30}
                               />
                               <span className={styles.slotItem}>{visual.displayName}</span>
                             </>

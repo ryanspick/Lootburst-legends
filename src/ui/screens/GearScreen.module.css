@@ -1,10 +1,10 @@
 .screen {
   height: calc(100% - 64px);
-  overflow-y: auto;
-  padding: 12px 12px 18px;
+  overflow: hidden;
+  padding: 8px 10px 10px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
   background:
     linear-gradient(180deg, rgba(10, 13, 26, 0.98), rgba(7, 10, 20, 1)),
     var(--bg-deep-navy);
@@ -15,7 +15,8 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
-  padding: 2px 2px 0;
+  padding: 0 2px;
+  flex: 0 0 auto;
 }
 
 .eyebrow {
@@ -30,7 +31,7 @@
 .title {
   margin: 2px 0 0;
   color: var(--text-primary);
-  font-size: 22px;
+  font-size: 18px;
   line-height: 1.05;
 }
 
@@ -39,11 +40,11 @@
   justify-content: flex-end;
   gap: 5px;
   flex-wrap: wrap;
-  max-width: 210px;
+  max-width: 250px;
 }
 
 .rules span {
-  padding: 5px 7px;
+  padding: 4px 6px;
   color: #d6f7ff;
   background: rgba(0, 229, 255, 0.08);
   border: 1px solid rgba(0, 229, 255, 0.22);
@@ -66,8 +67,17 @@
 .inventory {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 10px;
+  gap: 7px;
+  padding: 8px;
+}
+
+.loadout {
+  flex: 0 0 auto;
+}
+
+.inventory {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .sectionHead {
@@ -89,15 +99,15 @@
 
 .heroGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
 }
 
 .heroCard {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: 5px;
+  padding: 6px;
   background: rgba(6, 8, 16, 0.72);
   border: 1px solid rgba(68, 136, 255, 0.16);
   border-radius: 8px;
@@ -111,7 +121,7 @@
 .heroButton {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   width: 100%;
   padding: 0;
   background: transparent;
@@ -131,29 +141,29 @@
 
 .heroButton strong {
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.2;
 }
 
 .heroButton small {
   color: var(--text-muted);
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .slotGrid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
 }
 
 .slotTile {
-  min-height: 106px;
+  min-height: 64px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  gap: 5px;
-  padding: 7px 4px;
+  gap: 3px;
+  padding: 4px 3px;
   background: rgba(10, 12, 28, 0.9);
   border: 1px dashed rgba(121, 134, 203, 0.35);
   border-radius: 7px;
@@ -187,22 +197,24 @@
 .emptySlotText {
   width: 100%;
   color: var(--text-secondary);
-  font-size: 9px;
-  line-height: 1.25;
+  font-size: 8px;
+  line-height: 1.15;
   text-align: center;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .emptySlotMark {
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
-  margin-top: 7px;
+  margin-top: 2px;
   border: 1px solid rgba(136, 204, 255, 0.28);
   border-radius: 50%;
   color: #88ccff;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 900;
 }
 
@@ -224,7 +236,8 @@
 .filters {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+  flex: 0 0 auto;
 }
 
 .segmented {
@@ -234,7 +247,7 @@
 }
 
 .filterBtn {
-  min-height: 42px;
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -277,7 +290,7 @@
 .select,
 .search {
   width: 100%;
-  min-height: 40px;
+  min-height: 34px;
   padding: 0 9px;
   background: rgba(6, 8, 16, 0.9);
   border: 1px solid rgba(68, 136, 255, 0.2);
@@ -296,12 +309,19 @@
   grid-template-columns: minmax(0, 1.35fr) minmax(230px, 0.75fr);
   gap: 10px;
   align-items: start;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .gearList {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 8px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  padding-right: 3px;
+  align-content: start;
 }
 
 .gearCard {
@@ -390,12 +410,13 @@
 }
 
 .detail {
-  position: sticky;
-  top: 0;
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .detailTop {
@@ -515,13 +536,13 @@
 
 @media (max-width: 720px) {
   .header {
-    align-items: flex-start;
-    flex-direction: column;
+    align-items: center;
+    flex-direction: row;
   }
 
   .rules {
-    justify-content: flex-start;
-    max-width: none;
+    justify-content: flex-end;
+    max-width: 180px;
   }
 
   .filterRow,
@@ -529,30 +550,40 @@
     grid-template-columns: 1fr;
   }
 
-  .detail {
-    position: static;
+  .workbench {
+    grid-template-rows: auto minmax(0, 1fr);
   }
 
   .gearList {
     grid-template-columns: 1fr;
   }
+
+  .detail {
+    order: -1;
+    max-height: 150px;
+  }
 }
 
 @media (max-width: 430px) {
   .screen {
-    padding: 10px 10px 16px;
+    padding: 6px 8px 8px;
+    gap: 6px;
   }
 
   .segmented {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .heroGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .slotTile {
-    min-height: 98px;
+    min-height: 58px;
+  }
+
+  .rules {
+    display: none;
   }
 
   .gearCard {

@@ -162,6 +162,31 @@ interface GameState {
 
 let gearInstanceCounter = 0
 
+export function transferEquippedGearLoadout(
+  ownedGear: OwnedGear[],
+  fromHeroId: string,
+  toHeroId: string,
+): OwnedGear[] {
+  if (!fromHeroId || !toHeroId || fromHeroId === toHeroId) return ownedGear
+
+  const slotsToTransfer = new Set(
+    ownedGear
+      .filter(g => g.equipped && g.equippedHeroId === fromHeroId && g.equippedSlot)
+      .map(g => g.equippedSlot as GearSlot)
+  )
+  if (slotsToTransfer.size === 0) return ownedGear
+
+  return ownedGear.map(g => {
+    if (g.equipped && g.equippedHeroId === toHeroId && g.equippedSlot && slotsToTransfer.has(g.equippedSlot)) {
+      return { ...g, equipped: false, equippedHeroId: undefined, equippedSlot: undefined }
+    }
+    if (g.equipped && g.equippedHeroId === fromHeroId && g.equippedSlot) {
+      return { ...g, equippedHeroId: toHeroId }
+    }
+    return g
+  })
+}
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
@@ -285,6 +310,9 @@ export const useGameStore = create<GameState>()(
       setSquadSlot: (slot, heroId) =>
         set(s => {
           const squad = [...s.squadHeroIds]
+          const previousHeroId = squad[slot] ?? ''
+          let ownedGear = s.ownedGear
+
           if (heroId === null) {
             squad[slot] = ''
           } else {
@@ -292,8 +320,9 @@ export const useGameStore = create<GameState>()(
             const existing = squad.indexOf(heroId)
             if (existing !== -1) squad[existing] = ''
             squad[slot] = heroId
+            ownedGear = transferEquippedGearLoadout(ownedGear, previousHeroId, heroId)
           }
-          return { squadHeroIds: squad }
+          return { squadHeroIds: squad, ownedGear }
         }),
 
       addGear: (id) =>
