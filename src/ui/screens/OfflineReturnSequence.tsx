@@ -6,7 +6,7 @@ import PixelButton from '@/ui/components/PixelButton'
 import { emitCoinBurst, emitGoldBeam, emitGemScatter } from '@/vfx/emitters'
 import { playSound } from '@/audio/soundEvents'
 import { bob } from '@/animation/motionPrimitives'
-import { generateChestSprite } from '@/art/generated'
+import { generateChestSprite, generateRewardIcon } from '@/art/generated'
 import styles from './OfflineReturnSequence.module.css'
 
 interface Props {
@@ -87,7 +87,7 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
         {phase === 'reveal' && (
           <div className={styles.rewards}>
             <div className={styles.rewardRow}>
-              <span className={styles.rewardIcon}>💰</span>
+              <img src={generateRewardIcon('gold', 'uncommon')} alt="" className={styles.rewardIcon} aria-hidden="true" />
               <span className={styles.rewardLabel}>Gold</span>
               <strong className={styles.rewardValue} style={{ color: '#ffd700' }}>
                 +{reward.goldEarned.toLocaleString()}
@@ -95,7 +95,7 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
             </div>
             {reward.gemsEarned > 0 && (
               <div className={styles.rewardRow}>
-                <span className={styles.rewardIcon}>💎</span>
+                <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.rewardIcon} aria-hidden="true" />
                 <span className={styles.rewardLabel}>Gems</span>
                 <strong className={styles.rewardValue} style={{ color: '#aa44ff' }}>
                   +{reward.gemsEarned}
@@ -104,7 +104,7 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
             )}
             {reward.shardEarned > 0 && (
               <div className={styles.rewardRow}>
-                <span className={styles.rewardIcon}>🔮</span>
+                <img src={generateRewardIcon('shard', 'epic')} alt="" className={styles.rewardIcon} aria-hidden="true" />
                 <span className={styles.rewardLabel}>Shards</span>
                 <strong className={styles.rewardValue} style={{ color: '#44aaff' }}>
                   +{reward.shardEarned}
@@ -121,6 +121,12 @@ export default function OfflineReturnSequence({ reward, onClaim }: Props) {
                     className={styles.lootItem}
                     style={{ borderColor: RARITY_COLOURS[item.rarity]?.primary ?? '#555' }}
                   >
+                    <img
+                      src={generateRewardIcon(item.type === 'gem' ? 'gem' : 'loot', item.rarity)}
+                      alt=""
+                      className={styles.lootIcon}
+                      aria-hidden="true"
+                    />
                     <span
                       className={styles.lootRarity}
                       style={{ color: RARITY_COLOURS[item.rarity]?.primary }}

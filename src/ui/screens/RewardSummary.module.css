@@ -122,7 +122,12 @@
   padding: 6px 14px;
 }
 
-.currencyIcon { font-size: 18px; }
+.currencyIcon {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 5px #ffffff55);
+}
 
 .currencyAmt {
   font-family: monospace;
@@ -181,7 +186,13 @@
   50%       { box-shadow: 0 0 16px currentColor; }
 }
 
-.lootEmoji { font-size: 20px; flex: 0 0 auto; }
+.lootIcon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 7px currentColor);
+}
 
 .lootName {
   font-family: monospace;

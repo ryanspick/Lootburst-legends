@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { emitGemScatter } from '@/vfx/emitters'
 import { playSound } from '@/audio/soundEvents'
+import { generateRewardIcon } from '@/art/generated'
 import styles from './DuplicateShardConversion.module.css'
 
 interface Props {
@@ -30,7 +31,7 @@ export default function DuplicateShardConversion({ heroName, shardsGained, posit
 
   return (
     <div className={styles.toast}>
-      <div className={styles.icon}>🔮</div>
+      <img src={generateRewardIcon('shard', 'epic')} alt="" className={styles.icon} aria-hidden="true" />
       <div className={styles.body}>
         <div className={styles.label}>DUPLICATE</div>
         <div className={styles.name}>{heroName}</div>

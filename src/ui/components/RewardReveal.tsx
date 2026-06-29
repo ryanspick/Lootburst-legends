@@ -6,6 +6,7 @@ import RarityTextSlam from './RarityTextSlam'
 import RarityBeam from './RarityBeam'
 import { triggerShake } from '@/animation/screenShake'
 import { emitRarityBurst } from '@/vfx/emitters'
+import { generateRewardIcon } from '@/art/generated'
 import styles from './RewardReveal.module.css'
 
 interface Props {
@@ -62,8 +63,10 @@ export default function RewardReveal({ rarity, name, description, iconUrl, iconE
           <RarityFrame rarity={rarity} size={88} animate>
             {iconUrl ? (
               <img src={iconUrl} alt={name} className={styles.icon} style={{ imageRendering: 'pixelated' }} />
+            ) : !iconEmoji ? (
+              <img src={generateRewardIcon('loot', rarity)} alt={name} className={styles.icon} style={{ imageRendering: 'pixelated' }} />
             ) : (
-              <div className={styles.iconEmoji}>{iconEmoji ?? '🎁'}</div>
+              <div className={styles.iconEmoji}>{iconEmoji}</div>
             )}
           </RarityFrame>
           <div className={styles.name} style={{ color: rc.primary }}>

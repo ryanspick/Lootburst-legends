@@ -5,6 +5,7 @@ import { RARITY_COLOURS } from '@/constants/palette'
 import { emitCoinBurst, emitRarityBurst } from '@/vfx/emitters'
 import { triggerShake } from '@/animation/screenShake'
 import { playSound } from '@/audio/soundEvents'
+import { generateRewardIcon, getGeneratedSprite } from '@/art/generated'
 import styles from './RewardSummary.module.css'
 
 interface Props {
@@ -16,9 +17,6 @@ interface Props {
 }
 
 const RARITY_ORDER: Rarity[] = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic']
-const RARITY_EMOJI: Record<Rarity, string> = {
-  common: '⬜', uncommon: '🟩', rare: '🔵', epic: '🟣', legendary: '⭐', mythic: '🌈',
-}
 
 function formatMs(ms: number): string {
   const s = Math.floor(ms / 1000)
@@ -142,20 +140,20 @@ export default function RewardSummary({ reward, killCount, totalDamage, elapsedM
       {(phase === 'stats' || phase === 'loot' || phase === 'cta') && (
         <div className={styles.currencyRow}>
           <div className={styles.currencyChip}>
-            <span className={styles.currencyIcon}>💰</span>
+            <img src={generateRewardIcon('gold', 'uncommon')} alt="" className={styles.currencyIcon} aria-hidden="true" />
             <span className={styles.currencyAmt} style={{ color: 'var(--gold)' }}>
               +{goldCount}
             </span>
           </div>
           <div className={styles.currencyChip}>
-            <span className={styles.currencyIcon}>💎</span>
+            <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.currencyIcon} aria-hidden="true" />
             <span className={styles.currencyAmt} style={{ color: '#88aaff' }}>
               +{gemCount}
             </span>
           </div>
           {reward.xpEarned > 0 && (
             <div className={styles.currencyChip}>
-              <span className={styles.currencyIcon}>✨</span>
+              <img src={generateRewardIcon('xp', bestRarity)} alt="" className={styles.currencyIcon} aria-hidden="true" />
               <span className={styles.currencyAmt} style={{ color: '#44ccff' }}>
                 +{Math.round(reward.xpEarned)} XP
               </span>
@@ -178,7 +176,12 @@ export default function RewardSummary({ reward, killCount, totalDamage, elapsedM
                   style={{ borderColor: irc.primary, animationDelay: `${i * 0.06}s` }}
                   data-rarity={item.rarity}
                 >
-                  <span className={styles.lootEmoji}>{RARITY_EMOJI[item.rarity]}</span>
+                  <img
+                    src={getGeneratedSprite(item.id) ?? generateRewardIcon('loot', item.rarity)}
+                    alt=""
+                    className={styles.lootIcon}
+                    aria-hidden="true"
+                  />
                   <span className={styles.lootName}>{item.name}</span>
                   <span className={styles.lootRarity} style={{ color: irc.primary }}>
                     {item.rarity.toUpperCase()}

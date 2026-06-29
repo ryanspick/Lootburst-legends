@@ -92,7 +92,12 @@
   animation: bounce-in 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-.itemEmoji { font-size: 20px; }
+.itemIcon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px currentColor);
+}
 .itemName { font-size: 9px; color: var(--text-primary); text-align: center; line-height: 1.2; }
 .itemRarity { font-size: 8px; font-weight: bold; letter-spacing: 0.5px; }
 
@@ -109,7 +114,12 @@
   gap: 4px;
 }
 
-.currencyIcon { font-size: 18px; }
+.currencyIcon {
+  width: 26px;
+  height: 26px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 5px #ffffff55);
+}
 .currencyVal { font-size: 16px; font-weight: bold; }
 
 /* Claim */

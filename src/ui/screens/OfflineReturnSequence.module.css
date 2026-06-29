@@ -90,7 +90,12 @@
   padding: 8px 12px;
 }
 
-.rewardIcon { font-size: 18px; }
+.rewardIcon {
+  width: 24px;
+  height: 24px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 5px #ffffff55);
+}
 .rewardLabel { flex: 1; text-align: left; font-size: 13px; color: var(--text-muted, #889); }
 .rewardValue { font-size: 15px; font-weight: 700; }
 
@@ -124,6 +129,13 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   min-width: 60px;
+}
+
+.lootIcon {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px currentColor);
 }
 
 .lootName {

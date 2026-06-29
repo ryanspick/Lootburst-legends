@@ -4,7 +4,7 @@ import { RARITY_COLOURS } from '@/constants/palette'
 import { emitChestVolcano, emitGoldBeam, emitCoinBurst } from '@/vfx/emitters'
 import { playRarityReveal } from '@/vfx/rarityReveal'
 import { triggerShake } from '@/animation/screenShake'
-import { generateChestSprite } from '@/art/generated'
+import { generateChestSprite, generateRewardIcon, getGeneratedSprite } from '@/art/generated'
 import { playSound } from '@/audio/soundEvents'
 import styles from './LootBurstOverlay.module.css'
 
@@ -25,8 +25,14 @@ interface Props {
 
 type Phase = 'chest_land' | 'chest_shake' | 'chest_burst' | 'items_cascade' | 'summary'
 
-const RARITY_EMOJI: Record<Rarity, string> = {
-  common: '⬜', uncommon: '🟩', rare: '🔵', epic: '🟣', legendary: '⭐', mythic: '🌈',
+function getLootIcon(item: LootItem): string {
+  if ((item.type === 'hero' || item.type === 'gear') && item.assetId) {
+    return getGeneratedSprite(item.assetId) ?? generateRewardIcon('loot', item.rarity)
+  }
+  if (item.type === 'coin') return generateRewardIcon('gold', item.rarity)
+  if (item.type === 'gem') return generateRewardIcon('gem', item.rarity)
+  if (item.type === 'shard') return generateRewardIcon('shard', item.rarity)
+  return generateRewardIcon('loot', item.rarity)
 }
 
 export default function LootBurstOverlay({ items, gold = 0, xp = 0, onClaim }: Props) {
@@ -155,7 +161,12 @@ export default function LootBurstOverlay({ items, gold = 0, xp = 0, onClaim }: P
                   }}
                   data-rarity={item.rarity}
                 >
-                  <span className={styles.itemEmoji}>{RARITY_EMOJI[item.rarity]}</span>
+                  <img
+                    src={getLootIcon(item)}
+                    alt=""
+                    className={styles.itemIcon}
+                    aria-hidden="true"
+                  />
                   <span className={styles.itemName}>{item.name}</span>
                   <span className={styles.itemRarity} style={{ color: irc.primary }}>
                     {item.rarity.toUpperCase()}
@@ -170,13 +181,13 @@ export default function LootBurstOverlay({ items, gold = 0, xp = 0, onClaim }: P
             <div className={styles.currencyRow}>
               {gold > 0 && (
                 <div className={styles.currencyItem}>
-                  <span className={styles.currencyIcon}>💰</span>
+                  <img src={generateRewardIcon('gold', 'uncommon')} alt="" className={styles.currencyIcon} aria-hidden="true" />
                   <span className={styles.currencyVal} style={{ color: 'var(--gold)' }}>+{gold}</span>
                 </div>
               )}
               {xp > 0 && (
                 <div className={styles.currencyItem}>
-                  <span className={styles.currencyIcon}>✨</span>
+                  <img src={generateRewardIcon('xp', bestRarity)} alt="" className={styles.currencyIcon} aria-hidden="true" />
                   <span className={styles.currencyVal} style={{ color: '#44ccff' }}>+{Math.round(xp)} XP</span>
                 </div>
               )}

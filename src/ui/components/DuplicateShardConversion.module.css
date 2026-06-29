@@ -26,7 +26,12 @@
   to   { opacity: 0; transform: translate(-50%, -55%); }
 }
 
-.icon { font-size: 28px; }
+.icon {
+  width: 36px;
+  height: 36px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 10px #aa44ff88);
+}
 
 .body { display: flex; flex-direction: column; gap: 2px; }
 

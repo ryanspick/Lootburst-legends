@@ -138,9 +138,9 @@ export function toDataURL(canvas: HTMLCanvasElement): string {
 // Lighten / darken a hex color
 export function lighten(hex: string, amt: number): string {
   const n = parseInt(hex.replace('#', ''), 16)
-  const r = Math.min(255, ((n >> 16) & 0xff) + amt)
-  const g = Math.min(255, ((n >> 8) & 0xff) + amt)
-  const b = Math.min(255, (n & 0xff) + amt)
+  const r = Math.max(0, Math.min(255, ((n >> 16) & 0xff) + amt))
+  const g = Math.max(0, Math.min(255, ((n >> 8) & 0xff) + amt))
+  const b = Math.max(0, Math.min(255, (n & 0xff) + amt))
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 

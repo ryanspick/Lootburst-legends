@@ -17,6 +17,8 @@ export {
   generateChestSprite,
   generateMountSprite,
 } from './generateSprite'
+export { generateRewardIcon } from './rewardIcons'
+export type { RewardIconKind } from './rewardIcons'
 export {
   getGeneratedSprite,
   getGeneratedSpriteSync,
