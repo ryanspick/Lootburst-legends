@@ -108,6 +108,7 @@ export interface UpgradeCard {
   icon: string
   rarity: Rarity
   build: UpgradeBuild
+  combo?: UpgradeBuild[]
   synergy?: string
   apply: (state: RiftRunState) => void
 }

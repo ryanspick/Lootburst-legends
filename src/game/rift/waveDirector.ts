@@ -5,10 +5,10 @@ export const NORMAL_WAVE_CLEAR_DELAY_MS = 250
 export const WAVE_CLEAR_DELAY_MS = 1_500     // delay after boss death before post-boss waves spawn
 export const WAVE_AUTO_ADVANCE_MS = 8_000    // max time before the next queued wave starts
 export const ENDLESS_FIRST_WAVE = 8
-export const ENDLESS_BASE_COUNT = 34
-export const ENDLESS_COUNT_STEP = 7
-export const ENDLESS_MAX_COUNT = 140
-export const ENDLESS_MAX_DIFFICULTY_MULT = 60
+export const ENDLESS_BASE_COUNT = 42
+export const ENDLESS_COUNT_STEP = 10
+export const ENDLESS_MAX_COUNT = 190
+export const ENDLESS_MAX_DIFFICULTY_MULT = 120
 
 export type WaveSpawnPattern = 'ring' | 'scatter' | 'burst_top' | 'burst_bottom' | 'burst_sides'
 
@@ -182,7 +182,7 @@ export function getEnemyPoolForWave(wave: number): string[] {
 
 export function getEndlessWaveEntry(endlessWave: number): WaveSpawnEntry {
   const normalizedWave = Math.max(1, Math.floor(endlessWave))
-  const extraPressure = Math.floor(Math.max(0, normalizedWave - 1) ** 1.45 * 2.5)
+  const extraPressure = Math.floor(Math.max(0, normalizedWave - 1) ** 1.62 * 3.4)
   return {
     wave: ENDLESS_FIRST_WAVE + normalizedWave - 1,
     count: Math.min(
@@ -196,8 +196,8 @@ export function getEndlessWaveEntry(endlessWave: number): WaveSpawnEntry {
 export function getEndlessDifficultyMultiplier(currentDifficulty: number, endlessWave: number): number {
   const normalizedWave = Math.max(1, Math.floor(endlessWave))
   const step = Math.min(
-    1.45,
-    1.13 + normalizedWave * 0.018 + normalizedWave ** 1.25 * 0.003,
+    1.85,
+    1.23 + normalizedWave * 0.037 + normalizedWave ** 1.35 * 0.009,
   )
   return Math.min(ENDLESS_MAX_DIFFICULTY_MULT, Math.max(1, currentDifficulty) * step)
 }

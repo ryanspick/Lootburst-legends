@@ -18,6 +18,14 @@ function faster(current: number, factor: number): number {
   return Math.max(0.45, current * factor)
 }
 
+function getAppliedBuildCount(s: RiftRunState, build: UpgradeBuild): number {
+  return s.appliedUpgrades.filter(id => UPGRADE_CARDS.find(card => card.id === id)?.build === build).length
+}
+
+function hasAppliedBuild(s: RiftRunState, build: UpgradeBuild): boolean {
+  return getAppliedBuildCount(s, build) > 0
+}
+
 export const UPGRADE_CARDS: UpgradeCard[] = [
 
   // UNCOMMON
@@ -26,7 +34,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'gold_fever',
     title: 'Gold Fever',
     description: 'Enemies drop +60% gold. Starts the economy build.',
-    icon: '💰',
+    icon: 'upgrade_gold_fever',
     rarity: 'uncommon',
     build: 'Economy',
     synergy: 'Stacks with loot cards and cash-out runs.',
@@ -36,7 +44,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'jawbreaker_rush',
     title: 'Jawbreaker Rush',
     description: 'Squad attacks 40% faster.',
-    icon: '🍬',
+    icon: 'upgrade_jawbreaker_rush',
     rarity: 'uncommon',
     build: 'Barrage',
     synergy: 'Best with basic, crit, and lifesteal picks.',
@@ -46,7 +54,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'candy_shield',
     title: 'Candy Shell',
     description: 'Squad takes 45% less damage.',
-    icon: '🛡️',
+    icon: 'upgrade_candy_shield',
     rarity: 'uncommon',
     build: 'Guard',
     synergy: 'Pairs with drain builds for long endless pushes.',
@@ -56,7 +64,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'sweet_dreams',
     title: 'Sweet Dreams',
     description: 'Every hit heals the attacker for +12% damage dealt.',
-    icon: '💉',
+    icon: 'upgrade_sweet_dreams',
     rarity: 'uncommon',
     build: 'Drain',
     synergy: 'More hits means more healing.',
@@ -66,7 +74,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'loot_magnet',
     title: 'Loot Magnet',
     description: 'Gold sprints toward the squad. +30% gold.',
-    icon: '🧲',
+    icon: 'upgrade_loot_magnet',
     rarity: 'uncommon',
     build: 'Economy',
     synergy: 'Turns fast clear builds into richer runs.',
@@ -76,7 +84,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'slime_splitter',
     title: 'Slime Splitter',
     description: 'Hits gain +25% AoE chance.',
-    icon: '💥',
+    icon: 'upgrade_slime_splitter',
     rarity: 'uncommon',
     build: 'AoE',
     synergy: 'Needs splash damage picks to scale hard.',
@@ -86,7 +94,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'sugar_strike',
     title: 'Sugar Strike',
     description: 'Squad deals 30% more damage.',
-    icon: '⚡',
+    icon: 'upgrade_sugar_strike',
     rarity: 'uncommon',
     build: 'Power',
     synergy: 'Simple, flexible, and always useful.',
@@ -96,7 +104,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'quick_hands',
     title: 'Quick Hands',
     description: 'Basics hit +25% harder and recharge 15% faster.',
-    icon: '🥊',
+    icon: 'upgrade_quick_hands',
     rarity: 'uncommon',
     build: 'Barrage',
     synergy: 'Excellent with crit and lifesteal.',
@@ -109,7 +117,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'spark_practice',
     title: 'Spark Practice',
     description: 'Skills hit +20% harder and recharge 10% faster.',
-    icon: '✨',
+    icon: 'upgrade_spark_practice',
     rarity: 'uncommon',
     build: 'Skill',
     synergy: 'Feeds skill-loop builds.',
@@ -122,7 +130,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'ult_primer',
     title: 'Ult Primer',
     description: 'Ultimates recharge 18% faster.',
-    icon: '🔋',
+    icon: 'upgrade_ult_primer',
     rarity: 'uncommon',
     build: 'Ultimate',
     synergy: 'Gets ultimate builds online early.',
@@ -135,7 +143,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'blade_orbit',
     title: 'Blade Orbit',
     description: 'Enchanted blades ring the squad. +35% AoE chance.',
-    icon: '⚔️',
+    icon: 'upgrade_blade_orbit',
     rarity: 'rare',
     build: 'AoE',
     synergy: 'Turns all attack lanes into wave clear.',
@@ -145,7 +153,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'crit_confetti',
     title: 'Crit Confetti',
     description: '+25% crit chance and +75% crit damage.',
-    icon: '🎊',
+    icon: 'upgrade_crit_confetti',
     rarity: 'rare',
     build: 'Crit',
     synergy: 'Best with barrage and speed picks.',
@@ -158,7 +166,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'boss_biter',
     title: 'Boss Biter',
     description: 'Squad gets unreasonably angry. +45% damage.',
-    icon: '😤',
+    icon: 'upgrade_boss_biter',
     rarity: 'rare',
     build: 'Power',
     synergy: 'Keeps boss timers honest.',
@@ -168,7 +176,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'void_echo',
     title: 'Void Echo',
     description: 'Shadow clone strikes add +40% effective damage.',
-    icon: '👻',
+    icon: 'upgrade_void_echo',
     rarity: 'rare',
     build: 'Barrage',
     synergy: 'Loves speed, basics, and crit.',
@@ -178,7 +186,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'tiny_meteor',
     title: 'Tiny Meteor',
     description: 'Mini meteors fall constantly. +35% damage.',
-    icon: '☄️',
+    icon: 'upgrade_tiny_meteor',
     rarity: 'rare',
     build: 'Power',
     synergy: 'A stable bridge into any build.',
@@ -188,7 +196,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'emergency_bubble',
     title: 'Emergency Bubble',
     description: 'A giant bubble wraps the squad. +55% defense.',
-    icon: '🫧',
+    icon: 'upgrade_emergency_bubble',
     rarity: 'rare',
     build: 'Guard',
     synergy: 'Buys time for ultimate and economy builds.',
@@ -198,7 +206,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'chest_magnet',
     title: 'Chest Magnet',
     description: 'Loot chests fling gold at the squad. +50% gold.',
-    icon: '📦',
+    icon: 'upgrade_chest_magnet',
     rarity: 'rare',
     build: 'Economy',
     synergy: 'Stronger the longer you survive.',
@@ -208,7 +216,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'ultimate_battery',
     title: 'Ultimate Battery',
     description: '+25% damage, +25% speed, and ultimates recharge 10% faster.',
-    icon: '🔋',
+    icon: 'upgrade_ultimate_battery',
     rarity: 'rare',
     build: 'Ultimate',
     synergy: 'Smooths the path into ult spam.',
@@ -222,7 +230,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'glass_cannon',
     title: 'Glass Cannon',
     description: 'Reckless offense. +70% damage, -15% defense.',
-    icon: '💣',
+    icon: 'upgrade_glass_cannon',
     rarity: 'rare',
     build: 'Power',
     synergy: 'Risky with crit, safer with guard.',
@@ -232,7 +240,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'ricochet_lessons',
     title: 'Ricochet Lessons',
     description: 'Basics gain +20% damage and +15% AoE chance.',
-    icon: '🎯',
+    icon: 'upgrade_ricochet_lessons',
     rarity: 'rare',
     build: 'Barrage',
     synergy: 'Lets basic builds clear packs.',
@@ -245,7 +253,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'spell_echo',
     title: 'Spell Echo',
     description: 'Skills hit +30% harder and recharge 15% faster.',
-    icon: '🔮',
+    icon: 'upgrade_spell_echo',
     rarity: 'rare',
     build: 'Skill',
     synergy: 'Core skill-loop card.',
@@ -258,7 +266,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'splash_math',
     title: 'Splash Math',
     description: '+20% AoE chance and stronger splash hits.',
-    icon: '📐',
+    icon: 'upgrade_splash_math',
     rarity: 'rare',
     build: 'AoE',
     synergy: 'Makes existing AoE picks matter more.',
@@ -271,7 +279,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'rally_ward',
     title: 'Rally Ward',
     description: '+18% max HP and +20% defense.',
-    icon: '🏰',
+    icon: 'upgrade_rally_ward',
     rarity: 'rare',
     build: 'Guard',
     synergy: 'Protects scaling builds through bad waves.',
@@ -284,7 +292,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'crit_compass',
     title: 'Crit Compass',
     description: '+18% crit chance and +15% basic damage.',
-    icon: '🧭',
+    icon: 'upgrade_crit_compass',
     rarity: 'rare',
     build: 'Crit',
     synergy: 'Points barrage builds toward crit.',
@@ -300,7 +308,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'lifesteal_bite',
     title: 'Life Drain',
     description: 'Squad heals 20% of all damage dealt.',
-    icon: '🩸',
+    icon: 'upgrade_lifesteal_bite',
     rarity: 'epic',
     build: 'Drain',
     synergy: 'Scales with every damage lane.',
@@ -310,7 +318,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'candy_cyclone',
     title: 'Candy Cyclone',
     description: '+40% AoE chance, +20% damage, and stronger splash.',
-    icon: '🌀',
+    icon: 'upgrade_candy_cyclone',
     rarity: 'epic',
     build: 'AoE',
     synergy: 'The classic wave-melter.',
@@ -324,7 +332,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'double_loot',
     title: 'Double Loot',
     description: 'Economy collapses in your favor. Gold drops double.',
-    icon: '✌️',
+    icon: 'upgrade_double_loot',
     rarity: 'epic',
     build: 'Economy',
     synergy: 'Cash out huge after endless streaks.',
@@ -334,7 +342,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'berserker_jam',
     title: 'Berserker Jam',
     description: '+50% damage and +30% speed.',
-    icon: '🔥',
+    icon: 'upgrade_berserker_jam',
     rarity: 'epic',
     build: 'Barrage',
     synergy: 'Great with drain if things get spicy.',
@@ -344,7 +352,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'crit_storm',
     title: 'Crit Storm',
     description: '+35% crit chance and +100% crit damage.',
-    icon: '⚡',
+    icon: 'upgrade_crit_storm',
     rarity: 'epic',
     build: 'Crit',
     synergy: 'The centerpiece crit card.',
@@ -357,7 +365,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'skillstorm_engine',
     title: 'Skillstorm Engine',
     description: 'Skills hit +35% harder, recharge 30% faster, and gain +20% AoE.',
-    icon: '🌩️',
+    icon: 'upgrade_skillstorm_engine',
     rarity: 'epic',
     build: 'Skill',
     synergy: 'Makes casters and supports feel active.',
@@ -371,7 +379,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'ultimate_reactor',
     title: 'Ultimate Reactor',
     description: 'Ultimates hit +40% harder and recharge 35% faster.',
-    icon: '☢️',
+    icon: 'upgrade_ultimate_reactor',
     rarity: 'epic',
     build: 'Ultimate',
     synergy: 'The core ultimate-spam payoff.',
@@ -384,7 +392,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'hemomancer_loop',
     title: 'Hemomancer Loop',
     description: '+18% lifesteal and +20% skill damage.',
-    icon: '🧪',
+    icon: 'upgrade_hemomancer_loop',
     rarity: 'epic',
     build: 'Drain',
     synergy: 'Skill builds become sustain builds.',
@@ -397,7 +405,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'shrapnel_galaxy',
     title: 'Shrapnel Galaxy',
     description: '+35% AoE chance, +10% crit, and much stronger splash.',
-    icon: '🪐',
+    icon: 'upgrade_shrapnel_galaxy',
     rarity: 'epic',
     build: 'AoE',
     synergy: 'Connects AoE and crit builds.',
@@ -411,7 +419,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'payday_engine',
     title: 'Payday Engine',
     description: '+70% gold and basics recharge 10% faster.',
-    icon: '🏦',
+    icon: 'upgrade_payday_engine',
     rarity: 'epic',
     build: 'Economy',
     synergy: 'Lets economy builds keep fighting pace.',
@@ -421,13 +429,98 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     },
   },
 
+  // COMBO PAYOFFS
+
+  {
+    id: 'crit_barrage_jackpot',
+    title: 'Crit Jackpot',
+    description: 'Basics hit harder and crits explode. Barrage picks double the payout.',
+    icon: 'upgrade_crit_barrage_jackpot',
+    rarity: 'epic',
+    build: 'Crit',
+    combo: ['Barrage'],
+    synergy: 'Barrage + Crit: fast hits become jackpot crit chains.',
+    apply: s => {
+      const ready = hasAppliedBuild(s, 'Barrage')
+      s.basicDamageMult *= ready ? 1.55 : 1.25
+      s.critChance = Math.min(0.8, s.critChance + (ready ? 0.22 : 0.12))
+      s.critMult += ready ? 1.25 : 0.55
+      s.spdMult *= ready ? 1.16 : 1.06
+    },
+  },
+  {
+    id: 'vampire_cyclone',
+    title: 'Vampire Cyclone',
+    description: 'Splash hits and healing surge. AoE picks unlock the full drain loop.',
+    icon: 'upgrade_vampire_cyclone',
+    rarity: 'epic',
+    build: 'Drain',
+    combo: ['AoE'],
+    synergy: 'AoE + Drain: wave clear turns into sustain.',
+    apply: s => {
+      const ready = hasAppliedBuild(s, 'AoE')
+      s.lifeSteal = Math.min(0.5, s.lifeSteal + (ready ? 0.22 : 0.12))
+      s.aoeChance = Math.min(1, s.aoeChance + (ready ? 0.28 : 0.14))
+      improveAoeSplash(s, ready ? 0.18 : 0.08)
+    },
+  },
+  {
+    id: 'arcane_relay',
+    title: 'Arcane Relay',
+    description: 'Skills and ultimates feed each other. Ultimate picks overclock the loop.',
+    icon: 'upgrade_arcane_relay',
+    rarity: 'legendary',
+    build: 'Skill',
+    combo: ['Ultimate'],
+    synergy: 'Skill + Ultimate: cooldowns collapse into a caster engine.',
+    apply: s => {
+      const ready = hasAppliedBuild(s, 'Ultimate')
+      s.skillDamageMult *= ready ? 1.55 : 1.30
+      s.ultimateDamageMult *= ready ? 1.42 : 1.18
+      s.skillCooldownMult = faster(s.skillCooldownMult, ready ? 0.65 : 0.82)
+      s.ultimateCooldownMult = faster(s.ultimateCooldownMult, ready ? 0.70 : 0.86)
+    },
+  },
+  {
+    id: 'golden_onslaught',
+    title: 'Golden Onslaught',
+    description: 'Gold turns into damage. Power or Barrage picks make it hit much harder.',
+    icon: 'upgrade_golden_onslaught',
+    rarity: 'epic',
+    build: 'Economy',
+    combo: ['Power'],
+    synergy: 'Economy + Power: farming no longer costs tempo.',
+    apply: s => {
+      const ready = hasAppliedBuild(s, 'Power') || hasAppliedBuild(s, 'Barrage')
+      s.goldMult *= ready ? 1.85 : 1.45
+      s.atkMult *= ready ? 1.35 : 1.15
+      if (hasAppliedBuild(s, 'Barrage')) s.basicDamageMult *= 1.20
+    },
+  },
+  {
+    id: 'unkillable_compound',
+    title: 'Unkillable Compound',
+    description: 'Max HP, defense, and healing spike together. Drain picks complete the wall.',
+    icon: 'upgrade_unkillable_compound',
+    rarity: 'legendary',
+    build: 'Guard',
+    combo: ['Drain'],
+    synergy: 'Guard + Drain: a defensive shell that heals through pressure.',
+    apply: s => {
+      const ready = hasAppliedBuild(s, 'Drain')
+      boostMaxHp(s, ready ? 0.32 : 0.20)
+      s.defMult *= ready ? 1.45 : 1.25
+      s.lifeSteal = Math.min(0.5, s.lifeSteal + (ready ? 0.18 : 0.08))
+    },
+  },
+
   // LEGENDARY
 
   {
     id: 'prismatic_core',
     title: 'Prismatic Core',
     description: 'Every stat +20%, +15% crit, +50% crit damage, +20% gold.',
-    icon: '🌈',
+    icon: 'upgrade_prismatic_core',
     rarity: 'legendary',
     build: 'Rainbow',
     synergy: 'Keeps any build open.',
@@ -444,7 +537,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'rainbow_overload',
     title: 'Rainbow Overload',
     description: '+35% damage, +20% crit, +75% crit damage, +35% AoE.',
-    icon: '🌟',
+    icon: 'upgrade_rainbow_overload',
     rarity: 'legendary',
     build: 'Rainbow',
     synergy: 'Power, crit, and AoE in one loud package.',
@@ -459,7 +552,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'sugar_rush_omega',
     title: 'Sugar Rush Omega',
     description: '+50% speed, +30% damage, +25% crit, +50% crit damage.',
-    icon: '💎',
+    icon: 'upgrade_sugar_rush_omega',
     rarity: 'legendary',
     build: 'Barrage',
     synergy: 'The premium fast-hit payoff.',
@@ -474,7 +567,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'infinite_combo',
     title: 'Infinite Combo',
     description: 'Basics +35%, skills +25%, and both recharge 20% faster.',
-    icon: '♾️',
+    icon: 'upgrade_infinite_combo',
     rarity: 'legendary',
     build: 'Barrage',
     synergy: 'Turns fast teams into a combo engine.',
@@ -489,7 +582,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'singularity_bloom',
     title: 'Singularity Bloom',
     description: 'Ultimates +35%, +30% AoE, and splash damage blooms wider.',
-    icon: '🕳️',
+    icon: 'upgrade_singularity_bloom',
     rarity: 'legendary',
     build: 'Ultimate',
     synergy: 'Ultimate builds become wave-clear builds.',
@@ -503,7 +596,7 @@ export const UPGRADE_CARDS: UpgradeCard[] = [
     id: 'immortal_engine',
     title: 'Immortal Engine',
     description: '+25% max HP, +30% defense, +12% lifesteal.',
-    icon: '🛡️',
+    icon: 'upgrade_immortal_engine',
     rarity: 'legendary',
     build: 'Guard',
     synergy: 'A defensive anchor for endless mode.',
@@ -566,6 +659,12 @@ export function getUpgradeBuildSummary(upgradeIds: string[]): UpgradeBuildSummar
   }
 }
 
+export function isUpgradeComboReady(card: UpgradeCard, upgradeIds: string[]): boolean {
+  if (!card.combo?.length) return false
+  const counts = getUpgradeBuildCounts(upgradeIds)
+  return card.combo.every(build => counts[build] > 0)
+}
+
 const RARITY_WEIGHT: Record<string, number> = {
   uncommon: 8,
   rare: 4,
@@ -577,9 +676,11 @@ export function rollUpgradeCards(count = 4, excludeIds: string[] = []): UpgradeC
   const pool = UPGRADE_CARDS.filter(c => !excludeIds.includes(c.id))
   if (pool.length <= count) return [...pool]
 
-  const weighted = pool.flatMap(c =>
-    Array(RARITY_WEIGHT[c.rarity] ?? 1).fill(c) as UpgradeCard[]
-  )
+  const weighted = pool.flatMap(c => {
+    const baseWeight = RARITY_WEIGHT[c.rarity] ?? 1
+    const payoffBoost = isUpgradeComboReady(c, excludeIds) ? 4 : 1
+    return Array(baseWeight * payoffBoost).fill(c) as UpgradeCard[]
+  })
   const shuffled = [...weighted].sort(() => Math.random() - 0.5)
   const result: UpgradeCard[] = []
   const seen = new Set<string>()

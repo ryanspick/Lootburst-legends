@@ -142,12 +142,11 @@
 }
 
 .cardIcon {
-  font-size: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
+  display: block;
+  width: 42px;
+  height: 42px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px currentColor);
 }
 
 .cardTitle {
@@ -185,6 +184,11 @@
 .laneHint[data-hot='true'] {
   color: var(--gold);
   text-shadow: 0 0 8px rgba(255, 215, 0, 0.55);
+}
+
+.laneHint[data-payoff='true'] {
+  color: #44ff88;
+  text-shadow: 0 0 10px rgba(68, 255, 136, 0.62);
 }
 
 .synergy {

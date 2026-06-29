@@ -20,6 +20,9 @@
 }
 
 .headerTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: #ffd700;
   letter-spacing: 1.5px;
@@ -27,12 +30,28 @@
 }
 
 .headerGems {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 10px;
   color: #88aaff;
   background: #1a1a3a;
   border: 1px solid #3344aa;
   border-radius: 4px;
   padding: 4px 8px;
+}
+
+.headerIcon,
+.headerGemIcon {
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 6px #88aaff88);
+}
+
+.headerGemIcon {
+  width: 18px;
+  height: 18px;
 }
 
 .closeBtn {
@@ -152,9 +171,10 @@
 }
 
 .starterIcon {
-  font-size: 28px;
+  width: 36px;
+  height: 36px;
   flex-shrink: 0;
-  line-height: 1;
+  image-rendering: pixelated;
   filter: drop-shadow(0 0 6px #ffd70066);
 }
 
@@ -353,8 +373,10 @@
 }
 
 .packGems {
-  font-size: 22px;
-  line-height: 1;
+  width: 34px;
+  height: 34px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px #88aaff88);
 }
 
 .packLabel {
@@ -415,10 +437,12 @@
 }
 
 .bundleIcon {
-  font-size: 24px;
+  width: 34px;
+  height: 34px;
   flex-shrink: 0;
-  line-height: 1;
   margin-top: 2px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 0 8px #ffd70055);
 }
 
 .bundleInfo {

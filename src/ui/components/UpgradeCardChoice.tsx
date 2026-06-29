@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { UpgradeChoice } from '@/game/rift/riftTypes'
 import { getUpgradeBuildCounts, getUpgradeBuildSummary } from '@/game/rift/upgradeCards'
+import { generateUpgradeIcon } from '@/art/generated'
 import RarityFrame from './RarityFrame'
 import { playSound } from '@/audio/soundEvents'
 import styles from './UpgradeCardChoice.module.css'
@@ -53,6 +54,7 @@ export default function UpgradeCardChoice({ choice, onPick, appliedUpgradeIds = 
       <div className={styles.cards}>
         {choice.cards.map(card => {
           const laneCount = buildCounts[card.build] ?? 0
+          const comboReady = Boolean(card.combo?.length && card.combo.every(build => (buildCounts[build] ?? 0) > 0))
           return (
             <button
               key={card.id}
@@ -61,12 +63,21 @@ export default function UpgradeCardChoice({ choice, onPick, appliedUpgradeIds = 
               disabled={!!picked}
             >
               <RarityFrame rarity={card.rarity} size={56} animate={!picked}>
-                <div className={styles.cardIcon}>{card.icon}</div>
+                <img
+                  src={generateUpgradeIcon(card.id, card.build, card.rarity)}
+                  alt=""
+                  className={styles.cardIcon}
+                  aria-hidden="true"
+                />
               </RarityFrame>
               <div className={styles.cardTitle} data-rarity={card.rarity}>{card.title}</div>
               <div className={styles.buildTag}>{card.build}</div>
-              <div className={styles.laneHint} data-hot={laneCount > 0 ? 'true' : undefined}>
-                {laneCount > 0 ? `LANE ${laneCount + 1}` : 'NEW LANE'}
+              <div
+                className={styles.laneHint}
+                data-hot={laneCount > 0 ? 'true' : undefined}
+                data-payoff={comboReady ? 'true' : undefined}
+              >
+                {comboReady ? 'PAYOFF' : laneCount > 0 ? `LANE ${laneCount + 1}` : 'NEW LANE'}
               </div>
               <div className={styles.cardDesc}>{card.description}</div>
               {card.synergy && <div className={styles.synergy}>{card.synergy}</div>}

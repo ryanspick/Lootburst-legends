@@ -90,4 +90,17 @@ describe('Wave spawning regressions', () => {
     expect(wave3 / wave2).toBeGreaterThan(wave2 / wave1)
     expect(wave8).toBeGreaterThan(2 * 5)
   })
+
+  it('makes endless pressure jump hard before deep waves', () => {
+    const wave1 = getEndlessWaveEntry(1)
+    const wave5 = getEndlessWaveEntry(5)
+    const wave10 = getEndlessWaveEntry(10)
+    const diff5 = Array.from({ length: 5 }, (_, i) => i + 1)
+      .reduce((diff, wave) => getEndlessDifficultyMultiplier(diff, wave), 2)
+
+    expect(wave1.count).toBeGreaterThanOrEqual(40)
+    expect(wave5.count).toBeGreaterThan(wave1.count * 2)
+    expect(wave10.count).toBeGreaterThan(wave5.count)
+    expect(diff5).toBeGreaterThan(9)
+  })
 })

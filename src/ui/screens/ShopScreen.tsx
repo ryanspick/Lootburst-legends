@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useGameStore } from '@/store/gameStore'
 import { emitCoinBurst, emitGemScatter } from '@/vfx/emitters'
 import { initiatePurchase } from '@/services/iapService'
+import { generateChestSprite, generateRewardIcon, getGeneratedSprite } from '@/art/generated'
+import type { Rarity } from '@/constants/palette'
 import styles from './ShopScreen.module.css'
 
 const IAP_ENABLED = !!import.meta.env.VITE_IAP_API
@@ -13,7 +15,7 @@ interface ShopProps { onClose?: () => void }
 const STARTER_PACKS = [
   {
     id: 'starter_blade',
-    icon: '🗡️',
+    iconAsset: 'gear_lucky_frog_coin',
     name: "Beginner's Blade",
     price: '$0.99',
     items: ['450 Gems', '2,500 Gold', '3 Keys', 'Lucky Frog Coin gear'],
@@ -24,7 +26,7 @@ const STARTER_PACKS = [
   },
   {
     id: 'starter_vault',
-    icon: '🏆',
+    iconAsset: 'gear_crystal_spike',
     name: "Founder's Vault",
     price: '$1.99',
     items: ['1,200 Gems', '12,000 Gold', '6 Keys', 'Storm Band + Crystal Spike'],
@@ -38,8 +40,8 @@ const STARTER_PACKS = [
 // ── Full gem packs (locked until starter purchased) ────────────────────────────
 const GEM_PACKS: { id: string; gems: number; price: string; label: string; tag: string; bonus?: string }[] = [
   { id: 'gems_80',   gems: 80,   price: '$0.99',  label: '80 Gems',    tag: '' },
-  { id: 'gems_500',  gems: 500,  price: '$4.99',  label: '500 Gems',   tag: '⭐ POPULAR',   bonus: '+10%' },
-  { id: 'gems_1200', gems: 1200, price: '$9.99',  label: '1,200 Gems', tag: '💎 BEST VALUE', bonus: '+25%' },
+  { id: 'gems_500',  gems: 500,  price: '$4.99',  label: '500 Gems',   tag: 'POPULAR',   bonus: '+10%' },
+  { id: 'gems_1200', gems: 1200, price: '$9.99',  label: '1,200 Gems', tag: 'BEST VALUE', bonus: '+25%' },
   { id: 'gems_2500', gems: 2500, price: '$19.99', label: '2,500 Gems', tag: '',              bonus: '+40%' },
   { id: 'gems_6500', gems: 6500, price: '$49.99', label: '6,500 Gems', tag: '',              bonus: '+80%' },
 ]
@@ -47,31 +49,31 @@ const GEM_PACKS: { id: string; gems: number; price: string; label: string; tag: 
 const BUNDLES = [
   {
     id: 'bundle_rift_hunter',
-    icon: '⚔️',
+    iconAsset: 'gear_storm_band',
     name: 'Rift Hunter Pack',
     price: '$14.99',
-    items: ['🔮 2,000 Gems', '💰 50,000 Gold', '⭐ 3× Rare Gear', '🔑 5 Capsule Keys'],
+    items: ['2,000 Gems', '50,000 Gold', '3x Rare Gear', '5 Capsule Keys'],
     tag: '',
     gems: 2000, gold: 50_000,
     gearIds: ['gear_storm_band', 'gear_crystal_spike', 'gear_bubblegum_shield'],
   },
   {
     id: 'bundle_legends_vault',
-    icon: '🏛️',
+    iconAsset: 'chest_epic_closed',
     name: 'Legends Vault',
     price: '$49.99',
-    items: ['💎 8,000 Gems', '💰 200,000 Gold', '🌟 2× Epic Gear', '🔑 20 Keys'],
-    tag: '🔥 HOT',
+    items: ['8,000 Gems', '200,000 Gold', '2x Epic Gear', '20 Keys'],
+    tag: 'HOT',
     gems: 8000, gold: 200_000,
     gearIds: ['gear_boss_tooth_necklace', 'gear_infernal_core'],
   },
   {
     id: 'bundle_ultimate',
-    icon: '👑',
+    iconAsset: 'chest_legendary_closed',
     name: 'Ultimate Vault',
     price: '$99.99',
-    items: ['💎 25,000 Gems', '💰 1,000,000 Gold', '✨ 1× Legendary Gear', '🔑 50 Keys', '⚡ 25× Boosts'],
-    tag: '👑 ULTIMATE',
+    items: ['25,000 Gems', '1,000,000 Gold', '1x Legendary Gear', '50 Keys', '25x Boosts'],
+    tag: 'ULTIMATE',
     gems: 25_000, gold: 1_000_000,
     gearIds: ['gear_cosmos_fragment', 'gear_chaos_rune'],
   },
@@ -83,6 +85,10 @@ function fmt(ms: number): string {
   const h = Math.floor(s / 3600)
   const m = Math.floor((s % 3600) / 60)
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`
+}
+
+function shopAssetIcon(assetId: string, rarity: Rarity = 'rare'): string {
+  return getGeneratedSprite(assetId) ?? generateChestSprite(rarity, 'closed')
 }
 
 export default function ShopScreen({ onClose }: ShopProps) {
@@ -174,8 +180,14 @@ export default function ShopScreen({ onClose }: ShopProps) {
     <div className={styles.shopScreen}>
       {/* Header */}
       <div className={styles.header}>
-        <span className={styles.headerTitle}>💎 GEM SHOP</span>
-        <div className={styles.headerGems}>💎 {gems.toLocaleString()}</div>
+        <span className={styles.headerTitle}>
+          <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.headerIcon} aria-hidden="true" />
+          GEM SHOP
+        </span>
+        <div className={styles.headerGems}>
+          <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.headerGemIcon} aria-hidden="true" />
+          {gems.toLocaleString()}
+        </div>
         {onClose && <button className={styles.closeBtn} onClick={onClose}>✕</button>}
       </div>
 
@@ -184,7 +196,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
         {/* ── STARTER DEALS (always visible, gates the full shop) ── */}
         <div className={styles.starterSection}>
           <div className={styles.starterLabel}>
-            {shopUnlocked ? '🎁 YOUR STARTER PACKS' : '🌟 STARTER DEALS — UNLOCK THE VAULT'}
+            {shopUnlocked ? 'YOUR STARTER PACKS' : 'STARTER DEALS - UNLOCK THE VAULT'}
           </div>
 
           {/* Welcome offer (time-limited, replaces starter_blade while active) */}
@@ -194,7 +206,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
             >
               <div className={styles.starterTag}>WELCOME VALUE</div>
               <div className={styles.starterRow}>
-                <span className={styles.starterIcon}>🎁</span>
+                <img src={generateChestSprite('epic', 'closed')} alt="" className={styles.starterIcon} aria-hidden="true" />
                 <div className={styles.starterInfo}>
                   <div className={styles.starterName}>Welcome Bundle</div>
                   <div className={styles.starterItems}>
@@ -226,9 +238,9 @@ export default function ShopScreen({ onClose }: ShopProps) {
                 className={`${styles.starterCard} ${pack.highlight ? styles.starterHighlight : ''}`}
                 data-flash={flashId === pack.id ? 'true' : undefined}
               >
-                {pack.tag && <div className={styles.starterTag}>{pack.tag}</div>}
-                <div className={styles.starterRow}>
-                  <span className={styles.starterIcon}>{pack.icon}</span>
+                  {pack.tag && <div className={styles.starterTag}>{pack.tag}</div>}
+                  <div className={styles.starterRow}>
+                  <img src={shopAssetIcon(pack.iconAsset, pack.highlight ? 'epic' : 'rare')} alt="" className={styles.starterIcon} aria-hidden="true" />
                   <div className={styles.starterInfo}>
                     <div className={styles.starterName}>{pack.name}</div>
                     <div className={styles.starterItems}>
@@ -255,13 +267,13 @@ export default function ShopScreen({ onClose }: ShopProps) {
         <>
           {justUnlocked && (
             <div className={styles.unlockBanner}>
-              🔓 GEM VAULT UNLOCKED! Welcome to the full shop!
+              GEM VAULT UNLOCKED! Welcome to the full shop!
             </div>
           )}
 
           {!shopUnlocked && (
             <div className={styles.vaultHint}>
-              🔒 Purchase a starter deal above to unlock gem packs &amp; bundles
+              Purchase a starter deal above to unlock gem packs &amp; bundles
             </div>
           )}
 
@@ -278,11 +290,11 @@ export default function ShopScreen({ onClose }: ShopProps) {
                 onClick={() => shopUnlocked && buyGemPack(pack)}
               >
                 {pack.tag && <div className={styles.packTag}>{pack.tag}</div>}
-                <div className={styles.packGems}>💎</div>
+                <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.packGems} aria-hidden="true" />
                 <div className={styles.packLabel}>{pack.label}</div>
                 {pack.bonus && <div className={styles.packBonus}>{pack.bonus}</div>}
                 <div className={styles.packPrice}>
-                  {purchasingId === pack.id ? '⏳ ...' : pack.price}
+                  {purchasingId === pack.id ? '...' : pack.price}
                 </div>
               </button>
             ))}
@@ -300,7 +312,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
               >
                 {bundle.tag && <div className={styles.bundleTag}>{bundle.tag}</div>}
                 <div className={styles.bundleLeft}>
-                  <div className={styles.bundleIcon}>{bundle.icon}</div>
+                  <img src={shopAssetIcon(bundle.iconAsset, 'epic')} alt="" className={styles.bundleIcon} aria-hidden="true" />
                   <div className={styles.bundleInfo}>
                     <div className={styles.bundleName}>{bundle.name}</div>
                     <div className={styles.bundleItems}>
@@ -315,7 +327,7 @@ export default function ShopScreen({ onClose }: ShopProps) {
                   disabled={!shopUnlocked || purchasingId === bundle.id}
                   onClick={() => shopUnlocked && buyBundle(bundle)}
                 >
-                  {purchasingId === bundle.id ? '⏳' : bundle.price}
+                  {purchasingId === bundle.id ? '...' : bundle.price}
                 </button>
               </div>
             ))}

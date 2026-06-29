@@ -6,7 +6,7 @@ import gearData from '@/data/art/gear.visual.json'
 import heroesData from '@/data/art/heroes.visual.json'
 import type { Rarity } from '@/constants/palette'
 import { getGeneratedSprite } from '@/art/generated'
-import { GEAR_STATS, getGearStatLine } from '@/game/gear/gearStats'
+import { GEAR_STATS, MAX_GEAR_STARS, getGearPowerScore, getGearStatLine, normalizeGearStars } from '@/game/gear/gearStats'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot, OwnedGear } from '@/store/gameStore'
 import { playSound } from '@/audio/soundEvents'
@@ -74,9 +74,16 @@ function getEquippedGear(ownedGear: OwnedGear[], heroId: string, slot: GearSlot)
   return ownedGear.find(g => g.equipped && g.equippedHeroId === heroId && g.equippedSlot === slot)
 }
 
+function getGearRankLabel(gear: OwnedGear): string {
+  const stars = normalizeGearStars(gear.stars ?? 0)
+  return stars > 0 ? `+${stars}` : ''
+}
+
 function compareGearForInventory(a: OwnedGear, b: OwnedGear): number {
   const rarityDiff = RARITY_ORDER[getGearRarity(a.id)] - RARITY_ORDER[getGearRarity(b.id)]
   if (rarityDiff !== 0) return rarityDiff
+  const scoreDiff = getGearPowerScore(b) - getGearPowerScore(a)
+  if (scoreDiff !== 0) return scoreDiff
   if (a.equipped !== b.equipped) return a.equipped ? 1 : -1
   return (getGearVisual(a.id)?.displayName ?? a.id).localeCompare(getGearVisual(b.id)?.displayName ?? b.id)
 }
@@ -117,6 +124,7 @@ export default function GearScreen() {
   const squadHeroIds = useGameStore(s => s.squadHeroIds)
   const equipGear = useGameStore(s => s.equipGear)
   const unequipGear = useGameStore(s => s.unequipGear)
+  const upgradeGearWithDupes = useGameStore(s => s.upgradeGearWithDupes)
   const removeGear = useGameStore(s => s.removeGear)
   const addShards = useGameStore(s => s.addShards)
 
@@ -149,7 +157,12 @@ export default function GearScreen() {
   const selectedVisual = selectedGear ? getGearVisual(selectedGear.id) : null
   const selectedGearSlot = selectedGear ? getGearSlot(selectedGear.id) : selectedSlot
   const selectedRarity = selectedGear ? getGearRarity(selectedGear.id) : 'common'
-  const selectedStatLine = selectedGear ? getGearStatLine(selectedGear.id) : ''
+  const selectedStars = selectedGear ? normalizeGearStars(selectedGear.stars ?? 0) : 0
+  const selectedStatLine = selectedGear ? getGearStatLine(selectedGear.id, selectedStars) : ''
+  const selectedUpgradeDupes = selectedGear
+    ? ownedGear.filter(g => g.instanceId !== selectedGear.instanceId && g.id === selectedGear.id && !g.equipped).length
+    : 0
+  const canUpgradeSelected = Boolean(selectedGear && selectedStars < MAX_GEAR_STARS && selectedUpgradeDupes >= 2)
   const targetEquipped = selectedHeroId ? getEquippedGear(ownedGear, selectedHeroId, selectedSlot) : null
   const selectedTargetLabel = selectedHeroId ? `${shortHeroName(selectedHeroId)} / ${SLOT_LABELS[selectedSlot]}` : 'No target'
   const activeEquippedCount = ownedGear.filter(g =>
@@ -210,6 +223,44 @@ export default function GearScreen() {
     playSound('ui_tab_slide')
   }
 
+  function handleAutoEquip() {
+    if (activeSquad.length === 0) return
+
+    let equippedCount = 0
+    for (const slot of SLOTS) {
+      const candidates = ownedGear
+        .filter(gear => getGearSlot(gear.id) === slot)
+        .sort((a, b) => getGearPowerScore(b) - getGearPowerScore(a))
+
+      activeSquad.forEach((heroId, index) => {
+        const gear = candidates[index]
+        if (!gear) return
+        equipGear(gear.instanceId, heroId, slot)
+        equippedCount++
+      })
+    }
+
+    if (equippedCount > 0) {
+      const firstSlot = SLOTS.find(slot => ownedGear.some(gear => getGearSlot(gear.id) === slot))
+      const firstGear = firstSlot
+        ? ownedGear.filter(gear => getGearSlot(gear.id) === firstSlot).sort((a, b) => getGearPowerScore(b) - getGearPowerScore(a))[0]
+        : null
+      playSound('reward_gear_equip_clink')
+      if (firstGear) {
+        setSelectedInstanceId(firstGear.instanceId)
+        setSelectedSlot(getGearSlot(firstGear.id))
+      }
+    }
+  }
+
+  function handleUpgradeSelected() {
+    if (!selectedGear) return
+    const upgraded = upgradeGearWithDupes(selectedGear.instanceId)
+    if (!upgraded) return
+    playSound('reward_level_up_flourish')
+    setSelectedInstanceId(selectedGear.instanceId)
+  }
+
   function handleDismantle() {
     if (!selectedGear || selectedGear.equipped) return
     const shards = DISMANTLE_SHARDS[selectedRarity] ?? 1
@@ -240,8 +291,18 @@ export default function GearScreen() {
 
       <section className={styles.loadout}>
         <div className={styles.sectionHead}>
-          <span>Squad Loadouts</span>
-          <strong>{activeEquippedCount}/{activeSquad.length * SLOTS.length} filled</strong>
+          <div className={styles.sectionTitle}>
+            <span>Squad Loadouts</span>
+            <strong>{activeEquippedCount}/{activeSquad.length * SLOTS.length} filled</strong>
+          </div>
+          <button
+            type="button"
+            className={styles.autoEquipBtn}
+            onClick={handleAutoEquip}
+            disabled={activeSquad.length === 0 || ownedGear.length === 0}
+          >
+            AUTO EQUIP
+          </button>
         </div>
 
         {activeSquad.length === 0 ? (
@@ -297,6 +358,9 @@ export default function GearScreen() {
                                 size={30}
                               />
                               <span className={styles.slotItem}>{visual.displayName}</span>
+                              {getGearRankLabel(equipped) && (
+                                <span className={styles.slotRank}>{getGearRankLabel(equipped)}</span>
+                              )}
                             </>
                           ) : (
                             <>
@@ -394,6 +458,7 @@ export default function GearScreen() {
                 const isSelected = selectedInstanceId === gear.instanceId
                 const onTarget = Boolean(gear.equipped && gear.equippedHeroId === selectedHeroId && gear.equippedSlot === selectedSlot)
                 const targetName = selectedHeroId ? shortHeroName(selectedHeroId).toUpperCase() : ''
+                const rankLabel = getGearRankLabel(gear)
                 return (
                   <article
                     key={gear.instanceId}
@@ -416,9 +481,9 @@ export default function GearScreen() {
                     <div className={styles.gearInfo}>
                       <span className={styles.gearName}>{visual.displayName}</span>
                       <span className={styles.gearMeta}>
-                        {rarity.toUpperCase()} | {SLOT_LABELS[slot]}
+                        {rarity.toUpperCase()} | {SLOT_LABELS[slot]}{rankLabel ? ` | ${rankLabel}` : ''}
                       </span>
-                      <span className={styles.gearStats}>{getGearStatLine(gear.id)}</span>
+                      <span className={styles.gearStats}>{getGearStatLine(gear.id, gear.stars ?? 0)}</span>
                       {gear.equipped && gear.equippedHeroId && (
                         <span className={styles.equippedText}>
                           {shortHeroName(gear.equippedHeroId)} | {SLOT_LABELS[gear.equippedSlot ?? slot]}
@@ -458,9 +523,14 @@ export default function GearScreen() {
                   <div className={styles.detailCopy}>
                     <span className={styles.detailName}>{selectedVisual.displayName}</span>
                     <span className={styles.detailMeta}>
-                      {selectedRarity.toUpperCase()} | {SLOT_LABELS[selectedGearSlot]}
+                      {selectedRarity.toUpperCase()} | {SLOT_LABELS[selectedGearSlot]}{selectedStars > 0 ? ` | +${selectedStars}` : ''}
                     </span>
                     <span className={styles.detailStats}>{selectedStatLine}</span>
+                    <span className={styles.detailForge}>
+                      {selectedStars >= MAX_GEAR_STARS
+                        ? 'Max upgrade'
+                        : `${selectedUpgradeDupes}/2 spare dupes for next upgrade`}
+                    </span>
                     {selectedGear.equipped && selectedGear.equippedHeroId && (
                       <span className={styles.detailEquipped}>
                         Equipped by {getHeroName(selectedGear.equippedHeroId)}
@@ -505,6 +575,14 @@ export default function GearScreen() {
                       EQUIP TO {selectedHeroName.toUpperCase()}
                     </button>
                   )}
+                  <button
+                    type="button"
+                    className={styles.upgradeBtn}
+                    onClick={handleUpgradeSelected}
+                    disabled={!canUpgradeSelected}
+                  >
+                    {selectedStars >= MAX_GEAR_STARS ? 'MAX' : `UPGRADE ${selectedUpgradeDupes}/2`}
+                  </button>
                   <button
                     type="button"
                     className={styles.dismantleBtn}

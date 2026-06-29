@@ -14,13 +14,14 @@ import {
   cancelChestNotification, cancelFreeKeyNotification,
   notificationsGranted,
 } from '@/notifications/pushNotifications'
-import { generateChestSprite, generateCapsuleSprite } from '@/art/generated'
+import { generateChestSprite, generateCapsuleSprite, generateRewardIcon, generateUpgradeIcon } from '@/art/generated'
 import { useGameStore } from '@/store/gameStore'
 import type { GearSlot } from '@/store/gameStore'
+import type { UpgradeBuild } from '@/game/rift/riftTypes'
 import { getUnlockedTiers, getRiftTier, getVisibleRiftTiers } from '@/game/rift/riftTiers'
 import { RIFT_DURATION_MS } from '@/game/rift/waveDirector'
 import { ZONES } from '@/game/rift/zoneBackgrounds'
-import { GEAR_STATS, GEAR_SLOT_LABEL, getGearStatLine, computeSquadPower } from '@/game/gear/gearStats'
+import { GEAR_STATS, GEAR_SLOT_LABEL, getGearPowerScore, getGearStatLine, computeSquadPower } from '@/game/gear/gearStats'
 import {
   CHEST_COOLDOWN_MS, STREAK_GRACE_MS, getRewardForStreak, getNextReward,
   type PostRunOffer,
@@ -45,13 +46,23 @@ const RARITY_ORDER: Record<string, number> = { legendary: 0, epic: 1, rare: 2, u
 
 const ZONE_COLORS = ['#ff44aa', '#ff8800', '#00ccff', '#8888ff', '#ffcc00']
 
-const BOOST_CATALOG = [
-  { id: 'boost_revive_token', icon: '💫', name: 'Revive Token',  desc: 'Auto-revive once if squad falls', cost: 60  },
-  { id: 'boost_gold_magnet',  icon: '🧲', name: 'Gold Magnet',   desc: '+50% gold from kills',            cost: 100 },
-  { id: 'boost_quick_start',  icon: '⚡', name: 'Battle Scroll', desc: 'Start with a random power-up',   cost: 140 },
-  { id: 'boost_iron_shield',  icon: '🛡️', name: 'Iron Shield',   desc: '+30% hero HP this run',           cost: 160 },
-  { id: 'boost_fury_elixir',  icon: '🔥', name: 'Fury Elixir',   desc: '+25% attack damage this run',    cost: 200 },
+type BoostIcon =
+  | { kind: 'reward'; reward: 'gold' | 'gem' | 'shard' | 'xp' | 'loot'; rarity: Rarity }
+  | { kind: 'upgrade'; build: UpgradeBuild; rarity: Rarity }
+
+const BOOST_CATALOG: Array<{ id: string; icon: BoostIcon; name: string; desc: string; cost: number }> = [
+  { id: 'boost_revive_token', icon: { kind: 'reward', reward: 'shard', rarity: 'epic' }, name: 'Revive Token',  desc: 'Auto-revive once if squad falls', cost: 60  },
+  { id: 'boost_gold_magnet',  icon: { kind: 'reward', reward: 'gold', rarity: 'rare' },  name: 'Gold Magnet',   desc: '+50% gold from kills',            cost: 100 },
+  { id: 'boost_quick_start',  icon: { kind: 'upgrade', build: 'Power', rarity: 'rare' }, name: 'Battle Scroll', desc: 'Start with a random power-up',   cost: 140 },
+  { id: 'boost_iron_shield',  icon: { kind: 'upgrade', build: 'Guard', rarity: 'rare' }, name: 'Iron Shield',   desc: '+30% hero HP this run',           cost: 160 },
+  { id: 'boost_fury_elixir',  icon: { kind: 'upgrade', build: 'Power', rarity: 'epic' }, name: 'Fury Elixir',   desc: '+25% attack damage this run',    cost: 200 },
 ]
+
+function boostIconSrc(boost: { id: string; icon: BoostIcon }) {
+  return boost.icon.kind === 'reward'
+    ? generateRewardIcon(boost.icon.reward, boost.icon.rarity)
+    : generateUpgradeIcon(boost.id, boost.icon.build, boost.icon.rarity)
+}
 
 interface HubProps {
   onEnterRift?: () => void
@@ -137,10 +148,10 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
     .map(id => heroesData.heroes.find(h => h.id === id))
     .filter(Boolean) as typeof heroesData.heroes
 
-  const equippedGearIds = ownedGear.filter(g => g.equipped).map(g => g.id)
+  const equippedGear = ownedGear.filter(g => g.equipped)
   const activeHeroIds = squadHeroIds.filter(Boolean)
   const heroLevels = activeHeroIds.map(id => ownedHeroes.find(h => h.id === id)?.level ?? 1)
-  const squadPower = computeSquadPower(activeHeroIds, heroesData, equippedGearIds, heroLevels)
+  const squadPower = computeSquadPower(activeHeroIds, heroesData, equippedGear, heroLevels)
 
   // Update highestPower when squad changes
   useEffect(() => {
@@ -253,12 +264,22 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
 
       {/* Currency row */}
       <div className={styles.currencies}>
-        <span className={styles.currency}>💰 <strong>{gold.toLocaleString()}</strong></span>
+        <span className={styles.currency}>
+          <img src={generateRewardIcon('gold', 'uncommon')} alt="" className={styles.currencyIcon} aria-hidden="true" />
+          <strong>{gold.toLocaleString()}</strong>
+        </span>
         <button className={styles.gemCurrencyBtn} onClick={onOpenShop}>
-          💎 <strong>{gems}</strong>
+          <img src={generateRewardIcon('gem', 'rare')} alt="" className={styles.currencyIcon} aria-hidden="true" />
+          <strong>{gems}</strong>
         </button>
-        <span className={styles.currency}>🔑 <strong>{keys}</strong></span>
-        <span className={styles.currency}>🔮 <strong>{shards}</strong></span>
+        <span className={styles.currency}>
+          <img src={generateCapsuleSprite('rare')} alt="" className={styles.currencyIcon} aria-hidden="true" />
+          <strong>{keys}</strong>
+        </span>
+        <span className={styles.currency}>
+          <img src={generateRewardIcon('shard', 'epic')} alt="" className={styles.currencyIcon} aria-hidden="true" />
+          <strong>{shards}</strong>
+        </span>
       </div>
 
       {/* ── Zone Hero Banner ───────────────────────────────────── */}
@@ -303,7 +324,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
           >
             {capsuleImg
               ? <img src={capsuleImg} alt="capsule" style={{ width: 28, height: 28, imageRendering: 'pixelated' }} />
-              : '🔮'}
+              : 'CAP'}
             <span className={styles.bannerCollectibleLabel}>Capsule</span>
           </div>
         </div>
@@ -347,9 +368,9 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
 
       {/* Run stats strip */}
       <div className={styles.statsStrip}>
-        <span className={styles.statPill}>☠️ <strong>{totalRifts}</strong> Rifts</span>
+        <span className={styles.statPill}><strong>{totalRifts}</strong> Rifts</span>
         <span className={styles.statDivider}>·</span>
-        <span className={styles.statPill}>⭐ <strong>{squadPower.toLocaleString()}</strong> Power</span>
+        <span className={styles.statPill}><strong>{squadPower.toLocaleString()}</strong> Power</span>
         <span className={styles.statDivider}>·</span>
         <span className={styles.statPill} style={{ color: activeTierData.color }}>{activeTierData.name}</span>
       </div>
@@ -397,12 +418,12 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         {/* CHEST READY — no dismiss, must claim */}
         {chestReady && (
           <div className={`${styles.notifCard} ${styles.notifGold}`} onClick={handleClaimDailyChest}>
-            <span className={styles.notifIcon}>🎁</span>
+            <img src={generateChestSprite('epic', 'closed')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>DAY {effectiveStreak} CHEST READY!</span>
               <span className={styles.notifDetail}>{currentReward.label}</span>
               {isNextJackpot && (
-                <span className={styles.notifDetail} style={{ color: '#ff44ff' }}>🏆 JACKPOT NEXT!</span>
+                <span className={styles.notifDetail} style={{ color: '#ff44ff' }}>JACKPOT NEXT!</span>
               )}
             </div>
             <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimDailyChest() }}>CLAIM</button>
@@ -411,9 +432,9 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         {/* NEXT CHEST countdown — dismissible */}
         {!chestReady && !dismissedNotifs.has('next_chest') && (
           <div className={`${styles.notifCard} ${styles.notifGray}`}>
-            <span className={styles.notifIcon}>{streakDying ? '🔥' : '⏳'}</span>
+            <img src={generateChestSprite(streakDying ? 'legendary' : 'rare', 'closed')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
-              <span className={styles.notifTitle}>{streakDying ? '⚠️ STREAK AT RISK!' : 'NEXT CHEST'}</span>
+              <span className={styles.notifTitle}>{streakDying ? 'STREAK AT RISK!' : 'NEXT CHEST'}</span>
               <span className={styles.notifDetail}>
                 {streakDying
                   ? `Day ${effectiveStreak} streak breaks in ${fmtMs(streakEndsMs)}`
@@ -429,7 +450,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         {/* QUESTS READY — no dismiss, must claim in Progress tab */}
         {questsClaimable > 0 && (
           <div className={`${styles.notifCard} ${styles.notifGreen}`}>
-            <span className={styles.notifIcon}>📋</span>
+            <img src={generateRewardIcon('loot', 'uncommon')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>{questsClaimable} QUEST{questsClaimable > 1 ? 'S' : ''} READY!</span>
               <span className={styles.notifDetail}>Claim rewards in Progress → Stats</span>
@@ -439,7 +460,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         {/* FREE KEY READY — no dismiss, must claim */}
         {freeKeyReady && (
           <div className={`${styles.notifCard} ${styles.notifGreen}`} onClick={handleClaimFreeKey}>
-            <span className={styles.notifIcon}>🔑</span>
+            <img src={generateCapsuleSprite('rare')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>FREE KEY READY!</span>
               <span className={styles.notifDetail}>Tap to collect - renews in 6h</span>
@@ -450,7 +471,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         {/* FREE KEY countdown — dismissible */}
         {!freeKeyReady && !dismissedNotifs.has('free_key_cd') && (
           <div className={`${styles.notifCard} ${styles.notifGray}`}>
-            <span className={styles.notifIcon}>🔑</span>
+            <img src={generateCapsuleSprite('uncommon')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>FREE KEY IN</span>
               <span className={styles.notifDetail}>6h free key - tap capsule tab to use</span>
@@ -478,11 +499,11 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             </div>
             {postRunOffer.type === 'free' ? (
               <button className={styles.postRunFreeBtn} onClick={() => handleClaimOffer(postRunOffer)}>
-                🎁 CLAIM FREE REWARD
+                CLAIM FREE REWARD
               </button>
             ) : (
               <button className={styles.postRunPaidBtn} onClick={() => handleClaimOffer(postRunOffer)}>
-                💎 GET IT — {postRunOffer.price}
+                GET IT - {postRunOffer.price}
               </button>
             )}
             <button className={styles.postRunDismiss} onClick={onDismissOffer}>No thanks</button>
@@ -494,7 +515,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
       {showShop && (
         <div className={styles.shopSheet}>
           <div className={styles.shopHeader}>
-            <span className={styles.shopTitle}>⚡ BOOST YOUR RUN</span>
+            <span className={styles.shopTitle}>BOOST YOUR RUN</span>
             <button className={styles.shopClose} onClick={() => setShowShop(false)}>✕</button>
           </div>
           {BOOST_CATALOG.map(boost => {
@@ -502,7 +523,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             const canAfford = gold >= boost.cost
             return (
               <div key={boost.id} className={styles.shopItem}>
-                <span className={styles.shopIcon}>{boost.icon}</span>
+                <img src={boostIconSrc(boost)} alt="" className={styles.shopIcon} aria-hidden="true" />
                 <div className={styles.shopItemInfo}>
                   <span className={styles.shopItemName}>{boost.name}{owned > 0 && <span className={styles.shopOwned}> ×{owned}</span>}</span>
                   <span className={styles.shopItemDesc}>{boost.desc}</span>
@@ -512,7 +533,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
                   disabled={!canAfford}
                   onClick={() => buyBoost(boost.id, boost.cost)}
                 >
-                  💰{boost.cost}
+                  <img src={generateRewardIcon('gold', 'uncommon')} alt="" className={styles.buyIcon} aria-hidden="true" />
+                  {boost.cost}
                 </button>
               </div>
             )
@@ -528,7 +550,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             const count = runBoosts.filter(b => b === id).length
             return boost ? (
               <span key={id} className={styles.activeBadge}>
-                {boost.icon}{count > 1 ? `×${count}` : ''}
+                <img src={boostIconSrc(boost)} alt="" className={styles.activeBadgeIcon} aria-hidden="true" />
+                {count > 1 ? `x${count}` : ''}
               </span>
             ) : null
           })}
@@ -548,7 +571,8 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
           const available = ownedGear
             .filter(g => !g.equipped && GEAR_STATS[g.id]?.slot === gearPickerSlot)
             .sort((a, b) => (RARITY_ORDER[gearData.gear.find(x => x.id === a.id)?.rarity ?? 'common'] ?? 4) -
-                            (RARITY_ORDER[gearData.gear.find(x => x.id === b.id)?.rarity ?? 'common'] ?? 4))
+                            (RARITY_ORDER[gearData.gear.find(x => x.id === b.id)?.rarity ?? 'common'] ?? 4) ||
+                            getGearPowerScore(b) - getGearPowerScore(a))
           return (
             <div className={styles.gearSheet}>
               <div className={styles.gearHeader}>
@@ -567,7 +591,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
                   >
                     <div className={styles.gearItemInfo}>
                       <span className={styles.gearItemName}>{meta?.displayName ?? g.id}</span>
-                      <span className={styles.gearItemStats}>{getGearStatLine(g.id)}</span>
+                      <span className={styles.gearItemStats}>{getGearStatLine(g.id, g.stars ?? 0)}</span>
                     </div>
                     <span className={styles.gearEquipBtn}>EQUIP</span>
                   </div>
@@ -580,7 +604,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         return (
           <div className={styles.gearSheet}>
             <div className={styles.gearHeader}>
-              <span className={styles.gearTitle}>⚔️ GEAR</span>
+              <span className={styles.gearTitle}>GEAR</span>
               <button className={styles.shopClose} onClick={() => setShowGear(false)}>✕</button>
             </div>
             {/* Hero tabs */}
@@ -607,7 +631,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
                     <div className={styles.gearSlotFilled} data-rarity={meta.rarity}>
                       <div className={styles.gearSlotItemInfo}>
                         <span className={styles.gearSlotItemName}>{meta.displayName}</span>
-                        <span className={styles.gearSlotItemStats}>{getGearStatLine(eq.id)}</span>
+                        <span className={styles.gearSlotItemStats}>{getGearStatLine(eq.id, eq.stars ?? 0)}</span>
                       </div>
                       <button className={styles.gearUnequipBtn}
                         onClick={() => unequipHeroSlot(heroId, slot)}
@@ -630,10 +654,10 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
         {!showShop && !showGear && (
           <div className={styles.ctaBtnRow}>
             <button className={styles.boostBtn} style={{ flex: 1 }} onClick={() => setShowShop(true)}>
-              ⚡ BOOST <span className={styles.boostBtnSub}>from 💰60</span>
+              BOOST <span className={styles.boostBtnSub}>from 60 gold</span>
             </button>
             <button className={styles.gearBtn} onClick={() => { setShowGear(true); setShowShop(false) }}>
-              ⚔️ GEAR
+              GEAR
               {ownedGear.filter(g => !g.equipped).length > 0 && (
                 <span className={styles.gearBadge}>{ownedGear.filter(g => !g.equipped).length}</span>
               )}
@@ -646,7 +670,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             size="lg"
             onClick={handleEnterRift}
           >
-            ⚔️ ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>{Math.round(RIFT_DURATION_MS / 1000)}s Run</span>
+            ENTER RIFT &nbsp;<span style={{ opacity: 0.7, fontSize: '13px' }}>{Math.round(RIFT_DURATION_MS / 1000)}s Run</span>
           </PixelButton>
         </div>
         <span className={styles.riftSubtext}>Squad Power: {squadPower.toLocaleString()}</span>

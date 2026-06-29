@@ -20,7 +20,7 @@ vi.mock('@/hooks/reducedMotion',   () => ({ getReducedMotion: vi.fn(() => false)
 beforeEach(() => { Math.random = () => 0.5 })
 
 import { createInitialRiftState, applyUpgradeCard } from '@/game/rift/riftRunState'
-import { UPGRADE_CARDS, getUpgradeBuildCounts, getUpgradeBuildSummary } from '@/game/rift/upgradeCards'
+import { UPGRADE_CARDS, getUpgradeBuildCounts, getUpgradeBuildSummary, isUpgradeComboReady } from '@/game/rift/upgradeCards'
 import type { RiftRunState } from '@/game/rift/riftTypes'
 
 function freshState(): RiftRunState {
@@ -251,5 +251,23 @@ describe('Upgrade cards - build summaries', () => {
     const counts = getUpgradeBuildCounts(['gold_fever', 'missing_upgrade'])
     expect(counts.Economy).toBe(1)
     expect(Object.values(counts).reduce((sum, count) => sum + count, 0)).toBe(1)
+  })
+
+  it('marks combo payoff cards ready when their build lane exists', () => {
+    const card = UPGRADE_CARDS.find(c => c.id === 'crit_barrage_jackpot')!
+    expect(isUpgradeComboReady(card, [])).toBe(false)
+    expect(isUpgradeComboReady(card, ['jawbreaker_rush'])).toBe(true)
+  })
+
+  it('makes combo payoff cards stronger after their prerequisite lane is built', () => {
+    const cold = freshState()
+    applyUpgradeCard(cold, 'crit_barrage_jackpot')
+
+    const ready = freshState()
+    applyUpgradeCard(ready, 'jawbreaker_rush')
+    applyUpgradeCard(ready, 'crit_barrage_jackpot')
+
+    expect(ready.basicDamageMult).toBeGreaterThan(cold.basicDamageMult)
+    expect(ready.critMult).toBeGreaterThan(cold.critMult)
   })
 })

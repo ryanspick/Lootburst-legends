@@ -27,13 +27,13 @@ import {
 
 describe('Hero auto-revive', () => {
   it('starts a 30s revive charge when a hero is downed', () => {
-    const { state } = createInitialRiftState(['hero_copper_knight'])
+    const { state } = createInitialRiftState(['hero_copper_knight', 'hero_mushroom_medic'])
     state.phase = 'combat'
 
     spawnWave(state, 1, 1)
     tickCombat(state, 16)
 
-    const hero = state.heroes[0]
+    const hero = state.heroes[1]
     const enemy = state.enemies[0]
     hero.hp = 1
     enemy.x = CENTER_X
@@ -52,7 +52,7 @@ describe('Hero auto-revive', () => {
   })
 
   it('revives a downed hero at half HP when the charge completes', () => {
-    const { state } = createInitialRiftState(['hero_copper_knight'])
+    const { state } = createInitialRiftState(['hero_copper_knight', 'hero_mushroom_medic'])
     state.phase = 'combat'
 
     const hero = state.heroes[0]
@@ -75,7 +75,7 @@ describe('Hero auto-revive', () => {
     expect(state.postRun).toBeNull()
   })
 
-  it('does not end the run while the full squad is auto-reviving', () => {
+  it('ends the run immediately when the full squad is down even if revive timers exist', () => {
     const { state } = createInitialRiftState([
       'hero_copper_knight',
       'hero_mushroom_medic',
@@ -93,15 +93,9 @@ describe('Hero auto-revive', () => {
 
     tickCombat(state, 5_000)
 
-    expect(state.phase).toBe('combat')
-    expect(state.postRun).toBeNull()
+    expect(state.phase).toBe('post_run')
+    expect(state.postRun?.wasWipe).toBe(true)
     expect(state.heroes.every(h => !h.alive)).toBe(true)
-    expect(state.heroes.every(h => (h.reviveMs ?? 0) > 0)).toBe(true)
-
-    tickCombat(state, HERO_REVIVE_MS - 5_000)
-
-    expect(state.phase).toBe('combat')
-    expect(state.postRun).toBeNull()
-    expect(state.heroes.every(h => h.alive)).toBe(true)
+    expect(state.heroes.every(h => (h.reviveMs ?? 0) === HERO_REVIVE_MS)).toBe(true)
   })
 })

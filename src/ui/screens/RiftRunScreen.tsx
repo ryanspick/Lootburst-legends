@@ -11,8 +11,7 @@ import {
   reviveHeroes,
   countAliveEnemies,
   hasWaveMobsRemaining,
-  hasPendingHeroRevive,
-  isSquadAutoReviving,
+  canHeroAutoRevive,
   type SpawnPattern,
 } from '@/game/rift/riftRunState'
 import { renderRiftFrame, clearCombatEmitCache } from '@/game/rift/combatLoop'
@@ -25,7 +24,7 @@ import {
   getEndlessWaveEntry,
 } from '@/game/rift/waveDirector'
 import { getRiftTier } from '@/game/rift/riftTiers'
-import { computeHeroGearBonuses, computeRunGearBonuses } from '@/game/gear/gearStats'
+import { computeHeroGearBonusesFromGear, computeRunGearBonusesFromGear } from '@/game/gear/gearStats'
 import { ZONES } from '@/game/rift/zoneBackgrounds'
 import UpgradeCardChoice from '@/ui/components/UpgradeCardChoice'
 import BossHpBar from '@/ui/components/BossHpBar'
@@ -155,15 +154,15 @@ export default function RiftRunScreen({ onExit }: Props) {
     const storeSnapshot = useGameStore.getState()
     const gearSnapshot = storeSnapshot.ownedGear
     const heroGearBonuses = heroIds.map(heroId =>
-      computeHeroGearBonuses(
-        gearSnapshot.filter(g => g.equipped && g.equippedHeroId === heroId).map(g => g.id)
+      computeHeroGearBonusesFromGear(
+        gearSnapshot.filter(g => g.equipped && g.equippedHeroId === heroId)
       )
     )
     const heroLevels = heroIds.map(heroId =>
       storeSnapshot.ownedHeroes.find(h => h.id === heroId)?.level ?? 1
     )
-    const runGearBonuses = computeRunGearBonuses(
-      gearSnapshot.filter(g => g.equipped).map(g => g.id)
+    const runGearBonuses = computeRunGearBonusesFromGear(
+      gearSnapshot.filter(g => g.equipped)
     )
 
     const { state, timeline } = createInitialRiftState(heroIds, {
@@ -403,7 +402,7 @@ export default function RiftRunScreen({ onExit }: Props) {
         // Hero wipe detected inside tickCombat — check for revive before ending run.
         // Read via ref to escape TypeScript's control-flow narrowing of state.phase.
         if (stateRef.current!.phase === 'post_run') {
-          if (hasPendingHeroRevive(state)) {
+          if (canHeroAutoRevive(state)) {
             state.phase = 'combat'
             state.postRun = null
             setPhase('combat')
@@ -525,7 +524,7 @@ export default function RiftRunScreen({ onExit }: Props) {
                   wavePhaseRef.current === 'wave_active' ||
                   wavePhaseRef.current === 'boss_active' ||
                   hasWaveMobsRemaining(state) ||
-                  hasPendingHeroRevive(state) ||
+                  canHeroAutoRevive(state) ||
                   !!state.boss?.alive ||
                   bossDeathPendingRef.current) {
                 event.fired = false
@@ -604,10 +603,10 @@ export default function RiftRunScreen({ onExit }: Props) {
           const canSpawnNext = !bossAlive && waveQueueRef.current.length > 0 && (
             wavePhaseRef.current === 'idle' ||
             (wavePhaseRef.current === 'resting' && waveClearTimerRef.current <= 0)
-          ) && !isSquadAutoReviving(state)
+          )
           if (canSpawnNext) {
             startNextWave()
-          } else if (wavePhaseRef.current === 'wave_active' && !bossAlive && waveQueueRef.current.length > 0 && !isSquadAutoReviving(state)) {
+          } else if (wavePhaseRef.current === 'wave_active' && !bossAlive && waveQueueRef.current.length > 0) {
             const waveElapsedMs = state.elapsedMs - activeWaveStartedAtMsRef.current
             const nextWaveMs = Math.max(0, WAVE_AUTO_ADVANCE_MS - waveElapsedMs)
             setNextWaveIn(nextWaveMs > 0 ? Math.ceil(nextWaveMs / 1000) : null)

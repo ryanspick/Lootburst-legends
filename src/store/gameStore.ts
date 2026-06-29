@@ -11,6 +11,7 @@ import {
 import { FREE_COSMETIC_IDS, getCosmeticById } from '@/data/cosmeticsData'
 import type { CosmeticType } from '@/data/cosmeticsData'
 import { ACHIEVEMENTS } from '@/data/achievementsData'
+import { MAX_GEAR_STARS } from '@/game/gear/gearStats'
 import { MAX_PLAYABLE_RIFT_TIER } from '@/game/rift/riftTiers'
 
 export interface RunRecord {
@@ -38,6 +39,7 @@ export interface OwnedGear {
   id: string
   instanceId: string
   equipped: boolean
+  stars?: number
   equippedHeroId?: string
   equippedSlot?: GearSlot
 }
@@ -134,6 +136,7 @@ interface GameState {
   equipGear: (instanceId: string, heroId: string, slot: GearSlot) => void
   unequipGear: (instanceId: string) => void
   unequipHeroSlot: (heroId: string, slot: GearSlot) => void
+  upgradeGearWithDupes: (instanceId: string) => boolean
   incrementPity: () => void
   resetPity: () => void
   recordRiftResult: (result: { kills: number; goldEarned: number; elapsedMs?: number; tierLevel?: number; wasWipe?: boolean; zoneId?: string; heroIds?: string[] }) => void
@@ -187,6 +190,28 @@ export function transferEquippedGearLoadout(
     }
     return g
   })
+}
+
+export function upgradeGearWithDupesInInventory(
+  ownedGear: OwnedGear[],
+  instanceId: string,
+): OwnedGear[] | null {
+  const target = ownedGear.find(g => g.instanceId === instanceId)
+  if (!target) return null
+  const currentStars = Math.max(0, Math.floor(target.stars ?? 0))
+  if (currentStars >= MAX_GEAR_STARS) return null
+
+  const dupesToConsume = ownedGear
+    .filter(g => g.instanceId !== instanceId && g.id === target.id && !g.equipped)
+    .sort((a, b) => (a.stars ?? 0) - (b.stars ?? 0))
+    .slice(0, 2)
+
+  if (dupesToConsume.length < 2) return null
+
+  const consumed = new Set(dupesToConsume.map(g => g.instanceId))
+  return ownedGear
+    .filter(g => !consumed.has(g.instanceId))
+    .map(g => g.instanceId === instanceId ? { ...g, stars: currentStars + 1 } : g)
 }
 
 export const useGameStore = create<GameState>()(
@@ -334,6 +359,7 @@ export const useGameStore = create<GameState>()(
             id,
             instanceId: `gear_${id}_${++gearInstanceCounter}_${Date.now()}`,
             equipped: false,
+            stars: 0,
           }],
         })),
 
@@ -366,6 +392,13 @@ export const useGameStore = create<GameState>()(
               : g
           ),
         })),
+
+      upgradeGearWithDupes: (instanceId) => {
+        const upgradedGear = upgradeGearWithDupesInInventory(get().ownedGear, instanceId)
+        if (!upgradedGear) return false
+        set({ ownedGear: upgradedGear })
+        return true
+      },
 
       addShards: (amount) => set(s => ({ shards: s.shards + amount })),
 

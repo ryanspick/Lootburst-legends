@@ -105,6 +105,8 @@ function reviveHero(hero: CombatEntity, hpPct = HERO_REVIVE_HP_PCT): void {
 }
 
 function tickHeroRevives(state: RiftRunState, dtMs: number): void {
+  if (!state.heroes.some(h => h.alive)) return
+
   for (const hero of state.heroes) {
     if (hero.alive || (hero.reviveMs ?? 0) <= 0) continue
     hero.reviveMs = Math.max(0, (hero.reviveMs ?? HERO_REVIVE_MS) - dtMs)
@@ -473,8 +475,8 @@ export function hasPendingHeroRevive(state: RiftRunState): boolean {
   return state.heroes.some(h => !h.alive && (h.reviveMs ?? 0) > 0)
 }
 
-export function isSquadAutoReviving(state: RiftRunState): boolean {
-  return state.heroes.length > 0 && state.heroes.every(h => !h.alive) && hasPendingHeroRevive(state)
+export function canHeroAutoRevive(state: RiftRunState): boolean {
+  return state.heroes.some(h => h.alive) && hasPendingHeroRevive(state)
 }
 
 export function spawnBoss(state: RiftRunState, bossId: string): void {
@@ -867,7 +869,7 @@ export function tickCombat(state: RiftRunState, dtMs: number): void {
       state.reviveUsed = true
       return
     }
-    if (hasPendingHeroRevive(state)) return
+    if (canHeroAutoRevive(state)) return
     buildPostRunReward(state, true)
     return
   }
