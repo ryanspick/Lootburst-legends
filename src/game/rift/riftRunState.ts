@@ -198,20 +198,34 @@ function buildTierLoot(tierLevel: number, kills: number, bonusItem = false): Arr
   type Item = { id: string; rarity: Rarity; name: string }
   const tables: Record<number, { minKills: number; items: Item[] }> = {
     1: { minKills: 5,  items: [
+      { id: 'gear_bent_spoon',          rarity: 'common',    name: 'Bent Spoon'         },
+      { id: 'gear_splinter_sword',      rarity: 'common',    name: 'Splinter Sword'     },
+      { id: 'gear_tarnished_button',    rarity: 'common',    name: 'Tarnished Button'   },
+      { id: 'gear_cardboard_pauldron',  rarity: 'common',    name: 'Cardboard Pauldron' },
+      { id: 'gear_wobbly_boot',         rarity: 'common',    name: 'Wobbly Boot'        },
       { id: 'gear_lucky_frog_coin',     rarity: 'uncommon',  name: 'Lucky Frog Coin'    },
       { id: 'gear_glitter_boots',       rarity: 'uncommon',  name: 'Glitter Boots'      },
     ]},
     2: { minKills: 5,  items: [
+      { id: 'gear_training_bow',        rarity: 'uncommon',  name: 'Training Bow'       },
+      { id: 'gear_static_slingshot',    rarity: 'uncommon',  name: 'Static Slingshot'   },
+      { id: 'gear_zipper_charm',        rarity: 'uncommon',  name: 'Zipper Charm'       },
+      { id: 'gear_cookie_tin_armor',    rarity: 'uncommon',  name: 'Cookie Tin Armor'   },
       { id: 'gear_crystal_spike',       rarity: 'rare',      name: 'Crystal Spike'      },
       { id: 'gear_storm_band',          rarity: 'rare',      name: 'Storm Band'         },
       { id: 'gear_meteor_lunchbox',     rarity: 'rare',      name: 'Meteor Lunchbox'    },
     ]},
     3: { minKills: 4,  items: [
+      { id: 'gear_ember_badge',         rarity: 'uncommon',  name: 'Ember Badge'        },
+      { id: 'gear_soap_bubble_amulet',  rarity: 'uncommon',  name: 'Soap Bubble Amulet' },
+      { id: 'gear_sugar_rocket',        rarity: 'rare',      name: 'Sugar Rocket'       },
+      { id: 'gear_prismatic_compass',   rarity: 'rare',      name: 'Prismatic Compass'  },
       { id: 'gear_bubblegum_shield',    rarity: 'rare',      name: 'Bubblegum Shield'   },
       { id: 'gear_tiny_dragon_plush',   rarity: 'rare',      name: 'Tiny Dragon Plush'  },
       { id: 'gear_boss_tooth_necklace', rarity: 'epic',      name: 'Boss Tooth Necklace'},
     ]},
     4: { minKills: 4,  items: [
+      { id: 'gear_pocket_sun',          rarity: 'rare',      name: 'Pocket Sun'         },
       { id: 'gear_void_shard',          rarity: 'epic',      name: 'Void Shard'         },
       { id: 'gear_infernal_core',       rarity: 'epic',      name: 'Infernal Core'      },
       { id: 'gear_chaos_rune',          rarity: 'epic',      name: 'Chaos Rune'         },

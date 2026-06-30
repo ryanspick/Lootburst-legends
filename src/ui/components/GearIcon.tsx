@@ -15,25 +15,20 @@ interface Props {
 }
 
 const SLOT_FALLBACK: Record<string, string> = {
-  weapon: '⚔', armor: '🛡', charm: '📿',
-  boots: '👢', relic: '🔮', toy: '🎪',
+  weapon: 'WPN',
+  trinket: 'TRK',
+  relic: 'REL',
+  armor: 'ARM',
+  charm: 'CHM',
+  boots: 'BOT',
+  toy: 'TOY',
 }
 
 export default function GearIcon({ id, displayName, slot, rarity, size = 56, equipped, selected, onClick }: Props) {
   const sprite = getGeneratedSprite(id)
   const innerSize = Math.round(size * 0.76)
-
-  return (
-    <button
-      className={[
-        styles.icon,
-        equipped  ? styles.equipped  : '',
-        selected  ? styles.selected  : '',
-      ].filter(Boolean).join(' ')}
-      onClick={onClick}
-      title={displayName}
-      data-rarity={rarity}
-    >
+  const content = (
+    <>
       <RarityFrame rarity={rarity} size={size} animate={selected}>
         {sprite ? (
           <img
@@ -44,12 +39,45 @@ export default function GearIcon({ id, displayName, slot, rarity, size = 56, equ
             style={{ imageRendering: 'pixelated', display: 'block' }}
           />
         ) : (
-          <div className={styles.fallback} style={{ fontSize: innerSize * 0.5 }}>
-            {SLOT_FALLBACK[slot] ?? '❓'}
+          <div className={styles.fallback} style={{ fontSize: Math.max(9, innerSize * 0.28) }}>
+            {SLOT_FALLBACK[slot] ?? 'ITM'}
           </div>
         )}
       </RarityFrame>
       {equipped && <div className={styles.equippedPip}>E</div>}
-    </button>
+    </>
+  )
+
+  if (onClick) {
+    return (
+      <button
+        className={[
+          styles.icon,
+          equipped ? styles.equipped : '',
+          selected ? styles.selected : '',
+        ].filter(Boolean).join(' ')}
+        onClick={onClick}
+        title={displayName}
+        data-rarity={rarity}
+        data-interactive="true"
+        type="button"
+      >
+        {content}
+      </button>
+    )
+  }
+
+  return (
+    <span
+      className={[
+        styles.icon,
+        equipped ? styles.equipped : '',
+        selected ? styles.selected : '',
+      ].filter(Boolean).join(' ')}
+      title={displayName}
+      data-rarity={rarity}
+    >
+      {content}
+    </span>
   )
 }

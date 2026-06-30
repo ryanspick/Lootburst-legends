@@ -109,9 +109,9 @@ export default function App() {
       if (result.gems) addGems(result.gems)
       if (result.gold) addGold(result.gold)
       const parts: string[] = []
-      if (result.gems) parts.push(`+${result.gems} 💎`)
-      if (result.gold) parts.push(`+${result.gold} 💰`)
-      setIapToast(`Purchase complete! ${parts.join(' · ')}`)
+      if (result.gems) parts.push(`+${result.gems} GEMS`)
+      if (result.gold) parts.push(`+${result.gold} GOLD`)
+      setIapToast(`Purchase complete! ${parts.join(' / ')}`)
       setTimeout(() => setIapToast(null), 5000)
     })
   }, [])
@@ -142,6 +142,8 @@ export default function App() {
         <HubScreen
           onEnterRift={() => { setInRift(true); playTrack('rift') }}
           onOpenShop={() => setTab('shop')}
+          onOpenCapsule={() => setTab('capsule')}
+          onOpenProgress={() => setTab('progress')}
           postRunOffer={postRunOffer}
           onDismissOffer={() => setPostRunOffer(null)}
         />
@@ -196,19 +198,23 @@ export default function App() {
             top: 10,
             right: 12,
             zIndex: 95,
-            background: 'none',
-            border: 'none',
-            fontSize: 20,
+            background: 'rgba(6, 8, 16, 0.72)',
+            border: '1px solid rgba(136, 204, 255, 0.28)',
+            borderRadius: 6,
+            color: '#d6f7ff',
+            fontFamily: 'inherit',
+            fontSize: 9,
+            fontWeight: 900,
             cursor: 'pointer',
             padding: '6px',
             lineHeight: 1,
-            opacity: 0.6,
+            opacity: 0.82,
             minWidth: 36,
             minHeight: 36,
           }}
           aria-label="Settings"
         >
-          ⚙️
+          SET
         </button>
       )}
     </AppShell>

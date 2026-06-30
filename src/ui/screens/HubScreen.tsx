@@ -67,11 +67,13 @@ function boostIconSrc(boost: { id: string; icon: BoostIcon }) {
 interface HubProps {
   onEnterRift?: () => void
   onOpenShop?: () => void
+  onOpenCapsule?: () => void
+  onOpenProgress?: () => void
   postRunOffer?: PostRunOffer | null
   onDismissOffer?: () => void
 }
 
-export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDismissOffer }: HubProps = {}) {
+export default function HubScreen({ onEnterRift, onOpenShop, onOpenCapsule, onOpenProgress, postRunOffer, onDismissOffer }: HubProps = {}) {
   const rafRef = useRef<number>(0)
   const [timeMs, setTimeMs] = useState(0)
   const [showShop, setShowShop] = useState(false)
@@ -219,6 +221,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
     claimFreeKey()
     emitCoinBurst({ x: window.innerWidth / 2, y: window.innerHeight / 2 }, 8)
     playSound('ui_button_pop')
+    onOpenCapsule?.()
   }
 
   function handleClaimOffer(offer: PostRunOffer) {
@@ -444,17 +447,18 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             <span className={`${styles.notifTimer} ${streakDying ? styles.notifTimerRed : ''}`}>
               {fmtMs(streakDying ? streakEndsMs : nextChestMs)}
             </span>
-            <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('next_chest')) }}>✕</button>
+            <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('next_chest')) }}>X</button>
           </div>
         )}
         {/* QUESTS READY — no dismiss, must claim in Progress tab */}
         {questsClaimable > 0 && (
-          <div className={`${styles.notifCard} ${styles.notifGreen}`}>
+          <div className={`${styles.notifCard} ${styles.notifGreen}`} onClick={onOpenProgress}>
             <img src={generateRewardIcon('loot', 'uncommon')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>{questsClaimable} QUEST{questsClaimable > 1 ? 'S' : ''} READY!</span>
-              <span className={styles.notifDetail}>Claim rewards in Progress → Stats</span>
+              <span className={styles.notifDetail}>Claim rewards in Progress / Stats</span>
             </div>
+            <button className={styles.notifCta} onClick={e => { e.stopPropagation(); onOpenProgress?.() }}>OPEN</button>
           </div>
         )}
         {/* FREE KEY READY — no dismiss, must claim */}
@@ -463,7 +467,7 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             <img src={generateCapsuleSprite('rare')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>FREE KEY READY!</span>
-              <span className={styles.notifDetail}>Tap to collect - renews in 6h</span>
+              <span className={styles.notifDetail}>Claim 1 key, then open a capsule</span>
             </div>
             <button className={styles.notifCta} onClick={e => { e.stopPropagation(); handleClaimFreeKey() }}>CLAIM</button>
           </div>
@@ -474,10 +478,10 @@ export default function HubScreen({ onEnterRift, onOpenShop, postRunOffer, onDis
             <img src={generateCapsuleSprite('uncommon')} alt="" className={styles.notifIcon} aria-hidden="true" />
             <div className={styles.notifBody}>
               <span className={styles.notifTitle}>FREE KEY IN</span>
-              <span className={styles.notifDetail}>6h free key - tap capsule tab to use</span>
+              <span className={styles.notifDetail}>Next free capsule key timer</span>
             </div>
             <span className={styles.notifTimer}>{fmtMs(nextKeyMs)}</span>
-            <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('free_key_cd')) }}>✕</button>
+            <button className={styles.notifDismiss} onClick={e => { e.stopPropagation(); setDismissedNotifs(p => new Set(p).add('free_key_cd')) }}>X</button>
           </div>
         )}
       </div>

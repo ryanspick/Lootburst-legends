@@ -121,6 +121,7 @@ interface GameState {
   addGold: (amount: number) => void
   addKeys: (amount: number) => void
   spendGold: (amount: number) => boolean
+  spendKeys: (amount: number) => boolean
   setRiftTier: (tier: number) => void
   buyBoost: (id: string, cost: number) => boolean
   consumeBoosts: () => string[]
@@ -137,6 +138,7 @@ interface GameState {
   unequipGear: (instanceId: string) => void
   unequipHeroSlot: (heroId: string, slot: GearSlot) => void
   upgradeGearWithDupes: (instanceId: string) => boolean
+  upgradeAllGearWithDupes: () => number
   incrementPity: () => void
   resetPity: () => void
   recordRiftResult: (result: { kills: number; goldEarned: number; elapsedMs?: number; tierLevel?: number; wasWipe?: boolean; zoneId?: string; heroIds?: string[] }) => void
@@ -214,6 +216,47 @@ export function upgradeGearWithDupesInInventory(
     .map(g => g.instanceId === instanceId ? { ...g, stars: currentStars + 1 } : g)
 }
 
+export function findUpgradeableGearInstance(
+  ownedGear: OwnedGear[],
+  gearId?: string,
+): OwnedGear | null {
+  const targets = ownedGear
+    .filter(g => (!gearId || g.id === gearId) && Math.max(0, Math.floor(g.stars ?? 0)) < MAX_GEAR_STARS)
+    .sort((a, b) =>
+      Number(b.equipped) - Number(a.equipped) ||
+      (b.stars ?? 0) - (a.stars ?? 0) ||
+      a.id.localeCompare(b.id)
+    )
+
+  for (const target of targets) {
+    const spareDupes = ownedGear.filter(g =>
+      g.instanceId !== target.instanceId &&
+      g.id === target.id &&
+      !g.equipped
+    )
+    if (spareDupes.length >= 2) return target
+  }
+  return null
+}
+
+export function upgradeAllGearWithDupesInInventory(
+  ownedGear: OwnedGear[],
+): { ownedGear: OwnedGear[]; upgrades: number } {
+  let nextGear = ownedGear
+  let upgrades = 0
+
+  for (let safety = 0; safety < 100; safety++) {
+    const target = findUpgradeableGearInstance(nextGear)
+    if (!target) break
+    const upgraded = upgradeGearWithDupesInInventory(nextGear, target.instanceId)
+    if (!upgraded) break
+    nextGear = upgraded
+    upgrades++
+  }
+
+  return { ownedGear: nextGear, upgrades }
+}
+
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
@@ -235,12 +278,20 @@ export const useGameStore = create<GameState>()(
         'hero_goblin_sparkshot',
       ],
       ownedGear: [
-        { id: 'gear_lucky_frog_coin',     instanceId: 'g_start_0', equipped: false },
-        { id: 'gear_glitter_boots',       instanceId: 'g_start_1', equipped: false },
-        { id: 'gear_squeaky_doom_hammer', instanceId: 'g_start_2', equipped: false },
-        { id: 'gear_meteor_lunchbox',     instanceId: 'g_start_3', equipped: false },
-        { id: 'gear_crystal_spike',       instanceId: 'g_start_4', equipped: false },
-        { id: 'gear_storm_band',          instanceId: 'g_start_5', equipped: false },
+        { id: 'gear_bent_spoon',          instanceId: 'g_start_bent_0', equipped: false, stars: 0 },
+        { id: 'gear_bent_spoon',          instanceId: 'g_start_bent_1', equipped: false, stars: 0 },
+        { id: 'gear_bent_spoon',          instanceId: 'g_start_bent_2', equipped: false, stars: 0 },
+        { id: 'gear_tarnished_button',    instanceId: 'g_start_button_0', equipped: false, stars: 0 },
+        { id: 'gear_tarnished_button',    instanceId: 'g_start_button_1', equipped: false, stars: 0 },
+        { id: 'gear_tarnished_button',    instanceId: 'g_start_button_2', equipped: false, stars: 0 },
+        { id: 'gear_cardboard_pauldron',  instanceId: 'g_start_cardboard_0', equipped: false, stars: 0 },
+        { id: 'gear_cardboard_pauldron',  instanceId: 'g_start_cardboard_1', equipped: false, stars: 0 },
+        { id: 'gear_cardboard_pauldron',  instanceId: 'g_start_cardboard_2', equipped: false, stars: 0 },
+        { id: 'gear_splinter_sword',      instanceId: 'g_start_splinter_0', equipped: false, stars: 0 },
+        { id: 'gear_cracked_piggy_coin',  instanceId: 'g_start_piggy_0', equipped: false, stars: 0 },
+        { id: 'gear_wobbly_boot',         instanceId: 'g_start_boot_0', equipped: false, stars: 0 },
+        { id: 'gear_lucky_frog_coin',     instanceId: 'g_start_lucky_0', equipped: false, stars: 0 },
+        { id: 'gear_glitter_boots',       instanceId: 'g_start_glitter_0', equipped: false, stars: 0 },
       ],
       totalRifts: 0,
       totalKills: 0,
@@ -274,6 +325,11 @@ export const useGameStore = create<GameState>()(
       spendGold: (amount) => {
         if (get().gold < amount) return false
         set(s => ({ gold: s.gold - amount }))
+        return true
+      },
+      spendKeys: (amount) => {
+        if (get().keys < amount) return false
+        set(s => ({ keys: s.keys - amount }))
         return true
       },
       setRiftTier: (tier) => set({ selectedRiftTier: Math.max(1, Math.min(MAX_PLAYABLE_RIFT_TIER, tier)) }),
@@ -398,6 +454,12 @@ export const useGameStore = create<GameState>()(
         if (!upgradedGear) return false
         set({ ownedGear: upgradedGear })
         return true
+      },
+
+      upgradeAllGearWithDupes: () => {
+        const result = upgradeAllGearWithDupesInInventory(get().ownedGear)
+        if (result.upgrades > 0) set({ ownedGear: result.ownedGear })
+        return result.upgrades
       },
 
       addShards: (amount) => set(s => ({ shards: s.shards + amount })),

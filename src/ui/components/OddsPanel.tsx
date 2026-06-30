@@ -12,7 +12,7 @@ interface OddsEntry {
 interface Props {
   odds: OddsEntry[]
   pullCost: number
-  currency: '💎' | '🎟️'
+  currency: string
   title?: string
 }
 
@@ -32,7 +32,7 @@ export default function OddsPanel({ odds = DEFAULT_ODDS, pullCost, currency, tit
     <div className={styles.wrap}>
       <button className={styles.toggle} onClick={() => setOpen(o => !o)}>
         <span className={styles.toggleLabel}>{title}</span>
-        <span className={styles.toggleIcon}>{open ? '▲' : '▼'}</span>
+        <span className={styles.toggleIcon}>{open ? '^' : 'v'}</span>
         <span className={styles.pullCost}>{currency} {pullCost} / pull</span>
       </button>
 
@@ -54,7 +54,7 @@ export default function OddsPanel({ odds = DEFAULT_ODDS, pullCost, currency, tit
                 </div>
                 <span className={styles.pct} style={{ color: rc.primary }}>
                   {entry.chance.toFixed(1)}%
-                  {entry.guaranteed && ' ✓'}
+                  {entry.guaranteed && ' OK'}
                 </span>
               </div>
             )

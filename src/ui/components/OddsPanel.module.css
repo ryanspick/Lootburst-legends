@@ -2,7 +2,7 @@
   width: 100%;
   background: #0a0a18;
   border: 1px solid #2233aa33;
-  border-radius: 10px;
+  border-radius: 6px;
   overflow: hidden;
 }
 
@@ -11,7 +11,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px;
+  min-height: 34px;
+  padding: 7px 10px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -23,7 +24,7 @@
 .toggleLabel {
   font-family: monospace;
   font-size: 9px;
-  letter-spacing: 3px;
+  letter-spacing: 0;
   color: #556677;
   flex: 1;
   text-align: left;
@@ -58,7 +59,7 @@
 .rarityLabel {
   font-family: monospace;
   font-size: 9px;
-  letter-spacing: 1px;
+  letter-spacing: 0;
   width: 72px;
   flex: 0 0 72px;
 }

@@ -1,4 +1,4 @@
-// Local Web Notifications — no server required.
+// Local Web Notifications, no server required.
 // Schedules chest-ready and free-key-ready reminders via setTimeout.
 // Persists scheduled times to localStorage so reminders survive soft reloads.
 
@@ -62,10 +62,8 @@ function scheduleTimer(
 ): ReturnType<typeof setTimeout> {
   if (existing !== null) clearTimeout(existing)
   if (msFromNow <= 0) { fire(); return null as unknown as ReturnType<typeof setTimeout> }
-  return setTimeout(fire, Math.min(msFromNow, 2_147_483_647)) // clamp to max safe timeout
+  return setTimeout(fire, Math.min(msFromNow, 2_147_483_647))
 }
-
-// ── Public API ────────────────────────────────────────────────────────────────
 
 export function scheduleChestNotification(readyAtMs: number) {
   if (!notificationsSupported()) return
@@ -76,8 +74,8 @@ export function scheduleChestNotification(readyAtMs: number) {
   const delay = readyAtMs - Date.now()
   _chestTimer = scheduleTimer(delay, () => {
     show(
-      '🎁 Daily Chest Ready!',
-      'Your daily loot chest is waiting — open it before your streak resets!',
+      'Daily Chest Ready',
+      'Your daily loot chest is waiting. Open it before your streak resets.',
       'daily_chest',
     )
   }, _chestTimer)
@@ -92,8 +90,8 @@ export function scheduleFreeKeyNotification(readyAtMs: number) {
   const delay = readyAtMs - Date.now()
   _freeKeyTimer = scheduleTimer(delay, () => {
     show(
-      '🔑 Free Key Ready!',
-      'Your free capsule key has recharged — pull a new hero!',
+      'Free Capsule Key Ready',
+      'Open a hero capsule with your free key.',
       'free_key',
     )
   }, _freeKeyTimer)
@@ -109,7 +107,6 @@ export function cancelFreeKeyNotification() {
   const s = loadSchedule(); s.freeKeyAt = 0; saveSchedule(s)
 }
 
-// Re-arm timers on app start from persisted schedule
 export function restoreNotificationSchedule() {
   if (!notificationsGranted()) return
   const s = loadSchedule()

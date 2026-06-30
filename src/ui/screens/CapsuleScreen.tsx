@@ -29,6 +29,10 @@ const ODDS = [
 
 const DUPE_SHARDS = 10
 
+type PullPayment = 'key' | 'gems'
+interface DupeNotif { heroName: string; shards: number }
+interface Props { onPull?: () => void }
+
 function rollRarity(): Rarity {
   const r = Math.random() * 100
   let acc = 0
@@ -45,21 +49,20 @@ function pickHeroForRarity(rarity: Rarity): string {
   return pool[Math.floor(Math.random() * pool.length)].id
 }
 
-interface DupeNotif { heroName: string; shards: number }
-
-interface Props { onPull?: () => void }
-
 export default function CapsuleScreen({ onPull }: Props = {}) {
   const [pulling, setPulling] = useState(false)
   const [lastResult, setLastResult] = useState<Rarity | null>(null)
   const [capsuleSprites, setCapsuleSprites] = useState<Partial<Record<Rarity, string>>>({})
   const [tenPullItems, setTenPullItems] = useState<LootItem[] | null>(null)
   const [dupeNotif, setDupeNotif] = useState<DupeNotif | null>(null)
+  const [notice, setNotice] = useState<string | null>(null)
 
   const pity = useGameStore(s => s.pityCount)
   const gems = useGameStore(s => s.gems)
+  const keys = useGameStore(s => s.keys)
   const ownedHeroes = useGameStore(s => s.ownedHeroes)
   const spendGems = useGameStore(s => s.spendGems)
+  const spendKeys = useGameStore(s => s.spendKeys)
   const addHero = useGameStore(s => s.addHero)
   const incrementPity = useGameStore(s => s.incrementPity)
   const resetPity = useGameStore(s => s.resetPity)
@@ -67,6 +70,14 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
   const capsuleSkin = useGameStore(s => s.equippedCosmetics?.capsule ?? 'capsule_classic')
 
   const rarities: Rarity[] = ['common','uncommon','rare','epic','legendary','mythic']
+  const canSinglePull = keys > 0 || gems >= PULL_COSTS.single
+  const canTenPull = keys >= 10 || gems >= PULL_COSTS.ten
+  const singleCostLabel = keys > 0 ? 'KEY x1' : `GEM ${PULL_COSTS.single}`
+  const tenCostLabel = keys >= 10 ? 'KEY x10' : `GEM ${PULL_COSTS.ten}`
+  const readyOpenCount = keys > 0 ? keys : Math.floor(gems / PULL_COSTS.single)
+  const readyStatus = readyOpenCount > 0
+    ? `${readyOpenCount} capsule open${readyOpenCount === 1 ? '' : 's'} ready`
+    : `Need 1 key or ${PULL_COSTS.single} gems`
 
   useEffect(() => {
     const sprites: Partial<Record<Rarity, string>> = {}
@@ -77,16 +88,34 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
   }, [])
 
   function resolvePull(): Rarity {
-    const nextPity = pity + 1
+    const nextPity = useGameStore.getState().pityCount + 1
     const rarity = nextPity >= PITY_MAX ? 'legendary' : rollRarity()
     if (rarity === 'legendary' || rarity === 'mythic') resetPity()
     else incrementPity()
     return rarity
   }
 
+  function spendSinglePull(): PullPayment | null {
+    if (keys > 0 && spendKeys(1)) return 'key'
+    if (spendGems(PULL_COSTS.single)) return 'gems'
+    return null
+  }
+
+  function spendTenPull(): PullPayment | null {
+    if (keys >= 10 && spendKeys(10)) return 'key'
+    if (spendGems(PULL_COSTS.ten)) return 'gems'
+    return null
+  }
+
   async function doPull() {
     if (pulling) return
-    if (!spendGems(PULL_COSTS.single)) return
+    const payment = spendSinglePull()
+    if (!payment) {
+      setNotice(`Need 1 key or ${PULL_COSTS.single} gems.`)
+      return
+    }
+
+    setNotice(payment === 'key' ? 'Opening with 1 key.' : `Opening with ${PULL_COSTS.single} gems.`)
     setPulling(true)
     playSound('ui_pull_button_charge')
     await new Promise(r => setTimeout(r, 300))
@@ -94,6 +123,7 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
 
     const rarity = resolvePull()
     const heroId = pickHeroForRarity(rarity)
+    const heroName = heroesData.heroes.find(h => h.id === heroId)?.displayName ?? heroId
     const isDupe = ownedHeroes.some(h => h.id === heroId)
     addHero(heroId)
     recordCapsulePull()
@@ -101,15 +131,15 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
     setLastResult(rarity)
 
     if (isDupe) {
-      const hero = heroesData.heroes.find(h => h.id === heroId)
-      setDupeNotif({ heroName: hero?.displayName ?? heroId, shards: DUPE_SHARDS })
+      setDupeNotif({ heroName, shards: DUPE_SHARDS })
     }
+    setNotice(isDupe ? `${heroName} duplicate converted to shards.` : `${heroName} joined your roster.`)
 
     await playRarityReveal({
       rarity,
       position: { x: 200, y: 300 },
       rewardType: 'hero',
-      rewardName: heroesData.heroes.find(h => h.id === heroId)?.displayName ?? 'Hero',
+      rewardName: heroName,
       iconAssetId: heroId,
       mode: isDupe ? 'reward_card' : 'capsule_reveal',
     })
@@ -118,12 +148,17 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
 
   function doTenPull() {
     if (pulling) return
-    if (!spendGems(PULL_COSTS.ten)) return
+    const payment = spendTenPull()
+    if (!payment) {
+      setNotice(`Need 10 keys or ${PULL_COSTS.ten} gems.`)
+      return
+    }
+
+    setNotice(payment === 'key' ? 'Opening 10 capsules with keys.' : `Opening 10 capsules with ${PULL_COSTS.ten} gems.`)
     setPulling(true)
     playSound('ui_pull_button_charge')
 
     const items: LootItem[] = []
-    // snapshot owned heroes before any addHero calls so dupe check is accurate per-pull
     const ownedSnapshot = new Set(ownedHeroes.map(h => h.id))
     for (let i = 0; i < 10; i++) {
       const rarity = resolvePull()
@@ -136,12 +171,13 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
       const hero = heroesData.heroes.find(h => h.id === heroId)
       items.push({
         id: `pull_${i}_${heroId}`,
-        name: isDupe ? `${hero?.displayName ?? heroId} ✦DUP` : (hero?.displayName ?? heroId),
+        name: isDupe ? `${hero?.displayName ?? heroId} *DUP` : (hero?.displayName ?? heroId),
         rarity,
         type: 'hero',
         assetId: heroId,
       })
     }
+    setNotice('10 capsule rewards ready to claim.')
     setTenPullItems(items)
   }
 
@@ -150,11 +186,16 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
       <SparkleLayer active density={3} colors={['#ffd700','#aa44ff','#ffffff','#ff69b4']} />
 
       <div className={styles.banner}>
-        <h2 className={styles.bannerTitle}>✨ Hero Capsule</h2>
-        <span className={styles.bannerSub}>Pity guarantee: legendary by pull {PITY_MAX}</span>
+        <h2 className={styles.bannerTitle}>Hero Capsule</h2>
+        <span className={styles.bannerSub}>Legendary pity by pull {PITY_MAX}</span>
       </div>
 
-      {/* Machine visual */}
+      <div className={styles.resourceStrip} aria-live="polite">
+        <span className={styles.resourcePill}>KEYS {keys}</span>
+        <span className={styles.resourcePill}>GEMS {gems}</span>
+        <span className={styles.resourceStatus}>{notice ?? readyStatus}</span>
+      </div>
+
       <div className={styles.machine}>
         <div className={`${styles.machineBody} ${pulling ? styles.machineActive : ''}`} data-skin={capsuleSkin}>
           <div className={styles.capsuleWindow}>
@@ -171,61 +212,58 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
                 )}
               </RarityFrame>
             ) : (
-              capsuleSprites['common'] ? (
+              capsuleSprites.common ? (
                 <img
-                  src={capsuleSprites['common']}
+                  src={capsuleSprites.common}
                   alt="capsule"
                   className={styles.capsulePlaceholder}
                   style={{ width: 56, height: 56, imageRendering: 'pixelated', animation: 'bob 2s ease-in-out infinite' }}
                 />
               ) : (
-                <span className={styles.capsulePlaceholder}>🔮</span>
+                <span className={styles.capsuleFallback}>CAP</span>
               )
             )}
           </div>
-          <div className={styles.lever} onClick={!pulling ? doPull : undefined}>
+          <div
+            className={styles.lever}
+            data-disabled={pulling || !canSinglePull}
+            onClick={!pulling && canSinglePull ? doPull : undefined}
+            role="button"
+            aria-label="Open one capsule"
+          >
             <div className={`${styles.leverArm} ${pulling ? styles.leverPulled : ''}`} />
           </div>
         </div>
       </div>
 
-      {/* Pity meter */}
       <PityMeter pulls={pity} pityThreshold={PITY_MAX} guaranteedRarity="LEGENDARY" />
 
-      {/* Gem balance */}
-      <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-muted)' }}>
-        💎 {gems} gems
-      </div>
-
-      {/* Pull buttons */}
       <div className={styles.pullButtons}>
         <PixelButton
           variant="secondary"
-          size="md"
+          size="sm"
           onClick={doPull}
-          disabled={pulling || gems < PULL_COSTS.single}
+          disabled={pulling || !canSinglePull}
         >
-          × 1 Pull — 💎 {PULL_COSTS.single}
+          OPEN 1 - {singleCostLabel}
         </PixelButton>
         <PixelButton
           variant="primary"
-          size="md"
+          size="sm"
           onClick={doTenPull}
           pulse={!pulling}
-          disabled={pulling || gems < PULL_COSTS.ten}
+          disabled={pulling || !canTenPull}
         >
-          × 10 Pull — 💎 {PULL_COSTS.ten}
+          OPEN 10 - {tenCostLabel}
         </PixelButton>
       </div>
 
-      {/* Odds */}
       <OddsPanel
         odds={ODDS.map(o => ({ rarity: o.rarity, chance: o.pct }))}
         pullCost={PULL_COSTS.single}
-        currency="💎"
+        currency="GEM"
       />
 
-      {/* Duplicate shard conversion toast */}
       {dupeNotif && (
         <DuplicateShardConversion
           heroName={dupeNotif.heroName}
@@ -234,7 +272,6 @@ export default function CapsuleScreen({ onPull }: Props = {}) {
         />
       )}
 
-      {/* 10-pull multi-reveal */}
       {tenPullItems && (
         <LootBurstOverlay
           items={tenPullItems}

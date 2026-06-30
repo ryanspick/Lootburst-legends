@@ -15,6 +15,11 @@ export interface GearStatBonus {
 }
 
 export const GEAR_STATS: Record<string, GearStatBonus> = {
+  'gear_bent_spoon':          { slot: 'weapon', atk: 10 },
+  'gear_splinter_sword':      { slot: 'weapon', atk: 14 },
+  'gear_training_bow':        { slot: 'weapon', atk: 22, critChanceBonus: 0.03 },
+  'gear_static_slingshot':    { slot: 'weapon', atk: 18, spdMultBonus: 0.05 },
+  'gear_sugar_rocket':        { slot: 'weapon', atk: 34, critMultBonus: 0.15 },
   // ── Weapons ──────────────────────────────────────────────────────────
   'gear_squeaky_doom_hammer': { slot: 'weapon', atk: 35 },
   'gear_crystal_spike':       { slot: 'weapon', atk: 28, critChanceBonus: 0.06 },
@@ -22,12 +27,22 @@ export const GEAR_STATS: Record<string, GearStatBonus> = {
   'gear_cosmos_fragment':     { slot: 'weapon', atk: 85, critChanceBonus: 0.10, spdMultBonus: 0.08 },
 
   // ── Trinkets ─────────────────────────────────────────────────────────
+  'gear_tarnished_button':    { slot: 'trinket', goldMultBonus: 0.08 },
+  'gear_cracked_piggy_coin':  { slot: 'trinket', goldMultBonus: 0.12 },
+  'gear_zipper_charm':        { slot: 'trinket', spdMultBonus: 0.10 },
+  'gear_ember_badge':         { slot: 'trinket', atk: 10, critChanceBonus: 0.03 },
+  'gear_prismatic_compass':   { slot: 'trinket', goldMultBonus: 0.18, critChanceBonus: 0.04 },
   'gear_lucky_frog_coin':     { slot: 'trinket', goldMultBonus: 0.25 },
   'gear_storm_band':          { slot: 'trinket', spdMultBonus: 0.18 },
   'gear_boss_tooth_necklace': { slot: 'trinket', atk: 20, critChanceBonus: 0.08 },
   'gear_chaos_rune':          { slot: 'trinket', critChanceBonus: 0.12, critMultBonus: 0.50 },
 
   // ── Relics ───────────────────────────────────────────────────────────
+  'gear_cardboard_pauldron':  { slot: 'relic', hp: 40, def: 3 },
+  'gear_wobbly_boot':         { slot: 'relic', hp: 35, spdMultBonus: 0.03 },
+  'gear_cookie_tin_armor':    { slot: 'relic', hp: 70, def: 5 },
+  'gear_soap_bubble_amulet':  { slot: 'relic', hp: 60, lifeStealBonus: 0.025 },
+  'gear_pocket_sun':          { slot: 'relic', hp: 100, atk: 14 },
   'gear_glitter_boots':       { slot: 'relic', hp: 80,  spdMultBonus: 0.08 },
   'gear_meteor_lunchbox':     { slot: 'relic', hp: 120, def: 8 },
   'gear_bubblegum_shield':    { slot: 'relic', def: 22 },
@@ -57,6 +72,7 @@ export interface GearInstanceLike {
   equippedHeroId?: string
 }
 
+export type GearUserRole = 'tank' | 'healer' | 'ranged' | 'caster' | string
 export const MAX_GEAR_STARS = 5
 const GEAR_STAR_STAT_GAIN = 0.18
 
@@ -155,6 +171,31 @@ export function getGearPowerScore(gear: GearInstanceLike): number {
     scalePercentStat(s.spdMultBonus, gear.stars) * 620 +
     scalePercentStat(s.lifeStealBonus, gear.stars) * 900
   return Math.round(flatScore + runScore + normalizeGearStars(gear.stars) * 35)
+}
+
+export function getRoleGearPowerScore(gear: GearInstanceLike, role: GearUserRole = 'ranged'): number {
+  const s = GEAR_STATS[gear.id]
+  if (!s) return 0
+
+  const weights = role === 'tank'
+    ? { atk: 4.8, hp: 0.48, def: 16, critChance: 600, critMult: 240, gold: 140, spd: 420, lifeSteal: 980 }
+    : role === 'healer'
+      ? { atk: 7.1, hp: 0.34, def: 8, critChance: 620, critMult: 240, gold: 160, spd: 980, lifeSteal: 760 }
+      : role === 'caster'
+        ? { atk: 8.8, hp: 0.22, def: 4, critChance: 1350, critMult: 680, gold: 140, spd: 720, lifeSteal: 560 }
+        : { atk: 9.2, hp: 0.20, def: 4, critChance: 1500, critMult: 650, gold: 150, spd: 760, lifeSteal: 620 }
+
+  return Math.round(
+    scaleFlatStat(s.atk, gear.stars) * weights.atk +
+    scaleFlatStat(s.hp, gear.stars) * weights.hp +
+    scaleFlatStat(s.def, gear.stars) * weights.def +
+    scalePercentStat(s.critChanceBonus, gear.stars) * weights.critChance +
+    scalePercentStat(s.critMultBonus, gear.stars) * weights.critMult +
+    scalePercentStat(s.goldMultBonus, gear.stars) * weights.gold +
+    scalePercentStat(s.spdMultBonus, gear.stars) * weights.spd +
+    scalePercentStat(s.lifeStealBonus, gear.stars) * weights.lifeSteal +
+    normalizeGearStars(gear.stars) * 36
+  )
 }
 
 export function getGearStatLine(gearId: string, stars = 0): string {

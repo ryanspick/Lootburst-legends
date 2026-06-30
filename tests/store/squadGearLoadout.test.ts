@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import {
+  findUpgradeableGearInstance,
   transferEquippedGearLoadout,
+  upgradeAllGearWithDupesInInventory,
   upgradeGearWithDupesInInventory,
+  useGameStore,
   type OwnedGear,
 } from '@/store/gameStore'
-import { computeHeroGearBonusesFromGear } from '@/game/gear/gearStats'
+import { computeHeroGearBonusesFromGear, getRoleGearPowerScore } from '@/game/gear/gearStats'
 
 describe('squad gear loadout transfer', () => {
   it('moves an occupied squad slot loadout onto the replacement hero', () => {
@@ -85,10 +88,56 @@ describe('gear duplicate upgrades', () => {
     expect(upgradeGearWithDupesInInventory(gear, 'target')).toBeNull()
   })
 
+  it('finds upgradeable stacks and can upgrade every ready item', () => {
+    const gear: OwnedGear[] = [
+      { id: 'gear_bent_spoon', instanceId: 'spoon_0', equipped: false },
+      { id: 'gear_bent_spoon', instanceId: 'spoon_1', equipped: false },
+      { id: 'gear_bent_spoon', instanceId: 'spoon_2', equipped: false },
+      { id: 'gear_tarnished_button', instanceId: 'button_0', equipped: true, equippedHeroId: 'hero_a', equippedSlot: 'trinket' },
+      { id: 'gear_tarnished_button', instanceId: 'button_1', equipped: false },
+      { id: 'gear_tarnished_button', instanceId: 'button_2', equipped: false },
+    ]
+
+    expect(findUpgradeableGearInstance(gear, 'gear_bent_spoon')?.instanceId).toBe('spoon_0')
+
+    const result = upgradeAllGearWithDupesInInventory(gear)
+
+    expect(result.upgrades).toBe(2)
+    expect(result.ownedGear).toHaveLength(2)
+    expect(result.ownedGear.find(g => g.id === 'gear_bent_spoon')).toMatchObject({ stars: 1 })
+    expect(result.ownedGear.find(g => g.id === 'gear_tarnished_button')).toMatchObject({
+      stars: 1,
+      equipped: true,
+      equippedHeroId: 'hero_a',
+    })
+  })
+
   it('makes upgraded gear stronger in combat stat calculations', () => {
     const base = computeHeroGearBonusesFromGear([{ id: 'gear_squeaky_doom_hammer' }])
     const upgraded = computeHeroGearBonusesFromGear([{ id: 'gear_squeaky_doom_hammer', stars: 2 }])
 
     expect(upgraded.atk).toBeGreaterThan(base.atk)
+  })
+
+  it('scores defensive relics higher for tanks than ranged heroes', () => {
+    const defensive = { id: 'gear_cardboard_pauldron' }
+    const offensive = { id: 'gear_sugar_rocket' }
+
+    const tankPreference = getRoleGearPowerScore(defensive, 'tank') - getRoleGearPowerScore(offensive, 'tank')
+    const rangedPreference = getRoleGearPowerScore(defensive, 'ranged') - getRoleGearPowerScore(offensive, 'ranged')
+
+    expect(tankPreference).toBeGreaterThan(rangedPreference)
+  })
+})
+
+describe('capsule key economy', () => {
+  it('spends capsule keys and leaves the balance unchanged when short', () => {
+    useGameStore.setState({ keys: 2 })
+
+    expect(useGameStore.getState().spendKeys(1)).toBe(true)
+    expect(useGameStore.getState().keys).toBe(1)
+
+    expect(useGameStore.getState().spendKeys(2)).toBe(false)
+    expect(useGameStore.getState().keys).toBe(1)
   })
 })

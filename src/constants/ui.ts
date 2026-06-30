@@ -16,7 +16,7 @@ export const UI = {
   cardGapPx:          8,
   sectionGapPx:       24,
 
-  // Border radii (pixel art uses minimal rounding)
+  // Border radii
   radiusSmallPx:      2,
   radiusMediumPx:     4,
   radiusLargePx:      6,
@@ -43,12 +43,12 @@ export const UI = {
 } as const
 
 export const BOTTOM_NAV_TABS = [
-  { id: 'run',      label: 'Run',      icon: '⚔️' },
-  { id: 'squad',    label: 'Squad',    icon: '👥' },
-  { id: 'capsule',  label: 'Capsule',  icon: '🔮' },
-  { id: 'shop',     label: 'Shop',     icon: '💎' },
-  { id: 'gear',     label: 'Gear',     icon: '🛡️' },
-  { id: 'progress', label: 'Progress', icon: '📦' },
+  { id: 'run',      label: 'Run',      icon: 'RUN' },
+  { id: 'squad',    label: 'Squad',    icon: 'SQD' },
+  { id: 'capsule',  label: 'Capsule',  icon: 'CAP' },
+  { id: 'shop',     label: 'Shop',     icon: 'GEM' },
+  { id: 'gear',     label: 'Gear',     icon: 'EQP' },
+  { id: 'progress', label: 'Progress', icon: 'LVL' },
 ] as const
 
 export type TabId = typeof BOTTOM_NAV_TABS[number]['id']
